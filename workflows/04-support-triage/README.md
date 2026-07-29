@@ -8,7 +8,7 @@ Turns repeated support questions into knowledge-base-grounded **draft** replies.
 - **Normalize:** `Normalize Support Intake` redacts the customer message (emails, phones, IBAN-like and token-like strings), flags known injection phrasing, and scores the question against an inline closed KB (match threshold 0.45).
 - **KB miss:** escalation row (`Insert Support Escalation`) + ops alert email. No model call, no invented answer.
 - **KB match:** `Draft Grounded Reply` (OpenAI) drafts from the matched KB entry + redacted question only. `Validate Grounded Draft` then checks the output: closed intent enum, `cited_kb_id` must equal the retrieved source, confidence ≥ 0.62, and a denylist of disclosure- and action-phrasing. Pass → `Draft Ready` row + review alert; fail → `Escalated`.
-- **Approval trigger:** `POST /support-approval-test` with its own token. Actions are a closed enum; `approve`/`edit` on a ticket in `Draft Ready` status (with an `approved_reply` of 20+ characters) sends the reply; `reject`/`escalate` persist the decision on the ticket row (`Rejected`/`Escalated`) and respond `decision_recorded` without sending anything (to the configured test inbox), records the sent state, and optionally captures the approved Q&A pair for later KB curation.
+- **Approval trigger:** `POST /support-approval-test` with its own token. Actions are a closed enum. `approve`/`edit` on a ticket in `Draft Ready` status (with an `approved_reply` of 20+ characters) sends the reply to the configured test inbox, records the sent state, and optionally captures the approved Q&A pair for later KB curation. `reject`/`escalate` persist the decision on the ticket row (`Rejected`/`Escalated`) and respond `decision_recorded` without sending anything.
 
 ## Flow
 
@@ -24,7 +24,9 @@ flowchart TD
   V -- yes --> DR(Draft ready plus alert)
   AW[Approval webhook] --> T2{Token and ticket valid?}
   T2 -- no --> HOLD(401 or validation hold)
-  T2 -- yes --> SEND(Reply sent)
+  T2 -- yes --> ACT{Sends reply?}
+  ACT -- approve or edit --> SEND(Reply sent)
+  ACT -- reject or escalate --> DEC(Decision recorded)
 ```
 
 ## Design decisions
@@ -42,7 +44,7 @@ flowchart TD
 3. Set variables `SUPPORT_INTAKE_TOKEN` and `SUPPORT_APPROVAL_TOKEN` (runtime `$vars` requires a plan that supports variables).
 4. Attach your Gmail credential and OpenAI credential; replace `ops@example.com` with your own inbox.
 5. Replace the demo KB: edit the `kb` array inside `Normalize Support Intake` with your own entries (id, intent, keywords, answer).
-6. **Safe test:** send the intake token as the `x-support-token` header and the approval token as `x-support-approval-token` (each webhook checks its own). `POST` a question with the intake token — every email goes only to your configured address. Test a KB miss, a duplicate, and an injection-style message ("ignore previous instructions...") to see escalation and flagging. Then exercise the approval webhook: an `approve` action requires an `approved_reply` string of at least 20 characters in the payload (the stored draft is not sent by default); try `reject` as well to see the send gate hold.
+6. **Safe test:** send the intake token as the `x-support-token` header and the approval token as `x-support-approval-token` (each webhook checks its own). `POST` a question with the intake token — every email goes only to your configured address. Test a KB miss, a duplicate, and an injection-style message ("ignore previous instructions...") to see escalation and flagging. Then exercise the approval webhook: an `approve` action requires an `approved_reply` string of at least 20 characters in the payload (the stored draft is not sent by default); try `reject` as well — it records the decision on the ticket row and responds `decision_recorded` without sending.
 
 ## Limits
 
