@@ -8,7 +8,7 @@ Turns repeated support questions into knowledge-base-grounded **draft** replies.
 - **Normalize:** `Normalize Support Intake` redacts the customer message (emails, phones, IBAN-like and token-like strings), flags known injection phrasing, and scores the question against an inline closed KB (match threshold 0.45).
 - **KB miss:** escalation row (`Insert Support Escalation`) + ops alert email. No model call, no invented answer.
 - **KB match:** `Draft Grounded Reply` (OpenAI) drafts from the matched KB entry + redacted question only. `Validate Grounded Draft` then checks the output: closed intent enum, `cited_kb_id` must equal the retrieved source, confidence ≥ 0.62, and a denylist of disclosure- and action-phrasing. Pass → `Draft Ready` row + review alert; fail → `Escalated`.
-- **Approval trigger:** `POST /support-approval-test` with its own token. Actions are a closed enum; `approve`/`edit` on a ticket in `Draft Ready` status (with an `approved_reply` of 20+ characters) sends the reply; `reject`/`escalate` currently answer with a validation hold instead of persisting a decision — tracked as a known gap in Issues (to the configured test inbox), records the sent state, and optionally captures the approved Q&A pair for later KB curation.
+- **Approval trigger:** `POST /support-approval-test` with its own token. Actions are a closed enum; `approve`/`edit` on a ticket in `Draft Ready` status (with an `approved_reply` of 20+ characters) sends the reply; `reject`/`escalate` persist the decision on the ticket row (`Rejected`/`Escalated`) and respond `decision_recorded` without sending anything (to the configured test inbox), records the sent state, and optionally captures the approved Q&A pair for later KB curation.
 
 ## Flow
 
