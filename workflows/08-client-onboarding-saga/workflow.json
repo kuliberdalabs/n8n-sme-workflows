@@ -1,0 +1,2949 @@
+{
+  "name": "Client Onboarding Saga",
+  "activeVersionId": null,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "connections": {
+    "Client Onboarding Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Intake Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "UTC Reconcile Sweep": {
+      "main": [
+        [
+          {
+            "node": "Find Reconcile Onboarding Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Intake Token": {
+      "main": [
+        [
+          {
+            "node": "Intake Authorized?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intake Authorized?": {
+      "main": [
+        [
+          {
+            "node": "Normalize Onboarding",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Unauthorized Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Unauthorized Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Unauthorized",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Onboarding": {
+      "main": [
+        [
+          {
+            "node": "Onboarding Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Existing Onboarding Rows": {
+      "main": [
+        [
+          {
+            "node": "Build Claim Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Claim Decision": {
+      "main": [
+        [
+          {
+            "node": "Claim Insert Needed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claim Insert Needed?": {
+      "main": [
+        [
+          {
+            "node": "Emit Claim Row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Find Existing Step Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emit Claim Row": {
+      "main": [
+        [
+          {
+            "node": "Insert Onboarding Claim Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Onboarding Claim Row": {
+      "main": [
+        [
+          {
+            "node": "Find Existing Step Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Existing Step Rows": {
+      "main": [
+        [
+          {
+            "node": "Build Missing Step Intent Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Missing Step Intent Summary": {
+      "main": [
+        [
+          {
+            "node": "Step Intents Needed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Step Intents Needed?": {
+      "main": [
+        [
+          {
+            "node": "Emit Step Intent Rows",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Find Offer Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emit Step Intent Rows": {
+      "main": [
+        [
+          {
+            "node": "Insert Step Intent Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Step Intent Rows": {
+      "main": [
+        [
+          {
+            "node": "Find Offer Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Offer Rows": {
+      "main": [
+        [
+          {
+            "node": "Find Invoice Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Invoice Rows": {
+      "main": [
+        [
+          {
+            "node": "Find Booking Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Booking Rows": {
+      "main": [
+        [
+          {
+            "node": "Find Document Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Document Rows": {
+      "main": [
+        [
+          {
+            "node": "Build Parent Saga Decisions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Parent Saga Decisions": {
+      "main": [
+        [
+          {
+            "node": "Terminal Rows Needed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Terminal Rows Needed?": {
+      "main": [
+        [
+          {
+            "node": "Emit Step Terminal Rows",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Final Write Source",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emit Step Terminal Rows": {
+      "main": [
+        [
+          {
+            "node": "Update Step Terminal Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Step Terminal Rows": {
+      "main": [
+        [
+          {
+            "node": "Build Final Write Source",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Final Write Source": {
+      "main": [
+        [
+          {
+            "node": "Final Onboarding Write Needed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final Onboarding Write Needed?": {
+      "main": [
+        [
+          {
+            "node": "Emit Final Onboarding Row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emit Final Onboarding Row": {
+      "main": [
+        [
+          {
+            "node": "Update Final Onboarding Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Final Onboarding Row": {
+      "main": [
+        [
+          {
+            "node": "Build Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Webhook Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Accepted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Reconcile Onboarding Rows": {
+      "main": [
+        [
+          {
+            "node": "Find Existing Reconcile Alert Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Existing Reconcile Alert Rows": {
+      "main": [
+        [
+          {
+            "node": "Find Reconcile Step Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Reconcile Step Rows": {
+      "main": [
+        [
+          {
+            "node": "Find Reconcile Offer Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Reconcile Offer Rows": {
+      "main": [
+        [
+          {
+            "node": "Find Reconcile Invoice Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Reconcile Invoice Rows": {
+      "main": [
+        [
+          {
+            "node": "Find Reconcile Booking Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Reconcile Booking Rows": {
+      "main": [
+        [
+          {
+            "node": "Find Reconcile Document Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Reconcile Document Rows": {
+      "main": [
+        [
+          {
+            "node": "Build UTC Reconcile Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build UTC Reconcile Alerts": {
+      "main": [
+        [
+          {
+            "node": "Reconcile Alerts Needed?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reconcile Step Adoptions Needed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reconcile Step Adoptions Needed?": {
+      "main": [
+        [
+          {
+            "node": "Emit Reconcile Adopted Step Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emit Reconcile Adopted Step Rows": {
+      "main": [
+        [
+          {
+            "node": "Update Reconcile Adopted Step Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reconcile Alerts Needed?": {
+      "main": [
+        [
+          {
+            "node": "Emit Reconcile Alert Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emit Reconcile Alert Rows": {
+      "main": [
+        [
+          {
+            "node": "Insert Reconcile Alert Intent Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Reconcile Alert Intent Rows": {
+      "main": [
+        [
+          {
+            "node": "Send Controlled Reconcile Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Controlled Reconcile Alert": {
+      "main": [
+        [
+          {
+            "node": "Build Alert Sent Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Alert Sent Update": {
+      "main": [
+        [
+          {
+            "node": "Update Reconcile Alert Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Onboarding Valid?": {
+      "main": [
+        [
+          {
+            "node": "Find Existing Onboarding Rows",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Onboarding Invalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodes": [
+    {
+      "id": "7cbe3f9b-9b40-42c7-bb1e-e3f661b3775e",
+      "name": "Client Onboarding Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -700,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "client-onboarding",
+        "responseMode": "responseNode"
+      },
+      "webhookId": "2b74603f-d84e-470f-b381-7ecd8642e065"
+    },
+    {
+      "id": "8a944881-1004-430f-8852-40d83556c529",
+      "name": "UTC Reconcile Sweep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -700,
+        760
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "4bd9d5d9-3443-46d5-87b7-4fe246576ac3",
+      "name": "Validate Intake Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst headers = $input.item.json.headers || {};\nconst expected = $vars.ONBOARDING_INTAKE_TOKEN;\nconst supplied = headers['x-onboarding-token'] || headers['X-Onboarding-Token'] || (String(headers.authorization || '').startsWith('Bearer ') ? String(headers.authorization).slice(7) : '');\nconst auth_ok = Boolean(expected && supplied && supplied === expected);\nreturn { json: { auth_ok, auth_reason: expected ? (auth_ok ? 'ok' : 'bad_token') : 'missing_server_token_var', headers, body: $input.item.json.body || {} } };\n"
+      }
+    },
+    {
+      "id": "9a4cad20-a4b0-4721-9077-284dc58dc98c",
+      "name": "Intake Authorized?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -180,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.auth_ok }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "f629fd1a-a786-423a-bb7e-91c980c48871",
+      "name": "Build Unauthorized Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        200
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nreturn { json: { ok: false, status: 'rejected', error: $input.item.json.auth_reason || 'unauthorized', owner_var_status: 'fail_closed', required_var: 'ONBOARDING_INTAKE_TOKEN' } };\n"
+      }
+    },
+    {
+      "id": "da5245e4-3078-4cb2-bdb8-4065d4eb9337",
+      "name": "Respond Unauthorized",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        340,
+        200
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 401
+        }
+      }
+    },
+    {
+      "id": "fabee3d3-9018-430c-a77f-19c2f3b53c6e",
+      "name": "Normalize Onboarding",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst crypto = require('crypto');\nconst root = $input.item.json || {};\nconst body = root.body && typeof root.body === 'object' ? root.body : root;\nconst now = new Date().toISOString();\nconst collapse = (value) => String(value ?? '').replace(/\\s+/g, ' ').trim();\nconst lower = (value) => collapse(value).toLowerCase();\nconst hash = (value) => crypto.createHash('sha256').update(String(value)).digest('hex');\nconst stable = (obj) => JSON.stringify(obj, Object.keys(obj).sort());\nconst email = lower(body.verified_email || body.email);\nconst identity = collapse(body.deal_id) || collapse(body.client_external_id);\nconst identitySource = collapse(body.deal_id) ? 'deal_id' : (collapse(body.client_external_id) ? 'client_external_id' : '');\nconst serviceCode = collapse(body.service_code);\nconst requestText = collapse(body.contract_or_offer_details || body.request_details || '');\nconst truncate = (value, max) => collapse(value).slice(0, max);\nconst allowedServiceCodes = ['ai_audit', 'automation_retainer', 'workflow_build', 'ops_sprint'];\nconst errors = [];\nif (!identity) errors.push('missing_stable_identity');\nif (!email || !email.includes('@') || email.includes(' ')) errors.push('bad_verified_email');\nif (!serviceCode) errors.push('missing_service_code');\nif (serviceCode && !allowedServiceCodes.includes(serviceCode)) errors.push('unknown_service_code');\nif (Number(body.quantity || 0) <= 0) errors.push('bad_quantity');\nif (!requestText || requestText.length > 5000) errors.push('bad_request_details');\nconst onboardingId = identity ? hash('onboarding.v1\\n' + identity) : '';\nconst smokeTag = collapse(body.smoke_tag || 'ONBOARDING-DRAFT');\nconst childVersions = Object.assign({\n  offer: '74dd7db8-f3f3-4c06-899e-49be6c4b417a',\n  invoice: '31923245-8e53-4d13-98ce-ed5c1c3cef6e',\n  booking: '3dfffb2f-50c1-4bc5-b9ae-06d2a9f25a1d',\n  document: '365c9b34-0c35-47de-a0ae-9a0ce3831329',\n}, body.child_versions || {});\nconst planned = [];\nfunction addStep(step_name, child_day, workflow_id, registry_row, child_version_id, request, predicted_child_key, policy, forcedState, forcedReason) {\n  const request_snapshot_bytes = stable(request);\n  const request_snapshot_hash = hash(request_snapshot_bytes);\n  const step_version = 'onboarding.' + step_name + '.v1';\n  planned.push({\n    step_key: hash([onboardingId, step_name, step_version, child_version_id, request_snapshot_hash].join('\\n')),\n    onboarding_id: onboardingId,\n    step_name,\n    step_version,\n    state: forcedState || (errors.length ? 'PRECONDITION_FAILED' : 'INTENT_WRITTEN'),\n    child_day,\n    registry_row,\n    workflow_id,\n    child_version_id,\n    request_snapshot_bytes,\n    request_snapshot_hash,\n    predicted_child_key,\n    child_status: '',\n    child_proof_json: '',\n    side_effect_policy: policy,\n    created_at_utc: now,\n    updated_at_utc: now,\n    last_progress_at_utc: now,\n    blocked_reason: forcedReason || errors.join(','),\n    smoke_tag: smokeTag,\n    last_execution_id: $execution.id,\n  });\n}\nconst offerRequest = { client_name: collapse(body.client_name), company: collapse(body.company), email, verified_email: email, service_code: serviceCode, quantity: Number(body.quantity || 0), request_details: requestText, request_text: requestText };\nconst offerSubmissionId = hash([offerRequest.email, offerRequest.service_code, offerRequest.quantity, offerRequest.request_details].join('\\n').toLowerCase());\naddStep('offer_out', 'Offer', 'EXTERNAL_OFFER_WORKFLOW_ID', 'Quote / Offer workflow (external)', childVersions.offer, offerRequest, offerSubmissionId, 'cannot_unsend_offer');\nconst invoiceRequest = { verified_email: email, job_id: onboardingId + ':first_invoice', service_code: serviceCode, amount_policy: 'first_invoice_from_offer', issued_at_utc: now };\naddStep('first_invoice', 'Invoice', 'EXTERNAL_INVOICE_WORKFLOW_ID', 'Invoice Dunning workflow (external)', childVersions.invoice, invoiceRequest, hash('invoice.v1\\n' + invoiceRequest.job_id), 'cannot_unsend_invoice');\nconst slotStart = collapse(body.kickoff_slot_start);\nconst slotEnd = collapse(body.kickoff_slot_end);\nconst slotOk = slotStart && slotEnd && Date.parse(slotStart) < Date.parse(slotEnd) && /Z$|[+-]\\d\\d:\\d\\d$/.test(slotStart) && /Z$|[+-]\\d\\d:\\d\\d$/.test(slotEnd);\nconst bookingUid = onboardingId + ':kickoff:' + slotStart;\nif (slotOk) {\n  addStep('kickoff_booking', 'Booking', 'EXTERNAL_BOOKING_WORKFLOW_ID', 'Booking Lifecycle workflow (external)', childVersions.booking, { booking_uid: bookingUid, verified_email: email, slot_start: slotStart, slot_end: slotEnd, slot_tz: collapse(body.kickoff_slot_tz || 'UTC') }, bookingUid, 'change_or_human_if_reschedule');\n} else {\n  addStep('kickoff_booking', 'Booking', 'EXTERNAL_BOOKING_WORKFLOW_ID', 'Booking Lifecycle workflow (external)', childVersions.booking, { booking_uid: onboardingId + ':kickoff:missing', verified_email: email, slot_start: '', slot_end: '', slot_tz: collapse(body.kickoff_slot_tz || 'UTC') }, onboardingId + ':kickoff:missing', 'change_or_human_if_reschedule', 'KICKOFF_SLOT_MISSING', 'missing_or_invalid_kickoff_slot');\n}\nconst filename = truncate(body.filename || body.file_name || 'unnamed-document', 180);\nconst docMimeType = truncate(body.mime_type || body.mimeType || 'application/pdf', 120);\nconst attachmentId = truncate(body.attachment_id || body.attachmentId || '', 180);\nconst fileHash = truncate(body.file_sha256 || body.sha256 || body.document_sha256 || '', 128).toLowerCase();\nconst rawDocumentText = String(body.ocr_text || body.text || body.extracted_text || '');\nconst documentKeySeed = fileHash || (attachmentId ? [attachmentId, filename, docMimeType].join('|') : [filename, docMimeType, rawDocumentText.slice(0, 2000)].join('|'));\nif (fileHash || attachmentId || rawDocumentText.trim()) {\n  addStep('signed_document', 'Document', 'EXTERNAL_DOCUMENT_WORKFLOW_ID', 'Document Intake workflow (external)', childVersions.document, { document_key_basis: documentKeySeed, verified_email: email, file_sha256: fileHash, filename, mime_type: docMimeType, attachment_id: attachmentId, ocr_text: rawDocumentText }, hash('doc-intake\\n' + documentKeySeed), 'quarantine_or_supersede_not_delete');\n}\naddStep('welcome_email', 'Parent', 'ONBOARDING-PARENT', 'Onboarding parent-owned', 'parent-v1', { verified_email: email, onboarding_id: onboardingId, controlled_to: 'ops@example.com' }, hash('onboarding.welcome|' + onboardingId), 'cannot_unsend_welcome');\naddStep('internal_checklist', 'Parent', 'ONBOARDING-PARENT', 'Onboarding parent-owned', 'parent-v1', { onboarding_id: onboardingId, checklist_template: 'onboarding-checklist-v1' }, hash('onboarding.checklist|' + onboardingId), 'checklist_reopen_close');\nreturn { json: {\n  ok: errors.length === 0,\n  errors,\n  onboarding_id: onboardingId,\n  onboarding_identity: identity,\n  identity_source: identitySource,\n  state: errors.length ? 'PRECONDITION_FAILED' : 'PLAN_READY',\n  client_name: collapse(body.client_name),\n  company: collapse(body.company),\n  verified_email: email,\n  service_code: serviceCode,\n  created_at_utc: now,\n  updated_at_utc: now,\n  last_progress_at_utc: now,\n  required_steps_json: JSON.stringify(planned.map((row) => row.step_name)),\n  planned_steps_json: JSON.stringify(planned),\n  current_kickoff_slot_start_utc: slotStart,\n  current_kickoff_slot_valid: slotOk,\n  step_summary_json: '[]',\n  blocked_reason: errors.join(','),\n  smoke_tag: smokeTag,\n  last_execution_id: $execution.id,\n  child_fixtures_json: JSON.stringify(body.child_fixtures || {}),\n  current_payload_hash: hash(stable(body)),\n} };\n"
+      }
+    },
+    {
+      "id": "bc37082c-4c94-4f9f-a348-c84fa3e53310",
+      "name": "Find Existing Onboarding Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        340,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Onboardings"
+        },
+        "returnAll": true
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "2b1d047d-fe22-43e9-8b2c-c821eff3b7a6",
+      "name": "Build Claim Decision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst source = $('Normalize Onboarding').item.json || {};\nconst rows = $input.all().map((item) => item.json || {}).filter((row) => row.onboarding_id === source.onboarding_id && row.smoke_tag === source.smoke_tag);\nconst terminal = rows.find((row) => ['COMPLETE','HUMAN_REQUIRED','UNKNOWN_CHILD_RESULT'].includes(String(row.state || '')));\nreturn { json: Object.assign({}, source, {\n  existing_onboarding_count: rows.length,\n  should_insert_claim: Boolean(source.onboarding_id && rows.length === 0),\n  replay_terminal_state: terminal ? terminal.state : '',\n}) };\n"
+      }
+    },
+    {
+      "id": "243f6d56-3d9c-4e2b-9f99-8c1733db80ae",
+      "name": "Claim Insert Needed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        860,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.should_insert_claim }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "15dead2c-bfcd-4d50-94f7-fb977901987d",
+      "name": "Emit Claim Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        -100
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst item = $input.item.json || {};\nif (!item.should_insert_claim) return [];\nreturn { json: Object.assign({}, item, { state: 'CLAIMED', step_summary_json: '[]' }) };\n"
+      }
+    },
+    {
+      "id": "c34b26ea-dc7f-46bf-9eed-4cf89000944d",
+      "name": "Insert Onboarding Claim Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1380,
+        -100
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Onboardings"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "onboarding_id": "={{ $json.onboarding_id }}",
+            "onboarding_identity": "={{ $json.onboarding_identity }}",
+            "identity_source": "={{ $json.identity_source }}",
+            "state": "={{ $json.state }}",
+            "client_name": "={{ $json.client_name }}",
+            "company": "={{ $json.company }}",
+            "verified_email": "={{ $json.verified_email }}",
+            "service_code": "={{ $json.service_code }}",
+            "created_at_utc": "={{ $json.created_at_utc }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_progress_at_utc": "={{ $json.last_progress_at_utc }}",
+            "required_steps_json": "={{ $json.required_steps_json }}",
+            "step_summary_json": "={{ $json.step_summary_json }}",
+            "blocked_reason": "={{ $json.blocked_reason }}",
+            "smoke_tag": "={{ $json.smoke_tag }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "onboarding_id",
+              "displayName": "onboarding_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "onboarding_identity",
+              "displayName": "onboarding_identity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "identity_source",
+              "displayName": "identity_source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "state",
+              "displayName": "state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "client_name",
+              "displayName": "client_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "company",
+              "displayName": "company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "verified_email",
+              "displayName": "verified_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "service_code",
+              "displayName": "service_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at_utc",
+              "displayName": "created_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_progress_at_utc",
+              "displayName": "last_progress_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "required_steps_json",
+              "displayName": "required_steps_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "step_summary_json",
+              "displayName": "step_summary_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "blocked_reason",
+              "displayName": "blocked_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "1a09528b-9cad-4df3-bd90-d731fbcabb40",
+      "name": "Find Existing Step Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1660,
+        40
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Onboarding_Steps"
+        },
+        "returnAll": true
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "1767a7b3-89cc-4610-86b2-ddee18d1cec3",
+      "name": "Build Missing Step Intent Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        40
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst source = $('Normalize Onboarding').item.json || {};\nconst planned = JSON.parse(source.planned_steps_json || '[]');\nconst rows = $input.all().map((item) => item.json || {}).filter((row) => row.onboarding_id === source.onboarding_id && row.smoke_tag === source.smoke_tag);\nconst latest = new Map();\nfor (const row of rows) {\n  const prev = latest.get(row.step_name);\n  if (!prev || String(row.updated_at_utc || row.created_at_utc || '') >= String(prev.updated_at_utc || prev.created_at_utc || '')) latest.set(row.step_name, row);\n}\nconst missing = [];\nconst existing = [];\nfor (const plan of planned) {\n  const prior = latest.get(plan.step_name);\n  if (prior) {\n    if (\n      ['KICKOFF_SLOT_MISSING','DOC_WAITING_UPLOAD'].includes(String(prior.state || '')) &&\n      String(plan.state || '') === 'INTENT_WRITTEN' &&\n      String(plan.predicted_child_key || '') !== String(prior.predicted_child_key || '')\n    ) {\n      existing.push(Object.assign({}, plan, {\n        match_step_key: prior.step_key,\n        created_at_utc: prior.created_at_utc || plan.created_at_utc,\n        previous_wait_state: prior.state,\n        previous_predicted_child_key: prior.predicted_child_key || '',\n      }));\n      continue;\n    }\n    existing.push(prior);\n    continue;\n  }\n  missing.push(plan);\n}\nconst claim = $('Build Claim Decision').item.json || {};\nconst terminalStates = new Set(['TERMINAL_SUCCESS','TERMINAL_REVIEW','TERMINAL_DEAD_LETTER','SKIPPED_BLOCKED_BY_REGISTRY','UNKNOWN_CHILD_RESULT','HUMAN_REQUIRED']);\nconst replay_noop = Boolean(\n  claim.replay_terminal_state === 'COMPLETE' &&\n  planned.length > 0 &&\n  missing.length === 0 &&\n  planned.every((plan) => terminalStates.has(String((latest.get(plan.step_name) || {}).state || '')))\n);\nreturn { json: {\n  onboarding_id: source.onboarding_id,\n  smoke_tag: source.smoke_tag,\n  intent_rows_json: JSON.stringify(missing),\n  existing_step_rows_json: JSON.stringify(existing),\n  step_intent_count: missing.length,\n  row_count_before_steps: rows.length,\n  stored_snapshot_source: 'existing_step_rows_or_first_intent',\n  replay_noop,\n  last_execution_id: $execution.id,\n} };\n"
+      }
+    },
+    {
+      "id": "b0524478-ecb2-4bd0-95d9-e01c610157fc",
+      "name": "Step Intents Needed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2180,
+        40
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.step_intent_count }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              },
+              "rightValue": 0
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "89255fc2-b7cf-47ba-978a-b882d7e3313e",
+      "name": "Emit Step Intent Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2440,
+        -100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst item = $input.item.json || {};\nconst rows = JSON.parse(item.intent_rows_json || '[]');\nreturn rows.map((row) => ({ json: row }));\n"
+      }
+    },
+    {
+      "id": "f7009400-41e2-4c26-a0a2-e5ef34964da9",
+      "name": "Insert Step Intent Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2700,
+        -100
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Onboarding_Steps"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "step_key": "={{ $json.step_key }}",
+            "onboarding_id": "={{ $json.onboarding_id }}",
+            "step_name": "={{ $json.step_name }}",
+            "step_version": "={{ $json.step_version }}",
+            "state": "={{ $json.state }}",
+            "child_day": "={{ $json.child_day }}",
+            "registry_row": "={{ $json.registry_row }}",
+            "workflow_id": "={{ $json.workflow_id }}",
+            "child_version_id": "={{ $json.child_version_id }}",
+            "request_snapshot_bytes": "={{ $json.request_snapshot_bytes }}",
+            "request_snapshot_hash": "={{ $json.request_snapshot_hash }}",
+            "predicted_child_key": "={{ $json.predicted_child_key }}",
+            "child_status": "={{ $json.child_status }}",
+            "child_proof_json": "={{ $json.child_proof_json }}",
+            "side_effect_policy": "={{ $json.side_effect_policy }}",
+            "created_at_utc": "={{ $json.created_at_utc }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_progress_at_utc": "={{ $json.last_progress_at_utc }}",
+            "blocked_reason": "={{ $json.blocked_reason }}",
+            "smoke_tag": "={{ $json.smoke_tag }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "step_key",
+              "displayName": "step_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "onboarding_id",
+              "displayName": "onboarding_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "step_name",
+              "displayName": "step_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "step_version",
+              "displayName": "step_version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "state",
+              "displayName": "state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "child_day",
+              "displayName": "child_day",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "registry_row",
+              "displayName": "registry_row",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "workflow_id",
+              "displayName": "workflow_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "child_version_id",
+              "displayName": "child_version_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "request_snapshot_bytes",
+              "displayName": "request_snapshot_bytes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "request_snapshot_hash",
+              "displayName": "request_snapshot_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "predicted_child_key",
+              "displayName": "predicted_child_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "child_status",
+              "displayName": "child_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "child_proof_json",
+              "displayName": "child_proof_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "side_effect_policy",
+              "displayName": "side_effect_policy",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at_utc",
+              "displayName": "created_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_progress_at_utc",
+              "displayName": "last_progress_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "blocked_reason",
+              "displayName": "blocked_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "ed923b00-c94c-4775-a4e5-f9a9265364be",
+      "name": "Build Parent Saga Decisions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4000,
+        40
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst crypto = require('crypto');\nconst source = $('Normalize Onboarding').item.json || {};\nconst summary = $('Build Missing Step Intent Summary').item.json || {};\nconst planned = JSON.parse(source.planned_steps_json || '[]');\nconst existing = JSON.parse(summary.existing_step_rows_json || '[]');\nconst missing = JSON.parse(summary.intent_rows_json || '[]');\nconst testMode = /^TEST-(FIX|DRAFT)/.test(String(source.smoke_tag || ''));\nconst fixtures = testMode ? JSON.parse(source.child_fixtures_json || '{}') : {};\nconst replayNoop = summary.replay_noop === true || String(summary.replay_noop) === 'true';\nconst now = new Date().toISOString();\nconst hash = (value) => crypto.createHash('sha256').update(String(value)).digest('hex');\nconst html = (value) => String(value ?? '').replace(/[&<>\"']/g, (ch) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;' }[ch]));\nconst terminalStates = new Set(['TERMINAL_SUCCESS','TERMINAL_REVIEW','TERMINAL_DEAD_LETTER','SKIPPED_BLOCKED_BY_REGISTRY','UNKNOWN_CHILD_RESULT','HUMAN_REQUIRED']);\nconst finalRows = [];\nconst allRows = [...existing, ...missing];\nconst decisions = [];\nfunction nodeRows(name) {\n  try { return $items(name).map((item) => item.json || {}).filter((row) => Object.keys(row).length); } catch (error) { return []; }\n}\nconst childTables = {\n  offer: nodeRows('Find Offer Rows'),\n  invoice: nodeRows('Find Invoice Rows'),\n  booking: nodeRows('Find Booking Rows'),\n  document: nodeRows('Find Document Rows'),\n};\nfunction findChildEvidence(step) {\n  const key = String(step.predicted_child_key || '');\n  if (step.child_day === 'Offer') return childTables.offer.find((row) => String(row.submission_id || '') === key || String(row.offer_submission_id || '') === key) || null;\n  if (step.child_day === 'Invoice') return childTables.invoice.find((row) => String(row.invoice_key || row.real_invoice_key || row.dedupe_key || '') === key) || null;\n  if (step.child_day === 'Booking') return childTables.booking.find((row) => String(row.booking_uid || '') === key) || null;\n  if (step.child_day === 'Document') return childTables.document.find((row) => String(row.document_key || '') === key) || null;\n  return null;\n}\nfunction statusOf(row) {\n  return String(row.status || row.state || row.child_status || '').trim();\n}\nfunction boolish(value) {\n  return value === true || String(value).toLowerCase() === 'true' || String(value) === '1';\n}\nfunction sameUtcInstant(left, right) {\n  const leftMs = Date.parse(left || '');\n  const rightMs = Date.parse(right || '');\n  return Number.isFinite(leftMs) && Number.isFinite(rightMs) && leftMs === rightMs;\n}\nfunction classifyTerminalFromChild(step, row) {\n  const status = statusOf(row);\n  const lowerStatus = status.toLowerCase();\n  if (step.child_day === 'Offer') {\n    if (boolish(row.email_sent) || ['offer sent','offer_sent','sent','terminal_success'].includes(lowerStatus)) return { state: 'TERMINAL_SUCCESS', status: status || 'offer_sent', proof: { adopted_by: step.predicted_child_key, source: 'Quote_Offers' } };\n    if (['needs review','needs_review','terminal_review'].includes(lowerStatus)) return { state: 'TERMINAL_REVIEW', status: status || 'needs_review', proof: { adopted_by: step.predicted_child_key, source: 'Quote_Offers' } };\n    if (['dead letter','dead_letter','terminal_dead_letter'].includes(lowerStatus)) return { state: 'TERMINAL_DEAD_LETTER', status: status || 'dead_letter', proof: { adopted_by: step.predicted_child_key, source: 'Quote_Offers' } };\n  }\n  if (step.child_day === 'Invoice') {\n    if (boolish(row.invoice_email_sent) || ['invoice sent','invoice_sent','paid','terminal_success'].includes(lowerStatus)) return { state: 'TERMINAL_SUCCESS', status: status || 'invoice_sent', proof: { adopted_by: step.predicted_child_key, source: 'Dunning_Invoices' } };\n    if (['needs review','needs_review','terminal_review'].includes(lowerStatus)) return { state: 'TERMINAL_REVIEW', status: status || 'needs_review', proof: { adopted_by: step.predicted_child_key, source: 'Dunning_Invoices' } };\n    if (['dead letter','dead_letter','terminal_dead_letter'].includes(lowerStatus)) return { state: 'TERMINAL_DEAD_LETTER', status: status || 'dead_letter', proof: { adopted_by: step.predicted_child_key, source: 'Dunning_Invoices' } };\n  }\n  if (step.child_day === 'Booking') {\n    const requestedSlot = JSON.parse(step.request_snapshot_bytes || '{}').slot_start || '';\n    const terminalSlot = row.slot_start_utc || row.slot_start || row.start_utc || '';\n    if (terminalSlot && requestedSlot && !sameUtcInstant(terminalSlot, requestedSlot)) return { state: 'HUMAN_REQUIRED', status: 'reschedule_required', proof: { action: 'route_booking_change_contract', old_booking_uid: step.predicted_child_key, terminal_slot_start_utc: terminalSlot, requested_slot_start_utc: requestedSlot } };\n    if (['confirmed','booking_confirmed','terminal_success'].includes(lowerStatus)) return { state: 'TERMINAL_SUCCESS', status: status || 'confirmed', proof: { adopted_by: step.predicted_child_key, source: 'Bookings' } };\n    if (['needs review','needs_review','cancelled','rescheduled','terminal_review'].includes(lowerStatus)) return { state: 'TERMINAL_REVIEW', status: status || 'needs_review', proof: { adopted_by: step.predicted_child_key, source: 'Bookings' } };\n    if (['dead letter','dead_letter','terminal_dead_letter'].includes(lowerStatus)) return { state: 'TERMINAL_DEAD_LETTER', status: status || 'dead_letter', proof: { adopted_by: step.predicted_child_key, source: 'Bookings' } };\n  }\n  if (step.child_day === 'Document') {\n    if (['filed','document filed','terminal_success'].includes(lowerStatus)) return { state: 'TERMINAL_SUCCESS', status: status || 'filed', proof: { adopted_by: step.predicted_child_key, source: 'Intake_Documents' } };\n    if (['needs review','needs_review','quarantined','terminal_review'].includes(lowerStatus)) return { state: 'TERMINAL_REVIEW', status: status || 'needs_review', proof: { adopted_by: step.predicted_child_key, source: 'Intake_Documents' } };\n    if (['dead letter','dead_letter','terminal_dead_letter'].includes(lowerStatus)) return { state: 'TERMINAL_DEAD_LETTER', status: status || 'dead_letter', proof: { adopted_by: step.predicted_child_key, source: 'Intake_Documents' } };\n  }\n  if (boolish(row.failed_before_send_proven)) return { state: 'RETRYABLE_FAILURE', status: 'contract_proven_failed_before_send', proof: { retry_legal: true, marker: row.failed_before_send_marker || 'failed_before_send_proven' } };\n  return { state: 'UNKNOWN_CHILD_RESULT', status: 'ambiguous_nonterminal_child_row', proof: { retry_legal: false, reason: 'row_state_cannot_prove_no_send', email_sent: row.email_sent, child_status: status } };\n}\nfunction classify(step, fixture) {\n  if (step.step_name === 'kickoff_booking' && terminalStates.has(String(step.state || '')) && source.current_kickoff_slot_valid === true) {\n    const storedSlot = JSON.parse(step.request_snapshot_bytes || '{}').slot_start || '';\n    if (storedSlot && source.current_kickoff_slot_start_utc && !sameUtcInstant(source.current_kickoff_slot_start_utc, storedSlot)) {\n      return { state: 'HUMAN_REQUIRED', status: 'reschedule_required', proof: { action: 'route_booking_change_contract', old_booking_uid: step.predicted_child_key, stored_slot_start_utc: storedSlot, requested_slot_start_utc: source.current_kickoff_slot_start_utc } };\n    }\n  }\n  if (terminalStates.has(String(step.state || ''))) return { state: step.state, status: 'already_terminal', proof: { action: 'skip_terminal' } };\n  if (String(step.state || '') === 'KICKOFF_SLOT_MISSING') return { state: 'KICKOFF_SLOT_MISSING', status: 'waiting_for_kickoff_slot', proof: { action: 'wait_for_slot_before_booking_call' } };\n  if (source.errors && source.errors.length) return { state: 'PRECONDITION_FAILED', status: 'precondition_failed', proof: { errors: source.errors } };\n  if (step.child_day === 'Parent') return { state: 'TERMINAL_SUCCESS', status: step.step_name === 'welcome_email' ? 'controlled_welcome_recorded' : 'parent_owned_recorded', proof: { source: 'parent_owned_step', no_child_call: true } };\n  const childRow = findChildEvidence(step);\n  if (childRow) return classifyTerminalFromChild(step, childRow);\n  if (fixture && fixture.child_version_id && fixture.child_version_id !== step.child_version_id) return { state: 'HUMAN_REQUIRED', status: 'child_version_drift', proof: { expected: step.child_version_id, actual: fixture.child_version_id, source: 'payload_fixture_test_only' } };\n  if (step.step_name === 'kickoff_booking' && fixture && fixture.terminal_slot_start_utc && !sameUtcInstant(fixture.terminal_slot_start_utc, JSON.parse(step.request_snapshot_bytes).slot_start)) {\n    return { state: 'HUMAN_REQUIRED', status: 'reschedule_required', proof: { action: 'route_booking_change_contract', old_booking_uid: step.predicted_child_key, terminal_slot_start_utc: fixture.terminal_slot_start_utc, source: 'payload_fixture_test_only' } };\n  }\n  if (fixture && fixture.terminal === true) return { state: 'TERMINAL_SUCCESS', status: fixture.status || 'terminal_success', proof: { adopted_by: step.predicted_child_key, source: 'payload_fixture_test_only' } };\n  if (fixture && fixture.failed_before_send_proven === true) return { state: 'RETRYABLE_FAILURE', status: 'contract_proven_failed_before_send', proof: { retry_legal: true, marker: fixture.marker || 'failed_before_send_proven', source: 'payload_fixture_test_only' } };\n  if (fixture && fixture.row_exists === true) return { state: 'UNKNOWN_CHILD_RESULT', status: 'ambiguous_nonterminal_child_row', proof: { retry_legal: false, reason: 'row_state_cannot_prove_no_send', email_sent: fixture.email_sent, child_status: fixture.status || '', source: 'payload_fixture_test_only' } };\n  return { state: 'UNKNOWN_CHILD_RESULT', status: 'no_terminal_child_row', proof: { retry_legal: false, reason: 'missing_child_table_evidence', predicted_child_key: step.predicted_child_key } };\n}\nfor (const step of allRows) {\n  const fixture = fixtures[step.step_name] || fixtures[step.predicted_child_key] || null;\n  const decision = classify(step, fixture);\n  decisions.push({ step_name: step.step_name, state: decision.state, status: decision.status, predicted_child_key: step.predicted_child_key });\n  if (!terminalStates.has(String(step.state || '')) || decision.state !== step.state) {\n    finalRows.push(Object.assign({}, step, {\n      match_step_key: step.match_step_key || step.step_key,\n      state: decision.state,\n      child_status: decision.status,\n      child_proof_json: JSON.stringify(decision.proof).slice(0, 4500),\n      updated_at_utc: now,\n      last_progress_at_utc: now,\n      blocked_reason: decision.state === 'UNKNOWN_CHILD_RESULT' || decision.state === 'HUMAN_REQUIRED' || decision.state === 'PRECONDITION_FAILED' ? decision.status : '',\n      last_execution_id: $execution.id,\n    }));\n  }\n}\nconst hasUnknown = decisions.some((d) => d.state === 'UNKNOWN_CHILD_RESULT');\nconst hasHuman = decisions.some((d) => d.state === 'HUMAN_REQUIRED' || d.state === 'TERMINAL_REVIEW');\nconst hasPrecondition = decisions.some((d) => d.state === 'PRECONDITION_FAILED' || d.state === 'KICKOFF_SLOT_MISSING' || d.state === 'RETRYABLE_FAILURE');\nconst complete = decisions.length > 0 && decisions.every((d) => d.state === 'TERMINAL_SUCCESS' || d.state === 'SKIPPED_BLOCKED_BY_REGISTRY');\nconst finalState = hasUnknown ? 'UNKNOWN_CHILD_RESULT' : (hasHuman ? 'HUMAN_REQUIRED' : (hasPrecondition ? 'PARTIAL_BLOCKED' : (complete ? 'COMPLETE' : 'PARTIAL_BLOCKED')));\nconst finalOnboardingRow = {\n  onboarding_id: source.onboarding_id,\n  onboarding_identity: source.onboarding_identity,\n  identity_source: source.identity_source,\n  state: finalState,\n  client_name: source.client_name,\n  company: source.company,\n  verified_email: source.verified_email,\n  service_code: source.service_code,\n  created_at_utc: source.created_at_utc,\n  updated_at_utc: now,\n  last_progress_at_utc: now,\n  required_steps_json: source.required_steps_json,\n  step_summary_json: JSON.stringify(decisions),\n  blocked_reason: hasUnknown ? 'unknown_child_result' : (hasHuman ? 'human_required' : (hasPrecondition ? source.blocked_reason : '')),\n  smoke_tag: source.smoke_tag,\n  last_execution_id: $execution.id,\n};\nreturn { json: {\n  ok: complete,\n  onboarding_id: source.onboarding_id,\n  state: finalState,\n  terminal_rows_json: JSON.stringify(finalRows),\n  terminal_row_count: finalRows.length,\n  should_insert_final_onboarding: !replayNoop,\n  final_onboarding_row_json: JSON.stringify(finalOnboardingRow),\n  response_body_json: JSON.stringify({ ok: complete, onboarding_id: source.onboarding_id, state: finalState, decisions, controlled_inbox: 'ops@example.com', replay_noop: replayNoop, escaped_company: html(source.company) }),\n  quoted_field_values: 'onboarding_id=\"' + source.onboarding_id + '\" state=\"' + finalState + '\" controlled_inbox=\"ops@example.com\" terminal_row_count=\"' + finalRows.length + '\"',\n} };\n"
+      }
+    },
+    {
+      "id": "f0d28131-72b9-482d-b135-c93d42c700b9",
+      "name": "Terminal Rows Needed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4260,
+        40
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.terminal_row_count }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              },
+              "rightValue": 0
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "fa42d5df-c9b2-4075-a67a-e6a541c4d12f",
+      "name": "Emit Step Terminal Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4520,
+        -100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst rows = JSON.parse(($input.item.json || {}).terminal_rows_json || '[]');\nreturn rows.map((row) => ({ json: row }));\n"
+      }
+    },
+    {
+      "id": "74e4ea0d-d654-4f23-a468-397a8eada340",
+      "name": "Update Step Terminal Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        4780,
+        -100
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Onboarding_Steps"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "step_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.match_step_key || $json.step_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "step_key": "={{ $json.step_key }}",
+            "onboarding_id": "={{ $json.onboarding_id }}",
+            "step_name": "={{ $json.step_name }}",
+            "step_version": "={{ $json.step_version }}",
+            "state": "={{ $json.state }}",
+            "child_day": "={{ $json.child_day }}",
+            "registry_row": "={{ $json.registry_row }}",
+            "workflow_id": "={{ $json.workflow_id }}",
+            "child_version_id": "={{ $json.child_version_id }}",
+            "request_snapshot_bytes": "={{ $json.request_snapshot_bytes }}",
+            "request_snapshot_hash": "={{ $json.request_snapshot_hash }}",
+            "predicted_child_key": "={{ $json.predicted_child_key }}",
+            "child_status": "={{ $json.child_status }}",
+            "child_proof_json": "={{ $json.child_proof_json }}",
+            "side_effect_policy": "={{ $json.side_effect_policy }}",
+            "created_at_utc": "={{ $json.created_at_utc }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_progress_at_utc": "={{ $json.last_progress_at_utc }}",
+            "blocked_reason": "={{ $json.blocked_reason }}",
+            "smoke_tag": "={{ $json.smoke_tag }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "step_key",
+              "displayName": "step_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "onboarding_id",
+              "displayName": "onboarding_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "step_name",
+              "displayName": "step_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "step_version",
+              "displayName": "step_version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "state",
+              "displayName": "state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "child_day",
+              "displayName": "child_day",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "registry_row",
+              "displayName": "registry_row",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "workflow_id",
+              "displayName": "workflow_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "child_version_id",
+              "displayName": "child_version_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "request_snapshot_bytes",
+              "displayName": "request_snapshot_bytes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "request_snapshot_hash",
+              "displayName": "request_snapshot_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "predicted_child_key",
+              "displayName": "predicted_child_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "child_status",
+              "displayName": "child_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "child_proof_json",
+              "displayName": "child_proof_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "side_effect_policy",
+              "displayName": "side_effect_policy",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at_utc",
+              "displayName": "created_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_progress_at_utc",
+              "displayName": "last_progress_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "blocked_reason",
+              "displayName": "blocked_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "af6a898d-e05d-47ef-9751-fecc53132ce8",
+      "name": "Final Onboarding Write Needed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        5040,
+        40
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.should_insert_final_onboarding }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "3549bfc4-fb68-4818-8c58-5fbe581ec172",
+      "name": "Emit Final Onboarding Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4260,
+        -100
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nreturn { json: JSON.parse(($input.item.json || {}).final_onboarding_row_json || '{}') };\n"
+      }
+    },
+    {
+      "id": "10557cfd-5ad3-421a-bd8a-c1e1535e3dd9",
+      "name": "Update Final Onboarding Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        5560,
+        -100
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Onboardings"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "onboarding_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.onboarding_id }}"
+            },
+            {
+              "keyName": "smoke_tag",
+              "condition": "eq",
+              "keyValue": "={{ $json.smoke_tag }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "onboarding_id": "={{ $json.onboarding_id }}",
+            "onboarding_identity": "={{ $json.onboarding_identity }}",
+            "identity_source": "={{ $json.identity_source }}",
+            "state": "={{ $json.state }}",
+            "client_name": "={{ $json.client_name }}",
+            "company": "={{ $json.company }}",
+            "verified_email": "={{ $json.verified_email }}",
+            "service_code": "={{ $json.service_code }}",
+            "created_at_utc": "={{ $json.created_at_utc }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_progress_at_utc": "={{ $json.last_progress_at_utc }}",
+            "required_steps_json": "={{ $json.required_steps_json }}",
+            "step_summary_json": "={{ $json.step_summary_json }}",
+            "blocked_reason": "={{ $json.blocked_reason }}",
+            "smoke_tag": "={{ $json.smoke_tag }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "onboarding_id",
+              "displayName": "onboarding_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "onboarding_identity",
+              "displayName": "onboarding_identity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "identity_source",
+              "displayName": "identity_source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "state",
+              "displayName": "state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "client_name",
+              "displayName": "client_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "company",
+              "displayName": "company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "verified_email",
+              "displayName": "verified_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "service_code",
+              "displayName": "service_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at_utc",
+              "displayName": "created_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_progress_at_utc",
+              "displayName": "last_progress_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "required_steps_json",
+              "displayName": "required_steps_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "step_summary_json",
+              "displayName": "step_summary_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "blocked_reason",
+              "displayName": "blocked_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "fbfc40fd-ea1b-4937-a78a-9d634477dffa",
+      "name": "Build Webhook Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4780,
+        40
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nreturn { json: JSON.parse(($('Build Parent Saga Decisions').item.json || {}).response_body_json || '{}') };\n"
+      }
+    },
+    {
+      "id": "ca48a746-261c-49ef-8cdc-b79337d058c0",
+      "name": "Respond Accepted",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        5040,
+        40
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 202
+        }
+      }
+    },
+    {
+      "id": "3ecf0a2b-b604-4f05-9fe6-0a03f7381b7b",
+      "name": "Find Reconcile Onboarding Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -440,
+        760
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Onboardings"
+        },
+        "returnAll": true
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "597f54a7-26e5-4200-8ec5-dea6a99ac910",
+      "name": "Build UTC Reconcile Alerts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1380,
+        760
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst crypto = require('crypto');\nconst now = new Date();\nconst CONFIG = {\n  ONBOARDING_RECONCILE_CLOCK: 'UTC',\n  ONBOARDING_STALLED_CLAIM_MINUTES: 15,\n  ONBOARDING_STALLED_CHILD_INTENT_MINUTES: 15,\n  ONBOARDING_UNKNOWN_CHILD_MINUTES: 5,\n  ONBOARDING_MISSING_SLOT_HOURS: 24,\n  ONBOARDING_MISSING_DOC_HOURS: 24,\n  ONBOARDING_HUMAN_REQUIRED_HOURS: 24,\n  ONBOARDING_GLOBAL_STUCK_HOURS: 72,\n  alertBucketBasis: 'utc_day',\n  throttleConsumesOnlyAfterSend: true,\n};\nconst hash = (value) => crypto.createHash('sha256').update(String(value)).digest('hex');\nlet existingAlerts = [];\ntry { existingAlerts = $items('Find Existing Reconcile Alert Rows').map((item) => item.json || {}); } catch (error) { existingAlerts = []; }\nfunction nodeRows(name) {\n  try { return $items(name).map((item) => item.json || {}).filter((row) => Object.keys(row).length); } catch (error) { return []; }\n}\nconst rows = nodeRows('Find Reconcile Onboarding Rows').filter((row) => row.onboarding_id);\nconst stepRows = nodeRows('Find Reconcile Step Rows');\nconst childTables = {\n  offer: nodeRows('Find Reconcile Offer Rows'),\n  invoice: nodeRows('Find Reconcile Invoice Rows'),\n  booking: nodeRows('Find Reconcile Booking Rows'),\n  document: nodeRows('Find Reconcile Document Rows'),\n};\nconst utcDay = now.toISOString().slice(0, 10);\nconst alreadyAlerted = new Set(existingAlerts.filter((row) => row.alert_key && (row.throttle_consumed === true || String(row.throttle_consumed).toLowerCase() === 'true')).map((row) => row.alert_key));\nconst nonterminal = rows.filter((row) => !['COMPLETE','CANCELLED'].includes(String(row.state || '')));\nconst alerts = [];\nconst adoptions = [];\nfunction ageParts(row) {\n  const t = new Date(row.last_progress_at_utc || row.updated_at_utc || row.created_at_utc || now.toISOString());\n  const ageHours = (now - t) / 36e5;\n  return { ageHours, ageMinutes: ageHours * 60 };\n}\nfunction boolish(value) {\n  return value === true || String(value).toLowerCase() === 'true' || String(value) === '1';\n}\nfunction statusOf(row) {\n  return String(row.status || row.state || row.child_status || '').trim();\n}\nfunction sameUtcInstant(left, right) {\n  const leftMs = Date.parse(left || '');\n  const rightMs = Date.parse(right || '');\n  return Number.isFinite(leftMs) && Number.isFinite(rightMs) && leftMs === rightMs;\n}\nfunction findChildEvidence(step) {\n  const key = String(step.predicted_child_key || '');\n  if (!key) return null;\n  if (step.child_day === 'Offer') return childTables.offer.find((row) => String(row.submission_id || '') === key || String(row.offer_submission_id || '') === key) || null;\n  if (step.child_day === 'Invoice') return childTables.invoice.find((row) => String(row.invoice_key || row.real_invoice_key || row.dedupe_key || '') === key) || null;\n  if (step.child_day === 'Booking') return childTables.booking.find((row) => String(row.booking_uid || '') === key) || null;\n  if (step.child_day === 'Document') return childTables.document.find((row) => String(row.document_key || '') === key) || null;\n  return null;\n}\nfunction classifyTerminalFromChild(step, row) {\n  const status = statusOf(row);\n  const lowerStatus = status.toLowerCase();\n  if (step.child_day === 'Offer') {\n    if (boolish(row.email_sent) || ['offer sent','offer_sent','sent','terminal_success'].includes(lowerStatus)) return { state: 'TERMINAL_SUCCESS', status: status || 'offer_sent', proof: { adopted_by: step.predicted_child_key, source: 'Quote_Offers', reconcile: true } };\n    if (['needs review','needs_review','terminal_review'].includes(lowerStatus)) return { state: 'TERMINAL_REVIEW', status: status || 'needs_review', proof: { adopted_by: step.predicted_child_key, source: 'Quote_Offers', reconcile: true } };\n    if (['dead letter','dead_letter','terminal_dead_letter'].includes(lowerStatus)) return { state: 'TERMINAL_DEAD_LETTER', status: status || 'dead_letter', proof: { adopted_by: step.predicted_child_key, source: 'Quote_Offers', reconcile: true } };\n  }\n  if (step.child_day === 'Invoice') {\n    if (boolish(row.invoice_email_sent) || ['invoice sent','invoice_sent','paid','terminal_success'].includes(lowerStatus)) return { state: 'TERMINAL_SUCCESS', status: status || 'invoice_sent', proof: { adopted_by: step.predicted_child_key, source: 'Dunning_Invoices', reconcile: true } };\n    if (['needs review','needs_review','terminal_review'].includes(lowerStatus)) return { state: 'TERMINAL_REVIEW', status: status || 'needs_review', proof: { adopted_by: step.predicted_child_key, source: 'Dunning_Invoices', reconcile: true } };\n    if (['dead letter','dead_letter','terminal_dead_letter'].includes(lowerStatus)) return { state: 'TERMINAL_DEAD_LETTER', status: status || 'dead_letter', proof: { adopted_by: step.predicted_child_key, source: 'Dunning_Invoices', reconcile: true } };\n  }\n  if (step.child_day === 'Booking') {\n    const requestedSlot = JSON.parse(step.request_snapshot_bytes || '{}').slot_start || '';\n    const terminalSlot = row.slot_start_utc || row.slot_start || row.start_utc || '';\n    if (terminalSlot && requestedSlot && !sameUtcInstant(terminalSlot, requestedSlot)) return { state: 'HUMAN_REQUIRED', status: 'reschedule_required', proof: { action: 'route_booking_change_contract', old_booking_uid: step.predicted_child_key, terminal_slot_start_utc: terminalSlot, requested_slot_start_utc: requestedSlot, reconcile: true } };\n    if (['confirmed','booking_confirmed','terminal_success'].includes(lowerStatus)) return { state: 'TERMINAL_SUCCESS', status: status || 'confirmed', proof: { adopted_by: step.predicted_child_key, source: 'Bookings', reconcile: true } };\n    if (['needs review','needs_review','cancelled','rescheduled','terminal_review'].includes(lowerStatus)) return { state: 'TERMINAL_REVIEW', status: status || 'needs_review', proof: { adopted_by: step.predicted_child_key, source: 'Bookings', reconcile: true } };\n    if (['dead letter','dead_letter','terminal_dead_letter'].includes(lowerStatus)) return { state: 'TERMINAL_DEAD_LETTER', status: status || 'dead_letter', proof: { adopted_by: step.predicted_child_key, source: 'Bookings', reconcile: true } };\n  }\n  if (step.child_day === 'Document') {\n    if (['filed','document filed','terminal_success'].includes(lowerStatus)) return { state: 'TERMINAL_SUCCESS', status: status || 'filed', proof: { adopted_by: step.predicted_child_key, source: 'Intake_Documents', reconcile: true } };\n    if (['needs review','needs_review','quarantined','terminal_review'].includes(lowerStatus)) return { state: 'TERMINAL_REVIEW', status: status || 'needs_review', proof: { adopted_by: step.predicted_child_key, source: 'Intake_Documents', reconcile: true } };\n    if (['dead letter','dead_letter','terminal_dead_letter'].includes(lowerStatus)) return { state: 'TERMINAL_DEAD_LETTER', status: status || 'dead_letter', proof: { adopted_by: step.predicted_child_key, source: 'Intake_Documents', reconcile: true } };\n  }\n  return null;\n}\nfunction pushAlert(row, bucket, alertType, stepKey) {\n  const alertKey = hash('onboarding.reconcile|' + row.onboarding_id + '|' + (stepKey || '') + '|' + bucket + '|' + utcDay);\n  if (alreadyAlerted.has(alertKey)) return;\n  alerts.push({\n    alert_key: alertKey,\n    onboarding_id: row.onboarding_id,\n    step_key: stepKey || '',\n    alert_type: alertType,\n    age_bucket: bucket,\n    send_intent_at_utc: now.toISOString(),\n    sent_at_utc: '',\n    send_status: 'INTENT_WRITTEN',\n    throttle_consumed: false,\n    subject: '[TEST] Stranded onboarding ' + String(row.onboarding_id || '').slice(0, 12),\n    body_html: '<p>Stranded onboarding requires review. state=' + String(row.state || '').replace(/[&<>\"]/g, '') + ' bucket=' + bucket + '</p>',\n    smoke_tag: row.smoke_tag || 'ONBOARDING-DRAFT',\n    last_execution_id: $execution.id,\n  });\n}\nfor (const row of nonterminal) {\n  const { ageHours, ageMinutes } = ageParts(row);\n  const state = String(row.state || '');\n  if (state === 'CLAIMED' && ageMinutes >= CONFIG.ONBOARDING_STALLED_CLAIM_MINUTES) pushAlert(row, 'stalled_claim_15m', 'stranded_onboarding', '');\n  if (state === 'UNKNOWN_CHILD_RESULT' && ageMinutes >= CONFIG.ONBOARDING_UNKNOWN_CHILD_MINUTES) pushAlert(row, 'unknown_child_5m', 'stranded_onboarding', '');\n  if (state === 'KICKOFF_SLOT_MISSING' && ageHours >= CONFIG.ONBOARDING_MISSING_SLOT_HOURS) pushAlert(row, 'missing_slot_24h', 'stranded_onboarding', '');\n  if (state === 'DOC_WAITING_UPLOAD' && ageHours >= CONFIG.ONBOARDING_MISSING_DOC_HOURS) pushAlert(row, 'missing_doc_24h', 'stranded_onboarding', '');\n  if (state === 'HUMAN_REQUIRED' && ageHours >= CONFIG.ONBOARDING_HUMAN_REQUIRED_HOURS) pushAlert(row, 'human_required_24h', 'stranded_onboarding', '');\n  if (ageHours >= CONFIG.ONBOARDING_GLOBAL_STUCK_HOURS) pushAlert(row, 'global_stuck_72h', 'stranded_onboarding', '');\n}\nconst terminalStates = new Set(['TERMINAL_SUCCESS','TERMINAL_REVIEW','TERMINAL_DEAD_LETTER','SKIPPED_BLOCKED_BY_REGISTRY','UNKNOWN_CHILD_RESULT','HUMAN_REQUIRED']);\nfor (const step of stepRows) {\n  const state = String(step.state || '');\n  if (!['INTENT_WRITTEN','CALL_IN_FLIGHT'].includes(state)) continue;\n  const { ageMinutes } = ageParts(step);\n  if (ageMinutes < CONFIG.ONBOARDING_STALLED_CHILD_INTENT_MINUTES) continue;\n  const childRow = findChildEvidence(step);\n  const decision = childRow ? classifyTerminalFromChild(step, childRow) : null;\n  if (decision && terminalStates.has(decision.state)) {\n    adoptions.push(Object.assign({}, step, {\n      match_step_key: step.step_key,\n      state: decision.state,\n      child_status: decision.status,\n      child_proof_json: JSON.stringify(decision.proof).slice(0, 4500),\n      updated_at_utc: now.toISOString(),\n      last_progress_at_utc: now.toISOString(),\n      blocked_reason: decision.state === 'UNKNOWN_CHILD_RESULT' || decision.state === 'HUMAN_REQUIRED' ? decision.status : '',\n      last_execution_id: $execution.id,\n    }));\n    continue;\n  }\n  pushAlert(step, 'stalled_child_intent_15m', 'stalled_child_intent', step.step_key);\n}\nreturn { json: { alert_rows_json: JSON.stringify(alerts), alert_count: alerts.length, adopted_step_rows_json: JSON.stringify(adoptions), adoption_count: adoptions.length, oldest_nonterminal_count: nonterminal.length, threshold_config_json: JSON.stringify(CONFIG) } };\n"
+      }
+    },
+    {
+      "id": "e20121b7-05bd-49c4-9865-d2ac4603038e",
+      "name": "Reconcile Alerts Needed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1640,
+        920
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.alert_count }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              },
+              "rightValue": 0
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "9e88b5dc-35f4-472c-a34f-4ccf94cc01c1",
+      "name": "Emit Reconcile Alert Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1900,
+        920
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst rows = JSON.parse(($input.item.json || {}).alert_rows_json || '[]');\nreturn rows.map((row) => ({ json: row }));\n"
+      }
+    },
+    {
+      "id": "08af26db-b480-4be0-9741-189999f5bab3",
+      "name": "Insert Reconcile Alert Intent Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2160,
+        920
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Onboarding_Reconcile_Alerts"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "alert_key": "={{ $json.alert_key }}",
+            "onboarding_id": "={{ $json.onboarding_id }}",
+            "step_key": "={{ $json.step_key }}",
+            "alert_type": "={{ $json.alert_type }}",
+            "age_bucket": "={{ $json.age_bucket }}",
+            "send_intent_at_utc": "={{ $json.send_intent_at_utc }}",
+            "sent_at_utc": "={{ $json.sent_at_utc }}",
+            "send_status": "={{ $json.send_status }}",
+            "throttle_consumed": "={{ $json.throttle_consumed }}",
+            "subject": "={{ $json.subject }}",
+            "body_html": "={{ $json.body_html }}",
+            "smoke_tag": "={{ $json.smoke_tag }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "alert_key",
+              "displayName": "alert_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "onboarding_id",
+              "displayName": "onboarding_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "step_key",
+              "displayName": "step_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "alert_type",
+              "displayName": "alert_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "age_bucket",
+              "displayName": "age_bucket",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "send_intent_at_utc",
+              "displayName": "send_intent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "sent_at_utc",
+              "displayName": "sent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "send_status",
+              "displayName": "send_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "throttle_consumed",
+              "displayName": "throttle_consumed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "subject",
+              "displayName": "subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "body_html",
+              "displayName": "body_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "d374d664-fd52-4105-96f8-1670a93eb8b7",
+      "name": "Send Controlled Reconcile Alert",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2420,
+        920
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "ops@example.com",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.body_html }}",
+        "options": {
+          "senderName": "Ops Notifications"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "543915c1-6d92-4566-929b-562fa1a58637",
+      "name": "Find Offer Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2960,
+        -220
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Quote_Offers"
+        },
+        "returnAll": true,
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "submission_id",
+              "condition": "eq",
+              "keyValue": "={{ [...JSON.parse($('Build Missing Step Intent Summary').item.json.existing_step_rows_json || '[]'), ...JSON.parse($('Build Missing Step Intent Summary').item.json.intent_rows_json || '[]')].find((row) => row.child_day === 'Offer')?.predicted_child_key || '__onboarding_no_child_key__' }}"
+            }
+          ]
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "1c47f0eb-660b-4ce2-bfad-ac862296e423",
+      "name": "Find Invoice Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        3220,
+        -220
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Dunning_Invoices"
+        },
+        "returnAll": true,
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "invoice_key",
+              "condition": "eq",
+              "keyValue": "={{ [...JSON.parse($('Build Missing Step Intent Summary').item.json.existing_step_rows_json || '[]'), ...JSON.parse($('Build Missing Step Intent Summary').item.json.intent_rows_json || '[]')].find((row) => row.child_day === 'Invoice')?.predicted_child_key || '__onboarding_no_child_key__' }}"
+            }
+          ]
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "8d7225e8-227a-4ac4-97d5-d98768ade133",
+      "name": "Find Booking Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        3480,
+        -220
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Bookings"
+        },
+        "returnAll": true,
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "booking_uid",
+              "condition": "eq",
+              "keyValue": "={{ [...JSON.parse($('Build Missing Step Intent Summary').item.json.existing_step_rows_json || '[]'), ...JSON.parse($('Build Missing Step Intent Summary').item.json.intent_rows_json || '[]')].find((row) => row.child_day === 'Booking')?.predicted_child_key || '__onboarding_no_child_key__' }}"
+            }
+          ]
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "293b088e-7c5e-471b-90d4-16dfcb0143f1",
+      "name": "Find Document Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        3740,
+        -220
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Intake_Documents"
+        },
+        "returnAll": true,
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "document_key",
+              "condition": "eq",
+              "keyValue": "={{ [...JSON.parse($('Build Missing Step Intent Summary').item.json.existing_step_rows_json || '[]'), ...JSON.parse($('Build Missing Step Intent Summary').item.json.intent_rows_json || '[]')].find((row) => row.child_day === 'Document')?.predicted_child_key || '__onboarding_no_child_key__' }}"
+            }
+          ]
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "aca0ff30-8a55-4794-9e1d-7cb8652486ac",
+      "name": "Find Existing Reconcile Alert Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -180,
+        760
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Onboarding_Reconcile_Alerts"
+        },
+        "returnAll": true
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "151a41fc-8070-46a2-98f9-ce387f09f20e",
+      "name": "Build Alert Sent Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2680,
+        920
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst row = $('Insert Reconcile Alert Intent Rows').item.json || {};\nconst email = $input.item.json || {};\nif (!row.alert_key || !(email.id || email.messageId || email.threadId)) return [];\nreturn { json: {\n  alert_key: row.alert_key,\n  sent_at_utc: new Date().toISOString(),\n  send_status: 'SENT_CONTROLLED',\n  throttle_consumed: true,\n  last_execution_id: row.last_execution_id || $execution.id,\n} };\n"
+      }
+    },
+    {
+      "id": "13b24bc9-8b81-4d0e-8cf7-7782662cce86",
+      "name": "Update Reconcile Alert Sent",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2940,
+        920
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Onboarding_Reconcile_Alerts"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "alert_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.alert_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "alert_key": "={{ $json.alert_key }}",
+            "sent_at_utc": "={{ $json.sent_at_utc }}",
+            "send_status": "={{ $json.send_status }}",
+            "throttle_consumed": "={{ $json.throttle_consumed }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "alert_key",
+              "displayName": "alert_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "onboarding_id",
+              "displayName": "onboarding_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "step_key",
+              "displayName": "step_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "alert_type",
+              "displayName": "alert_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "age_bucket",
+              "displayName": "age_bucket",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "send_intent_at_utc",
+              "displayName": "send_intent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "sent_at_utc",
+              "displayName": "sent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "send_status",
+              "displayName": "send_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "throttle_consumed",
+              "displayName": "throttle_consumed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "subject",
+              "displayName": "subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "body_html",
+              "displayName": "body_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "64f61aef-cdd5-4954-849d-556a95667dd3",
+      "name": "Build Final Write Source",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5040,
+        40
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nreturn { json: $('Build Parent Saga Decisions').item.json || {} };\n"
+      }
+    },
+    {
+      "id": "91826cf6-6cfc-46c0-ad5b-6414707c5b7b",
+      "name": "Find Reconcile Step Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        80,
+        760
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Onboarding_Steps"
+        },
+        "returnAll": true
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "15bf61fc-bbd8-4c3a-b7e1-3c3850c06d35",
+      "name": "Find Reconcile Offer Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        340,
+        760
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Quote_Offers"
+        },
+        "returnAll": true
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "a809dc22-904f-4e2b-b6e7-9a4a8c0dc412",
+      "name": "Find Reconcile Invoice Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        760
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Dunning_Invoices"
+        },
+        "returnAll": true
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "071111d7-6228-4a14-a4a6-253eefbd2f21",
+      "name": "Find Reconcile Booking Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        860,
+        760
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Bookings"
+        },
+        "returnAll": true
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "d1f4f618-d8f3-44a7-bd4f-16b3d52f444a",
+      "name": "Find Reconcile Document Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        760
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Intake_Documents"
+        },
+        "returnAll": true
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "9cfdb7b8-679f-4aba-a1e5-07abc91823ec",
+      "name": "Reconcile Step Adoptions Needed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1640,
+        560
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.adoption_count }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              },
+              "rightValue": 0
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "50aaf0c1-4cb4-4e88-a058-77628ccbb8ce",
+      "name": "Emit Reconcile Adopted Step Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1900,
+        500
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst rows = JSON.parse(($input.item.json || {}).adopted_step_rows_json || '[]');\nreturn rows.map((row) => ({ json: row }));\n"
+      }
+    },
+    {
+      "id": "d1bf29f6-9f3c-41f7-968f-b6cc4f732f3e",
+      "name": "Update Reconcile Adopted Step Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2160,
+        500
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Onboarding_Steps"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "step_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.match_step_key || $json.step_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "step_key": "={{ $json.step_key }}",
+            "onboarding_id": "={{ $json.onboarding_id }}",
+            "step_name": "={{ $json.step_name }}",
+            "step_version": "={{ $json.step_version }}",
+            "state": "={{ $json.state }}",
+            "child_day": "={{ $json.child_day }}",
+            "registry_row": "={{ $json.registry_row }}",
+            "workflow_id": "={{ $json.workflow_id }}",
+            "child_version_id": "={{ $json.child_version_id }}",
+            "request_snapshot_bytes": "={{ $json.request_snapshot_bytes }}",
+            "request_snapshot_hash": "={{ $json.request_snapshot_hash }}",
+            "predicted_child_key": "={{ $json.predicted_child_key }}",
+            "child_status": "={{ $json.child_status }}",
+            "child_proof_json": "={{ $json.child_proof_json }}",
+            "side_effect_policy": "={{ $json.side_effect_policy }}",
+            "created_at_utc": "={{ $json.created_at_utc }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_progress_at_utc": "={{ $json.last_progress_at_utc }}",
+            "blocked_reason": "={{ $json.blocked_reason }}",
+            "smoke_tag": "={{ $json.smoke_tag }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "step_key",
+              "displayName": "step_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "onboarding_id",
+              "displayName": "onboarding_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "step_name",
+              "displayName": "step_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "step_version",
+              "displayName": "step_version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "state",
+              "displayName": "state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "child_day",
+              "displayName": "child_day",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "registry_row",
+              "displayName": "registry_row",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "workflow_id",
+              "displayName": "workflow_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "child_version_id",
+              "displayName": "child_version_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "request_snapshot_bytes",
+              "displayName": "request_snapshot_bytes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "request_snapshot_hash",
+              "displayName": "request_snapshot_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "predicted_child_key",
+              "displayName": "predicted_child_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "child_status",
+              "displayName": "child_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "child_proof_json",
+              "displayName": "child_proof_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "side_effect_policy",
+              "displayName": "side_effect_policy",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at_utc",
+              "displayName": "created_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_progress_at_utc",
+              "displayName": "last_progress_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "blocked_reason",
+              "displayName": "blocked_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "a1b2c3d4-0808-4a4a-9c9c-onbvalidgate",
+      "name": "Onboarding Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        280,
+        140
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.ok }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "b2c3d4e5-0808-4b4b-8d8d-onbinvresp0",
+      "name": "Respond Onboarding Invalid",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        500,
+        300
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, status: \"validation_failed\", errors: $json.errors, onboarding_id: $json.onboarding_id || null } }}",
+        "options": {
+          "responseCode": 422
+        }
+      }
+    }
+  ],
+  "nodeGroups": [],
+  "activeVersion": null,
+  "parentFolderId": null,
+  "description": "Onboarding client-onboarding saga draft. Saga-pattern onboarding orchestration.",
+  "scopes": [
+    "execution:reveal",
+    "workflow:create",
+    "workflow:delete",
+    "workflow:disableRedaction",
+    "workflow:enableRedaction",
+    "workflow:execute",
+    "workflow:execute-chat",
+    "workflow:export",
+    "workflow:import",
+    "workflow:list",
+    "workflow:move",
+    "workflow:publish",
+    "workflow:read",
+    "workflow:share",
+    "workflow:unpublish",
+    "workflow:unshare",
+    "workflow:update"
+  ],
+  "canExecute": true
+}
