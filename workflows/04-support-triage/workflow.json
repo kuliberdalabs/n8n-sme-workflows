@@ -679,7 +679,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const n = $input.item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.support_claims = store.support_claims || {};\nconst claims = store.support_claims;\nconst claim = claims[n.ticket_key];\nconst now = Date.now();\nconst claimAge = claim?.claimed_at ? now - Date.parse(claim.claimed_at) : 0;\nconst activeClaim = claim && (claim.status !== 'in_progress' || claimAge < 15 * 60 * 1000);\nif (activeClaim) {\n  return { json: { ...n, duplicate_claim: true, duplicate_status: claim.status || 'seen', existing_record_id: claim.record_id || '' } };\n}\nclaims[n.ticket_key] = { status: 'in_progress', claimed_at: new Date(now).toISOString(), first_execution_id: n.last_execution_id };\nreturn { json: { ...n, duplicate_claim: false, duplicate_status: '', existing_record_id: '' } };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $input.item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.support_claims = store.support_claims || {};\npruneStore(store.support_claims);\nconst claims = store.support_claims;\nconst claim = claims[n.ticket_key];\nconst now = Date.now();\nconst claimAge = claim?.claimed_at ? now - Date.parse(claim.claimed_at) : 0;\nconst activeClaim = claim && (claim.status !== 'in_progress' || claimAge < 15 * 60 * 1000);\nif (activeClaim) {\n  return { json: { ...n, duplicate_claim: true, duplicate_status: claim.status || 'seen', existing_record_id: claim.record_id || '' } };\n}\nclaims[n.ticket_key] = { status: 'in_progress', claimed_at: new Date(now).toISOString(), first_execution_id: n.last_execution_id };\nreturn { json: { ...n, duplicate_claim: false, duplicate_status: '', existing_record_id: '' } };"
       }
     },
     {
@@ -1427,7 +1427,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const n = $('Build Draft Review Alert').item.json;\nconst record = $input.item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.support_claims = store.support_claims || {};\nstore.support_claims[n.ticket_key] = { ...(store.support_claims[n.ticket_key] || {}), status: n.status, record_id: record.id || '', completed_at: new Date().toISOString() };\nreturn { json: record };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $('Build Draft Review Alert').item.json;\nconst record = $input.item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.support_claims = store.support_claims || {};\npruneStore(store.support_claims);\nstore.support_claims[n.ticket_key] = { ...(store.support_claims[n.ticket_key] || {}), status: n.status, record_id: record.id || '', completed_at: new Date().toISOString() };\nreturn { json: record };"
       }
     },
     {
@@ -1965,7 +1965,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const n = $('Build Escalation Review Alert').item.json;\nconst record = $input.item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.support_claims = store.support_claims || {};\nstore.support_claims[n.ticket_key] = { ...(store.support_claims[n.ticket_key] || {}), status: n.status, record_id: record.id || '', completed_at: new Date().toISOString() };\nreturn { json: record };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $('Build Escalation Review Alert').item.json;\nconst record = $input.item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.support_claims = store.support_claims || {};\npruneStore(store.support_claims);\nstore.support_claims[n.ticket_key] = { ...(store.support_claims[n.ticket_key] || {}), status: n.status, record_id: record.id || '', completed_at: new Date().toISOString() };\nreturn { json: record };"
       }
     },
     {
@@ -2120,7 +2120,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const n = $input.item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.support_approval_claims = store.support_approval_claims || {};\nconst claims = store.support_approval_claims;\nif (claims[n.approval_key]) {\n  return { json: { ...n, duplicate_approval: true, duplicate_status: claims[n.approval_key].status || 'seen' } };\n}\nclaims[n.approval_key] = { status: 'in_progress', claimed_at: new Date().toISOString(), first_execution_id: n.last_execution_id };\nreturn { json: { ...n, duplicate_approval: false, duplicate_status: '' } };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $input.item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.support_approval_claims = store.support_approval_claims || {};\npruneStore(store.support_approval_claims);\nconst claims = store.support_approval_claims;\nif (claims[n.approval_key]) {\n  return { json: { ...n, duplicate_approval: true, duplicate_status: claims[n.approval_key].status || 'seen' } };\n}\nclaims[n.approval_key] = { status: 'in_progress', claimed_at: new Date().toISOString(), first_execution_id: n.last_execution_id };\nreturn { json: { ...n, duplicate_approval: false, duplicate_status: '' } };"
       }
     },
     {

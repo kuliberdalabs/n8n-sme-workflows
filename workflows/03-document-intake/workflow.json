@@ -446,7 +446,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const n = $input.item.json;\nconst store = $getWorkflowStaticData('global');\nstore.document_claims = store.document_claims || {};\nconst claims = store.document_claims;\nconst now = Date.now();\nconst claim = claims[n.document_key];\nconst claimAge = claim?.claimed_at ? now - Date.parse(claim.claimed_at) : 0;\nconst activeClaim = claim && (claim.status !== 'in_progress' || claimAge < 15 * 60 * 1000);\nif (activeClaim) {\n  return { json: { ...n, duplicate_claim: true, duplicate_status: claim.status || 'seen', existing_record_id: claim.record_id || '' } };\n}\nclaims[n.document_key] = { status: 'in_progress', claimed_at: new Date(now).toISOString(), first_execution_id: n.last_execution_id };\nreturn { json: { ...n, duplicate_claim: false, duplicate_status: '', existing_record_id: '' } };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $input.item.json;\nconst store = $getWorkflowStaticData('global');\nstore.document_claims = store.document_claims || {};\npruneStore(store.document_claims);\nconst claims = store.document_claims;\nconst now = Date.now();\nconst claim = claims[n.document_key];\nconst claimAge = claim?.claimed_at ? now - Date.parse(claim.claimed_at) : 0;\nconst activeClaim = claim && (claim.status !== 'in_progress' || claimAge < 15 * 60 * 1000);\nif (activeClaim) {\n  return { json: { ...n, duplicate_claim: true, duplicate_status: claim.status || 'seen', existing_record_id: claim.record_id || '' } };\n}\nclaims[n.document_key] = { status: 'in_progress', claimed_at: new Date(now).toISOString(), first_execution_id: n.last_execution_id };\nreturn { json: { ...n, duplicate_claim: false, duplicate_status: '', existing_record_id: '' } };"
       }
     },
     {
@@ -941,7 +941,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const n = $('Normalize Document Intake').item.json;\nconst record = $input.item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.document_claims = store.document_claims || {};\nstore.document_claims[n.document_key] = { ...(store.document_claims[n.document_key] || {}), status: 'Dead Letter', record_id: record.id || '', completed_at: new Date().toISOString() };\nreturn { json: record };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $('Normalize Document Intake').item.json;\nconst record = $input.item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.document_claims = store.document_claims || {};\npruneStore(store.document_claims);\nstore.document_claims[n.document_key] = { ...(store.document_claims[n.document_key] || {}), status: 'Dead Letter', record_id: record.id || '', completed_at: new Date().toISOString() };\nreturn { json: record };"
       }
     },
     {
@@ -1403,7 +1403,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const n = $('Validate AI Extraction').item.json;\nconst record = $input.item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.document_claims = store.document_claims || {};\nstore.document_claims[n.document_key] = { ...(store.document_claims[n.document_key] || {}), status: 'Filed', record_id: record.id || '', completed_at: new Date().toISOString(), archive_path: n.archive_path };\nreturn { json: record };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $('Validate AI Extraction').item.json;\nconst record = $input.item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.document_claims = store.document_claims || {};\npruneStore(store.document_claims);\nstore.document_claims[n.document_key] = { ...(store.document_claims[n.document_key] || {}), status: 'Filed', record_id: record.id || '', completed_at: new Date().toISOString(), archive_path: n.archive_path };\nreturn { json: record };"
       }
     },
     {
@@ -1866,7 +1866,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const n = $('Validate AI Extraction').item.json;\nconst record = $input.item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.document_claims = store.document_claims || {};\nstore.document_claims[n.document_key] = { ...(store.document_claims[n.document_key] || {}), status: 'Needs Review', record_id: record.id || '', completed_at: new Date().toISOString(), archive_path: n.archive_path };\nreturn { json: record };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $('Validate AI Extraction').item.json;\nconst record = $input.item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.document_claims = store.document_claims || {};\npruneStore(store.document_claims);\nstore.document_claims[n.document_key] = { ...(store.document_claims[n.document_key] || {}), status: 'Needs Review', record_id: record.id || '', completed_at: new Date().toISOString(), archive_path: n.archive_path };\nreturn { json: record };"
       }
     },
     {
@@ -2329,7 +2329,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const n = $('Normalize Document Intake').item.json;\nconst record = $input.item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.document_claims = store.document_claims || {};\nstore.document_claims[n.document_key] = { ...(store.document_claims[n.document_key] || {}), status: 'Needs Review', record_id: record.id || '', completed_at: new Date().toISOString() };\nreturn { json: record };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $('Normalize Document Intake').item.json;\nconst record = $input.item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.document_claims = store.document_claims || {};\npruneStore(store.document_claims);\nstore.document_claims[n.document_key] = { ...(store.document_claims[n.document_key] || {}), status: 'Needs Review', record_id: record.id || '', completed_at: new Date().toISOString() };\nreturn { json: record };"
       }
     },
     {

@@ -825,7 +825,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const n = $input.item.json;\nconst store = $getWorkflowStaticData('global');\nstore.invoice_claims = store.invoice_claims || {};\nconst claims = store.invoice_claims;\nconst now = Date.now();\nconst staleInProgressMs = 15 * 60 * 1000;\nconst claim = claims[n.invoice_key];\nconst claimAge = claim?.claimed_at ? now - Date.parse(claim.claimed_at) : 0;\nconst activeClaim = claim && (claim.status !== 'in_progress' || claimAge < staleInProgressMs);\nif (activeClaim) {\n  return { json: { ...n, duplicate_claim: true, duplicate_status: claim.status || 'seen', existing_record_id: claim.record_id || '' } };\n}\nclaims[n.invoice_key] = {\n  status: 'in_progress',\n  claimed_at: new Date(now).toISOString(),\n  first_execution_id: n.last_execution_id,\n  invoice_number: n.invoice_number,\n};\nreturn { json: { ...n, duplicate_claim: false, duplicate_status: '', existing_record_id: '' } };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $input.item.json;\nconst store = $getWorkflowStaticData('global');\nstore.invoice_claims = store.invoice_claims || {};\npruneStore(store.invoice_claims);\nconst claims = store.invoice_claims;\nconst now = Date.now();\nconst staleInProgressMs = 15 * 60 * 1000;\nconst claim = claims[n.invoice_key];\nconst claimAge = claim?.claimed_at ? now - Date.parse(claim.claimed_at) : 0;\nconst activeClaim = claim && (claim.status !== 'in_progress' || claimAge < staleInProgressMs);\nif (activeClaim) {\n  return { json: { ...n, duplicate_claim: true, duplicate_status: claim.status || 'seen', existing_record_id: claim.record_id || '' } };\n}\nclaims[n.invoice_key] = {\n  status: 'in_progress',\n  claimed_at: new Date(now).toISOString(),\n  first_execution_id: n.last_execution_id,\n  invoice_number: n.invoice_number,\n};\nreturn { json: { ...n, duplicate_claim: false, duplicate_status: '', existing_record_id: '' } };"
       }
     },
     {
@@ -1370,7 +1370,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const n = $('Normalize Completion Event').item.json;\nconst record = $input.item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.invoice_claims = store.invoice_claims || {};\nstore.invoice_claims[n.invoice_key] = {\n  ...(store.invoice_claims[n.invoice_key] || {}),\n  status: 'Dead Letter',\n  record_id: record.id || '',\n  completed_at: new Date().toISOString(),\n  first_execution_id: n.last_execution_id,\n};\nreturn { json: record };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $('Normalize Completion Event').item.json;\nconst record = $input.item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.invoice_claims = store.invoice_claims || {};\npruneStore(store.invoice_claims);\nstore.invoice_claims[n.invoice_key] = {\n  ...(store.invoice_claims[n.invoice_key] || {}),\n  status: 'Dead Letter',\n  record_id: record.id || '',\n  completed_at: new Date().toISOString(),\n  first_execution_id: n.last_execution_id,\n};\nreturn { json: record };"
       }
     },
     {
@@ -1883,7 +1883,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const n = $('Normalize Completion Event').item.json;\nconst record = $input.item.json || {};\nconst inserted = $('Insert Invoice Pending Email').item.json || {};\nconst email = $('Send Controlled Invoice Email').item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.invoice_claims = store.invoice_claims || {};\nstore.invoice_claims[n.invoice_key] = {\n  ...(store.invoice_claims[n.invoice_key] || {}),\n  status: 'Invoice Sent',\n  record_id: record.id || inserted.id || '',\n  completed_at: new Date().toISOString(),\n  first_execution_id: n.last_execution_id,\n  invoice_number: n.invoice_number,\n  invoice_email_id: email.id || '',\n};\nreturn { json: { ...record, id: record.id || inserted.id || '', invoice_email_id: email.id || '' } };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $('Normalize Completion Event').item.json;\nconst record = $input.item.json || {};\nconst inserted = $('Insert Invoice Pending Email').item.json || {};\nconst email = $('Send Controlled Invoice Email').item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.invoice_claims = store.invoice_claims || {};\npruneStore(store.invoice_claims);\nstore.invoice_claims[n.invoice_key] = {\n  ...(store.invoice_claims[n.invoice_key] || {}),\n  status: 'Invoice Sent',\n  record_id: record.id || inserted.id || '',\n  completed_at: new Date().toISOString(),\n  first_execution_id: n.last_execution_id,\n  invoice_number: n.invoice_number,\n  invoice_email_id: email.id || '',\n};\nreturn { json: { ...record, id: record.id || inserted.id || '', invoice_email_id: email.id || '' } };"
       }
     },
     {
@@ -2055,7 +2055,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const n = $input.item.json;\nconst store = $getWorkflowStaticData('global');\nstore.payment_claims = store.payment_claims || {};\nconst key = n.invoice_key + ':paid:' + n.payment_event_id;\nconst claims = store.payment_claims;\nconst now = Date.now();\nconst claim = claims[key];\nconst claimAge = claim?.claimed_at ? now - Date.parse(claim.claimed_at) : 0;\nconst activeClaim = claim && (claim.status !== 'in_progress' || claimAge < 15 * 60 * 1000);\nif (activeClaim) return { json: { ...n, payment_duplicate_claim: true, payment_claim_key: key, duplicate_status: claim.status || 'seen' } };\nclaims[key] = { status: 'in_progress', claimed_at: new Date(now).toISOString(), first_execution_id: n.last_execution_id };\nreturn { json: { ...n, payment_duplicate_claim: false, payment_claim_key: key, duplicate_status: '' } };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $input.item.json;\nconst store = $getWorkflowStaticData('global');\nstore.payment_claims = store.payment_claims || {};\npruneStore(store.payment_claims);\nconst key = n.invoice_key + ':paid:' + n.payment_event_id;\nconst claims = store.payment_claims;\nconst now = Date.now();\nconst claim = claims[key];\nconst claimAge = claim?.claimed_at ? now - Date.parse(claim.claimed_at) : 0;\nconst activeClaim = claim && (claim.status !== 'in_progress' || claimAge < 15 * 60 * 1000);\nif (activeClaim) return { json: { ...n, payment_duplicate_claim: true, payment_claim_key: key, duplicate_status: claim.status || 'seen' } };\nclaims[key] = { status: 'in_progress', claimed_at: new Date(now).toISOString(), first_execution_id: n.last_execution_id };\nreturn { json: { ...n, payment_duplicate_claim: false, payment_claim_key: key, duplicate_status: '' } };"
       }
     },
     {
@@ -2276,7 +2276,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const p = $('Claim Payment Event').item.json;\nconst store = $getWorkflowStaticData('global');\nstore.payment_claims = store.payment_claims || {};\nstore.payment_claims[p.payment_claim_key] = {\n  ...(store.payment_claims[p.payment_claim_key] || {}),\n  status: 'Paid',\n  completed_at: new Date().toISOString(),\n  first_execution_id: p.last_execution_id,\n};\nreturn { json: $input.item.json };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst p = $('Claim Payment Event').item.json;\nconst store = $getWorkflowStaticData('global');\nstore.payment_claims = store.payment_claims || {};\npruneStore(store.payment_claims);\nstore.payment_claims[p.payment_claim_key] = {\n  ...(store.payment_claims[p.payment_claim_key] || {}),\n  status: 'Paid',\n  completed_at: new Date().toISOString(),\n  first_execution_id: p.last_execution_id,\n};\nreturn { json: $input.item.json };"
       }
     },
     {
@@ -2393,7 +2393,7 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "const store = $getWorkflowStaticData('global');\nstore.dunning_claims = store.dunning_claims || {};\nconst claims = store.dunning_claims;\nconst now = Date.now();\nreturn $input.all().flatMap(item => {\nconst row = item.json || {};\nconst store = $getWorkflowStaticData('global');\nconst claim = claims[row.action_key];\nconst claimAge = claim?.claimed_at ? now - Date.parse(claim.claimed_at) : 0;\nconst activeClaim = claim && (claim.status !== 'in_progress' || claimAge < 15 * 60 * 1000);\nif (activeClaim) return [];\nclaims[row.action_key] = { status: 'in_progress', claimed_at: new Date(now).toISOString(), first_execution_id: row.last_execution_id };\nreturn [{ json: { ...row, dunning_duplicate_claim: false, duplicate_status: '' } }];\n});"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst store = $getWorkflowStaticData('global');\nstore.dunning_claims = store.dunning_claims || {};\npruneStore(store.dunning_claims);\nconst claims = store.dunning_claims;\nconst now = Date.now();\nreturn $input.all().flatMap(item => {\nconst row = item.json || {};\nconst store = $getWorkflowStaticData('global');\nconst claim = claims[row.action_key];\nconst claimAge = claim?.claimed_at ? now - Date.parse(claim.claimed_at) : 0;\nconst activeClaim = claim && (claim.status !== 'in_progress' || claimAge < 15 * 60 * 1000);\nif (activeClaim) return [];\nclaims[row.action_key] = { status: 'in_progress', claimed_at: new Date(now).toISOString(), first_execution_id: row.last_execution_id };\nreturn [{ json: { ...row, dunning_duplicate_claim: false, duplicate_status: '' } }];\n});"
       }
     },
     {
@@ -2712,7 +2712,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const row = $('Build Dunning Recheck Decision').item.json;\nconst store = $getWorkflowStaticData('global');\nstore.dunning_claims = store.dunning_claims || {};\nstore.dunning_claims[row.action_key] = {\n  ...(store.dunning_claims[row.action_key] || {}),\n  status: 'sent',\n  completed_at: new Date().toISOString(),\n  first_execution_id: row.last_execution_id || $execution.id,\n};\nreturn { json: $input.item.json };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst row = $('Build Dunning Recheck Decision').item.json;\nconst store = $getWorkflowStaticData('global');\nstore.dunning_claims = store.dunning_claims || {};\npruneStore(store.dunning_claims);\nstore.dunning_claims[row.action_key] = {\n  ...(store.dunning_claims[row.action_key] || {}),\n  status: 'sent',\n  completed_at: new Date().toISOString(),\n  first_execution_id: row.last_execution_id || $execution.id,\n};\nreturn { json: $input.item.json };"
       }
     },
     {
@@ -2795,7 +2795,7 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "const store = $getWorkflowStaticData('global');\nstore.dunning_claims = store.dunning_claims || {};\nconst claims = store.dunning_claims;\nconst now = Date.now();\nreturn $input.all().flatMap(item => {\n  const row = item.json || {};\n  const claim = claims[row.action_key];\n  const claimAge = claim?.claimed_at ? now - Date.parse(claim.claimed_at) : 0;\n  const activeClaim = claim && (claim.status !== 'in_progress' || claimAge < 15 * 60 * 1000);\n  if (activeClaim) return [];\n  claims[row.action_key] = { status: 'in_progress', claimed_at: new Date(now).toISOString(), first_execution_id: row.last_execution_id };\n  return [{ json: row }];\n});"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst store = $getWorkflowStaticData('global');\nstore.dunning_claims = store.dunning_claims || {};\npruneStore(store.dunning_claims);\nconst claims = store.dunning_claims;\nconst now = Date.now();\nreturn $input.all().flatMap(item => {\n  const row = item.json || {};\n  const claim = claims[row.action_key];\n  const claimAge = claim?.claimed_at ? now - Date.parse(claim.claimed_at) : 0;\n  const activeClaim = claim && (claim.status !== 'in_progress' || claimAge < 15 * 60 * 1000);\n  if (activeClaim) return [];\n  claims[row.action_key] = { status: 'in_progress', claimed_at: new Date(now).toISOString(), first_execution_id: row.last_execution_id };\n  return [{ json: row }];\n});"
       }
     },
     {
@@ -3084,7 +3084,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const row = $('Build Escalation Recheck Decision').item.json;\nconst store = $getWorkflowStaticData('global');\nstore.dunning_claims = store.dunning_claims || {};\nstore.dunning_claims[row.action_key] = {\n  ...(store.dunning_claims[row.action_key] || {}),\n  status: 'escalated',\n  completed_at: new Date().toISOString(),\n  first_execution_id: row.last_execution_id || $execution.id,\n};\nreturn { json: $input.item.json };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst row = $('Build Escalation Recheck Decision').item.json;\nconst store = $getWorkflowStaticData('global');\nstore.dunning_claims = store.dunning_claims || {};\npruneStore(store.dunning_claims);\nstore.dunning_claims[row.action_key] = {\n  ...(store.dunning_claims[row.action_key] || {}),\n  status: 'escalated',\n  completed_at: new Date().toISOString(),\n  first_execution_id: row.last_execution_id || $execution.id,\n};\nreturn { json: $input.item.json };"
       }
     },
     {

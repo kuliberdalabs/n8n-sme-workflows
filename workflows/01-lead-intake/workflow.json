@@ -931,7 +931,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const n = $('Normalize Intake').item.json;\nconst store = $getWorkflowStaticData('global');\nstore.lead_intake_claims = store.lead_intake_claims || {};\nconst claims = store.lead_intake_claims;\nconst now = Date.now();\nconst nowIso = new Date(now).toISOString();\nconst staleInProgressMs = 15 * 60 * 1000;\nconst claim = claims[n.submission_id];\nconst claimAge = claim?.claimed_at ? now - Date.parse(claim.claimed_at) : 0;\nconst activeClaim = claim && (claim.status !== 'in_progress' || claimAge < staleInProgressMs);\nif (activeClaim) {\n  return { json: {\n    ...n,\n    duplicate_claim: true,\n    existing_record_id: claim.record_id || '',\n    duplicate_status: claim.status || 'seen',\n    first_execution_id: claim.first_execution_id || '',\n    claimed_at: claim.claimed_at || '',\n  }};\n}\nclaims[n.submission_id] = {\n  status: 'in_progress',\n  claimed_at: nowIso,\n  first_execution_id: n.execution_id,\n  source: n.source,\n};\nreturn { json: {\n  ...n,\n  duplicate_claim: false,\n  duplicate_status: '',\n  existing_record_id: '',\n  first_execution_id: n.execution_id,\n  claimed_at: nowIso,\n}};"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $('Normalize Intake').item.json;\nconst store = $getWorkflowStaticData('global');\nstore.lead_intake_claims = store.lead_intake_claims || {};\npruneStore(store.lead_intake_claims);\nconst claims = store.lead_intake_claims;\nconst now = Date.now();\nconst nowIso = new Date(now).toISOString();\nconst staleInProgressMs = 15 * 60 * 1000;\nconst claim = claims[n.submission_id];\nconst claimAge = claim?.claimed_at ? now - Date.parse(claim.claimed_at) : 0;\nconst activeClaim = claim && (claim.status !== 'in_progress' || claimAge < staleInProgressMs);\nif (activeClaim) {\n  return { json: {\n    ...n,\n    duplicate_claim: true,\n    existing_record_id: claim.record_id || '',\n    duplicate_status: claim.status || 'seen',\n    first_execution_id: claim.first_execution_id || '',\n    claimed_at: claim.claimed_at || '',\n  }};\n}\nclaims[n.submission_id] = {\n  status: 'in_progress',\n  claimed_at: nowIso,\n  first_execution_id: n.execution_id,\n  source: n.source,\n};\nreturn { json: {\n  ...n,\n  duplicate_claim: false,\n  duplicate_status: '',\n  existing_record_id: '',\n  first_execution_id: n.execution_id,\n  claimed_at: nowIso,\n}};"
       },
       "id": "e829b15c-4158-41ea-b148-9c7a8f5acc01",
       "name": "Claim Submission",
@@ -977,7 +977,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const n = $('Normalize Intake').item.json;\nconst record = $input.item.json;\nconst store = $getWorkflowStaticData('global');\nstore.lead_intake_claims = store.lead_intake_claims || {};\nconst prior = store.lead_intake_claims[n.submission_id] || {};\nstore.lead_intake_claims[n.submission_id] = {\n  ...prior,\n  status: 'Dead Letter',\n  record_id: record.id || prior.record_id || '',\n  completed_at: new Date().toISOString(),\n  first_execution_id: prior.first_execution_id || n.execution_id,\n};\nreturn { json: record };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $('Normalize Intake').item.json;\nconst record = $input.item.json;\nconst store = $getWorkflowStaticData('global');\nstore.lead_intake_claims = store.lead_intake_claims || {};\npruneStore(store.lead_intake_claims);\nconst prior = store.lead_intake_claims[n.submission_id] || {};\nstore.lead_intake_claims[n.submission_id] = {\n  ...prior,\n  status: 'Dead Letter',\n  record_id: record.id || prior.record_id || '',\n  completed_at: new Date().toISOString(),\n  first_execution_id: prior.first_execution_id || n.execution_id,\n};\nreturn { json: record };"
       },
       "id": "21a9b9db-47f3-4c90-ba76-7328b1c4db8d",
       "name": "Mark Claim Dead Letter",
@@ -991,7 +991,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const n = $('Normalize Intake').item.json;\nconst existing = $input.item.json;\nconst store = $getWorkflowStaticData('global');\nstore.lead_intake_claims = store.lead_intake_claims || {};\nconst prior = store.lead_intake_claims[n.submission_id] || {};\nstore.lead_intake_claims[n.submission_id] = {\n  ...prior,\n  status: existing.fields?.Status || 'Existing',\n  record_id: existing.id || prior.record_id || '',\n  completed_at: new Date().toISOString(),\n  first_execution_id: prior.first_execution_id || n.execution_id,\n};\nreturn { json: existing };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $('Normalize Intake').item.json;\nconst existing = $input.item.json;\nconst store = $getWorkflowStaticData('global');\nstore.lead_intake_claims = store.lead_intake_claims || {};\npruneStore(store.lead_intake_claims);\nconst prior = store.lead_intake_claims[n.submission_id] || {};\nstore.lead_intake_claims[n.submission_id] = {\n  ...prior,\n  status: existing.fields?.Status || 'Existing',\n  record_id: existing.id || prior.record_id || '',\n  completed_at: new Date().toISOString(),\n  first_execution_id: prior.first_execution_id || n.execution_id,\n};\nreturn { json: existing };"
       },
       "id": "78f5ca20-d141-4bc2-aac0-52cc9e83f422",
       "name": "Mark Claim Existing",
@@ -1005,7 +1005,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const n = $('Normalize Intake').item.json;\nconst record = $input.item.json;\nconst store = $getWorkflowStaticData('global');\nstore.lead_intake_claims = store.lead_intake_claims || {};\nconst prior = store.lead_intake_claims[n.submission_id] || {};\nstore.lead_intake_claims[n.submission_id] = {\n  ...prior,\n  status: 'Needs Review',\n  record_id: record.id || prior.record_id || '',\n  completed_at: new Date().toISOString(),\n  first_execution_id: prior.first_execution_id || n.execution_id,\n};\nreturn { json: record };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $('Normalize Intake').item.json;\nconst record = $input.item.json;\nconst store = $getWorkflowStaticData('global');\nstore.lead_intake_claims = store.lead_intake_claims || {};\npruneStore(store.lead_intake_claims);\nconst prior = store.lead_intake_claims[n.submission_id] || {};\nstore.lead_intake_claims[n.submission_id] = {\n  ...prior,\n  status: 'Needs Review',\n  record_id: record.id || prior.record_id || '',\n  completed_at: new Date().toISOString(),\n  first_execution_id: prior.first_execution_id || n.execution_id,\n};\nreturn { json: record };"
       },
       "id": "6c8a583d-0906-4e17-a358-f617e1261ff3",
       "name": "Mark Claim Sensitive",
@@ -1019,7 +1019,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const n = $('Normalize Intake').item.json;\nconst lead = $('Validate AI and Build Record').item.json;\nconst record = $input.item.json;\nconst store = $getWorkflowStaticData('global');\nstore.lead_intake_claims = store.lead_intake_claims || {};\nconst prior = store.lead_intake_claims[n.submission_id] || {};\nstore.lead_intake_claims[n.submission_id] = {\n  ...prior,\n  status: lead.status,\n  record_id: record.id || prior.record_id || '',\n  completed_at: new Date().toISOString(),\n  first_execution_id: prior.first_execution_id || n.execution_id,\n};\nreturn { json: record };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $('Normalize Intake').item.json;\nconst lead = $('Validate AI and Build Record').item.json;\nconst record = $input.item.json;\nconst store = $getWorkflowStaticData('global');\nstore.lead_intake_claims = store.lead_intake_claims || {};\npruneStore(store.lead_intake_claims);\nconst prior = store.lead_intake_claims[n.submission_id] || {};\nstore.lead_intake_claims[n.submission_id] = {\n  ...prior,\n  status: lead.status,\n  record_id: record.id || prior.record_id || '',\n  completed_at: new Date().toISOString(),\n  first_execution_id: prior.first_execution_id || n.execution_id,\n};\nreturn { json: record };"
       },
       "id": "05aeaab5-d684-4655-95ad-2c1ad5885ad7",
       "name": "Mark Claim Lead",
@@ -1091,7 +1091,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const n = $('Normalize Intake').item.json;\nconst existing = $input.item.json;\nconst store = $getWorkflowStaticData('global');\nstore.lead_intake_claims = store.lead_intake_claims || {};\nconst prior = store.lead_intake_claims[n.submission_id] || {};\nstore.lead_intake_claims[n.submission_id] = {\n  ...prior,\n  status: existing.fields?.Status || 'Dead Letter',\n  record_id: existing.id || prior.record_id || '',\n  completed_at: new Date().toISOString(),\n  first_execution_id: prior.first_execution_id || n.execution_id,\n};\nreturn { json: existing };"
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $('Normalize Intake').item.json;\nconst existing = $input.item.json;\nconst store = $getWorkflowStaticData('global');\nstore.lead_intake_claims = store.lead_intake_claims || {};\npruneStore(store.lead_intake_claims);\nconst prior = store.lead_intake_claims[n.submission_id] || {};\nstore.lead_intake_claims[n.submission_id] = {\n  ...prior,\n  status: existing.fields?.Status || 'Dead Letter',\n  record_id: existing.id || prior.record_id || '',\n  completed_at: new Date().toISOString(),\n  first_execution_id: prior.first_execution_id || n.execution_id,\n};\nreturn { json: existing };"
       },
       "id": "cb59caec-da77-42ee-99e0-43b31f61ec61",
       "name": "Mark Claim Existing Dead Letter",
