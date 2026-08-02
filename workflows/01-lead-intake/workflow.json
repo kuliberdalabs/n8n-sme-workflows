@@ -98,7 +98,7 @@
       "main": [
         [
           {
-            "node": "Respond Sensitive Held",
+            "node": "Build Sensitive Alert Confirmation",
             "type": "main",
             "index": 0
           }
@@ -149,7 +149,7 @@
       "main": [
         [
           {
-            "node": "Email Alert Approved",
+            "node": "Build Welcome Delivery Confirmation",
             "type": "main",
             "index": 0
           }
@@ -160,7 +160,7 @@
       "main": [
         [
           {
-            "node": "Respond Approved",
+            "node": "Build Approved Alert Confirmation",
             "type": "main",
             "index": 0
           }
@@ -171,7 +171,7 @@
       "main": [
         [
           {
-            "node": "Respond Needs Review",
+            "node": "Build Review Alert Confirmation",
             "type": "main",
             "index": 0
           }
@@ -255,7 +255,7 @@
       "main": [
         [
           {
-            "node": "Mark Claim Sensitive",
+            "node": "Email Alert Sensitive",
             "type": "main",
             "index": 0
           }
@@ -266,7 +266,7 @@
       "main": [
         [
           {
-            "node": "Email Alert Sensitive",
+            "node": "Respond Sensitive Held",
             "type": "main",
             "index": 0
           }
@@ -277,7 +277,7 @@
       "main": [
         [
           {
-            "node": "Mark Claim Lead",
+            "node": "Approved?",
             "type": "main",
             "index": 0
           }
@@ -288,7 +288,7 @@
       "main": [
         [
           {
-            "node": "Approved?",
+            "node": "Delivery Was Approved?",
             "type": "main",
             "index": 0
           }
@@ -340,6 +340,178 @@
         [
           {
             "node": "Respond Dead Letter Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Sensitive Alert Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Update Sensitive Alert Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Sensitive Alert Sent": {
+      "main": [
+        [
+          {
+            "node": "Mark Claim Sensitive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Welcome Delivery Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Update Lead Welcome Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Lead Welcome Sent": {
+      "main": [
+        [
+          {
+            "node": "Email Alert Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Approved Alert Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Update Approved Alert Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Approved Alert Sent": {
+      "main": [
+        [
+          {
+            "node": "Mark Claim Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Review Alert Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Update Review Alert Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Review Alert Sent": {
+      "main": [
+        [
+          {
+            "node": "Mark Claim Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delivery Was Approved?": {
+      "main": [
+        [
+          {
+            "node": "Respond Approved",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Needs Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Outbox Reconciliation Sweep": {
+      "main": [
+        [
+          {
+            "node": "Find Pending Lead Deliveries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Pending Lead Deliveries": {
+      "main": [
+        [
+          {
+            "node": "Build Pending Lead Deliveries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Pending Lead Deliveries": {
+      "main": [
+        [
+          {
+            "node": "Send Pending Lead Delivery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Pending Lead Delivery": {
+      "main": [
+        [
+          {
+            "node": "Build Reconciled Delivery Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Reconciled Delivery Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Update Reconciled Lead Delivery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Reconciled Lead Delivery": {
+      "main": [
+        [
+          {
+            "node": "Mark Reconciled Lead Claim",
             "type": "main",
             "index": 0
           }
@@ -604,7 +776,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const n = $('Normalize Intake').item.json;\nconst htmlEscape = (value) => String(value ?? '').replace(/[&<>\"']/g, ch => ({\n  '&': '&amp;',\n  '<': '&lt;',\n  '>': '&gt;',\n  '\"': '&quot;',\n  \"'\": '&#39;',\n}[ch]));\nconst company = n.company || 'Unknown';\nconst email = n.email;\nconst review_reason = 'Held before model call due to sensitive content: ' + n.sensitivity_flags.join(', ');\nreturn { json: {\n  submission_id: n.submission_id,\n  status: 'Needs Review',\n  name: n.name || 'Unknown',\n  company,\n  company_html: htmlEscape(company),\n  email,\n  email_html: htmlEscape(email),\n  raw_needs: n.raw_needs,\n  raw_needs_html: htmlEscape(n.raw_needs),\n  need_summary: 'Sensitive content detected before AI extraction',\n  need_summary_html: htmlEscape('Sensitive content detected before AI extraction'),\n  category: 'Other',\n  company_size: 'unknown',\n  urgency: 'unknown',\n  budget_signal: 'unknown',\n  confidence: 0,\n  sensitive_held: true,\n  sensitivity_flags: n.sensitivity_flags.join(', '),\n  review_reason,\n  review_reason_html: htmlEscape(review_reason),\n  welcome_message: '',\n  welcome_message_html: '',\n  welcome_sent: false,\n  alert_sent: false,\n  replay_count: 0,\n  created_at: n.created_at,\n  updated_at: new Date().toISOString(),\n  model_version: n.model_version,\n  raw_ai_output: '',\n  execution_id: n.execution_id,\n}};"
+        "jsCode": "const n = $('Normalize Intake').item.json;\nconst htmlEscape = (value) => String(value ?? '').replace(/[&<>\"']/g, ch => ({\n  '&': '&amp;',\n  '<': '&lt;',\n  '>': '&gt;',\n  '\"': '&quot;',\n  \"'\": '&#39;',\n}[ch]));\nconst company = n.company || 'Unknown';\nconst email = n.email;\nconst review_reason = 'Held before model call due to sensitive content: ' + n.sensitivity_flags.join(', ');\nreturn { json: {\n  submission_id: n.submission_id,\n  status: 'Needs Review',\n  name: n.name || 'Unknown',\n  company,\n  company_html: htmlEscape(company),\n  email,\n  email_html: htmlEscape(email),\n  raw_needs: n.raw_needs,\n  raw_needs_html: htmlEscape(n.raw_needs),\n  need_summary: 'Sensitive content detected before AI extraction',\n  need_summary_html: htmlEscape('Sensitive content detected before AI extraction'),\n  category: 'Other',\n  company_size: 'unknown',\n  urgency: 'unknown',\n  budget_signal: 'unknown',\n  confidence: 0,\n  sensitive_held: true,\n  sensitivity_flags: n.sensitivity_flags.join(', '),\n  review_reason,\n  review_reason_html: htmlEscape(review_reason),\n  welcome_message: '',\n  welcome_message_html: '',\n  welcome_sent: false,\n  alert_sent: false,\n  delivery_state: 'PENDING_SEND',\n  welcome_message_id: '',\n  alert_message_id: '',\n  replay_count: 0,\n  created_at: n.created_at,\n  updated_at: new Date().toISOString(),\n  model_version: n.model_version,\n  raw_ai_output: '',\n  execution_id: n.execution_id,\n}};"
       },
       "id": "55d195e2-6e88-440a-b5cd-9103d7cca773",
       "name": "Build Sensitive-Held Record",
@@ -652,7 +824,10 @@
             "Replay Count": "={{ $json.replay_count }}",
             "Last Execution ID": "={{ $json.execution_id }}",
             "Model Version": "={{ $json.model_version }}",
-            "Raw AI Output": "={{ $json.raw_ai_output }}"
+            "Raw AI Output": "={{ $json.raw_ai_output }}",
+            "Delivery State": "={{ $json.delivery_state }}",
+            "Welcome Message ID": "={{ $json.welcome_message_id }}",
+            "Alert Message ID": "={{ $json.alert_message_id }}"
           }
         },
         "options": {
@@ -741,7 +916,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const n = $('Normalize Intake').item.json;\nconst htmlEscape = (value) => String(value ?? '').replace(/[&<>\"']/g, ch => ({\n  '&': '&amp;',\n  '<': '&lt;',\n  '>': '&gt;',\n  '\"': '&quot;',\n  \"'\": '&#39;',\n}[ch]));\nconst raw = $input.item.json;\nconst extractText = (value) => {\n  if (typeof value === 'string') return value;\n  if (Array.isArray(value)) return value.map(extractText).filter(Boolean).join('\\n');\n  if (value && typeof value === 'object') {\n    if (typeof value.text === 'string') return value.text;\n    if (typeof value.output_text === 'string') return value.output_text;\n    if (value.content) return extractText(value.content);\n    if (value.output) return extractText(value.output);\n  }\n  return '';\n};\nlet ai = raw.output ?? raw.text ?? raw.content ?? raw;\nif (typeof ai === 'string') {\n  const cleaned = ai.replace(/^\\s*```(?:json)?\\s*/i, '').replace(/\\s*```\\s*$/i, '').trim();\n  try { ai = JSON.parse(cleaned); } catch { ai = null; }\n} else {\n  const extracted = extractText(ai);\n  const cleaned = extracted.replace(/^\\s*```(?:json)?\\s*/i, '').replace(/\\s*```\\s*$/i, '').trim();\n  if (cleaned) {\n    try { ai = JSON.parse(cleaned); } catch { /* keep original object for validation fallback */ }\n  }\n}\nconst categories = ['Ops Automation','Sales/CRM','Finance/Admin','Marketing','Support','Data/Reporting','Other'];\nconst sizes = ['solo','micro','smb','mid','enterprise','unknown'];\nconst levels = ['low','medium','high','unknown'];\nconst budgets = ['none','low','medium','high','unknown'];\nconst reasons = [];\nif (!ai || typeof ai !== 'object') reasons.push('AI output unparseable');\nai = ai || {};\nconst pickEnum = (value, allowed, fallback, label, aliases = {}) => {\n  const v = typeof value === 'string' ? value.trim() : '';\n  if (allowed.includes(v)) return v;\n  const alias = aliases[v.toLowerCase()];\n  if (alias) return alias;\n  reasons.push(label + ' outside enum');\n  return fallback;\n};\nlet confidence = Number(ai.confidence);\nif (!Number.isFinite(confidence)) { confidence = 0; reasons.push('confidence missing or nonnumeric'); }\nconfidence = Math.max(0, Math.min(1, confidence));\nconst need_summary = typeof ai.need_summary === 'string' ? ai.need_summary.trim() : '';\nif (need_summary.length < 8) reasons.push('need_summary too sparse');\nlet welcome_message = typeof ai.welcome_message === 'string' ? ai.welcome_message.trim() : '';\nif (welcome_message.length < 20) {\n  welcome_message = 'Thank you for reaching out to Acme Automation. We received your automation request and will follow up with practical next steps shortly.';\n  reasons.push('welcome_message fallback used');\n}\nif (welcome_message.length > 1200) welcome_message = welcome_message.slice(0, 1200);\nconst review_reason = [typeof ai.review_reason === 'string' ? ai.review_reason.trim() : '', ...reasons].filter(Boolean).join('; ');\nconst needs_review = ai.needs_human_review === true || confidence < 0.75 || reasons.length > 0;\nconst company = n.company || 'Unknown';\nconst email = n.email;\nreturn { json: {\n  submission_id: n.submission_id,\n  status: needs_review ? 'Needs Review' : 'Approved',\n  name: n.name || 'Unknown',\n  company,\n  company_html: htmlEscape(company),\n  email,\n  email_html: htmlEscape(email),\n  raw_needs: n.raw_needs,\n  raw_needs_html: htmlEscape(n.raw_needs),\n  need_summary,\n  need_summary_html: htmlEscape(need_summary),\n  category: pickEnum(ai.category, categories, 'Other', 'category', { consulting: 'Other', automation: 'Ops Automation' }),\n  company_size: pickEnum(ai.company_size, sizes, 'unknown', 'company_size', { small: 'smb', medium: 'mid', large: 'enterprise' }),\n  urgency: pickEnum(ai.urgency, levels, 'unknown', 'urgency', { medium: 'medium', low: 'low', high: 'high' }),\n  budget_signal: pickEnum(ai.budget_signal, budgets, 'unknown', 'budget_signal', { low: 'low', medium: 'medium', high: 'high' }),\n  confidence,\n  sensitive_held: false,\n  sensitivity_flags: '',\n  review_reason,\n  review_reason_html: htmlEscape(review_reason),\n  welcome_message,\n  welcome_message_html: htmlEscape(welcome_message),\n  welcome_sent: !needs_review,\n  alert_sent: false,\n  replay_count: 0,\n  created_at: n.created_at,\n  updated_at: new Date().toISOString(),\n  model_version: n.model_version,\n  raw_ai_output: JSON.stringify(ai).slice(0, 9000),\n  execution_id: n.execution_id,\n}};"
+        "jsCode": "const n = $('Normalize Intake').item.json;\nconst htmlEscape = (value) => String(value ?? '').replace(/[&<>\"']/g, ch => ({\n  '&': '&amp;',\n  '<': '&lt;',\n  '>': '&gt;',\n  '\"': '&quot;',\n  \"'\": '&#39;',\n}[ch]));\nconst raw = $input.item.json;\nconst extractText = (value) => {\n  if (typeof value === 'string') return value;\n  if (Array.isArray(value)) return value.map(extractText).filter(Boolean).join('\\n');\n  if (value && typeof value === 'object') {\n    if (typeof value.text === 'string') return value.text;\n    if (typeof value.output_text === 'string') return value.output_text;\n    if (value.content) return extractText(value.content);\n    if (value.output) return extractText(value.output);\n  }\n  return '';\n};\nlet ai = raw.output ?? raw.text ?? raw.content ?? raw;\nif (typeof ai === 'string') {\n  const cleaned = ai.replace(/^\\s*```(?:json)?\\s*/i, '').replace(/\\s*```\\s*$/i, '').trim();\n  try { ai = JSON.parse(cleaned); } catch { ai = null; }\n} else {\n  const extracted = extractText(ai);\n  const cleaned = extracted.replace(/^\\s*```(?:json)?\\s*/i, '').replace(/\\s*```\\s*$/i, '').trim();\n  if (cleaned) {\n    try { ai = JSON.parse(cleaned); } catch { /* keep original object for validation fallback */ }\n  }\n}\nconst categories = ['Ops Automation','Sales/CRM','Finance/Admin','Marketing','Support','Data/Reporting','Other'];\nconst sizes = ['solo','micro','smb','mid','enterprise','unknown'];\nconst levels = ['low','medium','high','unknown'];\nconst budgets = ['none','low','medium','high','unknown'];\nconst reasons = [];\nif (!ai || typeof ai !== 'object') reasons.push('AI output unparseable');\nai = ai || {};\nconst pickEnum = (value, allowed, fallback, label, aliases = {}) => {\n  const v = typeof value === 'string' ? value.trim() : '';\n  if (allowed.includes(v)) return v;\n  const alias = aliases[v.toLowerCase()];\n  if (alias) return alias;\n  reasons.push(label + ' outside enum');\n  return fallback;\n};\nlet confidence = Number(ai.confidence);\nif (!Number.isFinite(confidence)) { confidence = 0; reasons.push('confidence missing or nonnumeric'); }\nconfidence = Math.max(0, Math.min(1, confidence));\nconst need_summary = typeof ai.need_summary === 'string' ? ai.need_summary.trim() : '';\nif (need_summary.length < 8) reasons.push('need_summary too sparse');\nlet welcome_message = typeof ai.welcome_message === 'string' ? ai.welcome_message.trim() : '';\nif (welcome_message.length < 20) {\n  welcome_message = 'Thank you for reaching out to Acme Automation. We received your automation request and will follow up with practical next steps shortly.';\n  reasons.push('welcome_message fallback used');\n}\nif (welcome_message.length > 1200) welcome_message = welcome_message.slice(0, 1200);\nconst review_reason = [typeof ai.review_reason === 'string' ? ai.review_reason.trim() : '', ...reasons].filter(Boolean).join('; ');\nconst needs_review = ai.needs_human_review === true || confidence < 0.75 || reasons.length > 0;\nconst company = n.company || 'Unknown';\nconst email = n.email;\nreturn { json: {\n  submission_id: n.submission_id,\n  status: needs_review ? 'Needs Review' : 'Approved',\n  name: n.name || 'Unknown',\n  company,\n  company_html: htmlEscape(company),\n  email,\n  email_html: htmlEscape(email),\n  raw_needs: n.raw_needs,\n  raw_needs_html: htmlEscape(n.raw_needs),\n  need_summary,\n  need_summary_html: htmlEscape(need_summary),\n  category: pickEnum(ai.category, categories, 'Other', 'category', { consulting: 'Other', automation: 'Ops Automation' }),\n  company_size: pickEnum(ai.company_size, sizes, 'unknown', 'company_size', { small: 'smb', medium: 'mid', large: 'enterprise' }),\n  urgency: pickEnum(ai.urgency, levels, 'unknown', 'urgency', { medium: 'medium', low: 'low', high: 'high' }),\n  budget_signal: pickEnum(ai.budget_signal, budgets, 'unknown', 'budget_signal', { low: 'low', medium: 'medium', high: 'high' }),\n  confidence,\n  sensitive_held: false,\n  sensitivity_flags: '',\n  review_reason,\n  review_reason_html: htmlEscape(review_reason),\n  welcome_message,\n  welcome_message_html: htmlEscape(welcome_message),\n  welcome_sent: false,\n  alert_sent: false,\n  delivery_state: 'PENDING_SEND',\n  welcome_message_id: '',\n  alert_message_id: '',\n  replay_count: 0,\n  created_at: n.created_at,\n  updated_at: new Date().toISOString(),\n  model_version: n.model_version,\n  raw_ai_output: JSON.stringify(ai).slice(0, 9000),\n  execution_id: n.execution_id,\n}};"
       },
       "id": "6362b95d-55ea-430d-81e2-ec5b9750c764",
       "name": "Validate AI and Build Record",
@@ -789,7 +964,10 @@
             "Replay Count": "={{ $json.replay_count }}",
             "Last Execution ID": "={{ $json.execution_id }}",
             "Model Version": "={{ $json.model_version }}",
-            "Raw AI Output": "={{ $json.raw_ai_output }}"
+            "Raw AI Output": "={{ $json.raw_ai_output }}",
+            "Delivery State": "={{ $json.delivery_state }}",
+            "Welcome Message ID": "={{ $json.welcome_message_id }}",
+            "Alert Message ID": "={{ $json.alert_message_id }}"
           }
         },
         "options": {
@@ -1117,6 +1295,803 @@
       "position": [
         2400,
         32
+      ]
+    },
+    {
+      "id": "24cc04ed-ed7f-4dd4-b6db-c1570b89d958",
+      "name": "Build Welcome Delivery Confirmation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2940,
+        500
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const gmail = $input.item.json || {};\nconst messageId = String(gmail.id || gmail.messageId || gmail.message_id || '').trim();\nif (!messageId) throw new Error('welcome_delivery_missing_message_id');\nconst record = { id: $('Create Lead Record').item.json.id, welcome_sent: false, alert_sent: false, welcome_message_id: '', alert_message_id: '' };\nconst now = new Date().toISOString();\nreturn { json: {\n  record_id: record.id,\n  welcome_sent: true,\n  alert_sent: Boolean(record.alert_sent),\n  delivery_state: 'PENDING_SEND',\n  welcome_message_id: messageId,\n  alert_message_id: String(record.alert_message_id || ''),\n  updated_at: now,\n  last_execution_id: $execution.id,\n} };"
+      }
+    },
+    {
+      "id": "8506da96-7611-4a28-acd4-f3f30d42178a",
+      "name": "Update Lead Welcome Sent",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        3140,
+        500
+      ],
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "cachedResultName": "Your Airtable base"
+        },
+        "table": "={{ \"Leads\" }}",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.record_id }}",
+            "Updated At": "={{ $json.updated_at }}",
+            "Welcome Sent": "={{ $json.welcome_sent }}",
+            "Alert Sent": "={{ $json.alert_sent }}",
+            "Delivery State": "={{ $json.delivery_state }}",
+            "Welcome Message ID": "={{ $json.welcome_message_id }}",
+            "Alert Message ID": "={{ $json.alert_message_id }}",
+            "Last Execution ID": "={{ $json.last_execution_id }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Updated At",
+              "displayName": "Updated At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Welcome Sent",
+              "displayName": "Welcome Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Alert Sent",
+              "displayName": "Alert Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Delivery State",
+              "displayName": "Delivery State",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Welcome Message ID",
+              "displayName": "Welcome Message ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Alert Message ID",
+              "displayName": "Alert Message ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Execution ID",
+              "displayName": "Last Execution ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ]
+        },
+        "options": {
+          "typecast": true
+        }
+      }
+    },
+    {
+      "id": "ae70ab07-67c5-40bf-868a-9fd34c805516",
+      "name": "Build Approved Alert Confirmation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3240,
+        560
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const gmail = $input.item.json || {};\nconst messageId = String(gmail.id || gmail.messageId || gmail.message_id || '').trim();\nif (!messageId) throw new Error('alert_delivery_missing_message_id');\nconst record = { id: $('Create Lead Record').item.json.id, welcome_sent: true, alert_sent: false, welcome_message_id: $('Build Welcome Delivery Confirmation').item.json.welcome_message_id, alert_message_id: '' };\nconst now = new Date().toISOString();\nreturn { json: {\n  record_id: record.id,\n  welcome_sent: Boolean(record.welcome_sent),\n  alert_sent: true,\n  delivery_state: 'SENT',\n  welcome_message_id: String(record.welcome_message_id || ''),\n  alert_message_id: messageId,\n  updated_at: now,\n  last_execution_id: $execution.id,\n} };"
+      }
+    },
+    {
+      "id": "1803be7a-c191-4ee9-9e17-11fc44f885c0",
+      "name": "Update Approved Alert Sent",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        3440,
+        560
+      ],
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "cachedResultName": "Your Airtable base"
+        },
+        "table": "={{ \"Leads\" }}",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.record_id }}",
+            "Updated At": "={{ $json.updated_at }}",
+            "Welcome Sent": "={{ $json.welcome_sent }}",
+            "Alert Sent": "={{ $json.alert_sent }}",
+            "Delivery State": "={{ $json.delivery_state }}",
+            "Welcome Message ID": "={{ $json.welcome_message_id }}",
+            "Alert Message ID": "={{ $json.alert_message_id }}",
+            "Last Execution ID": "={{ $json.last_execution_id }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Updated At",
+              "displayName": "Updated At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Welcome Sent",
+              "displayName": "Welcome Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Alert Sent",
+              "displayName": "Alert Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Delivery State",
+              "displayName": "Delivery State",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Welcome Message ID",
+              "displayName": "Welcome Message ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Alert Message ID",
+              "displayName": "Alert Message ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Execution ID",
+              "displayName": "Last Execution ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ]
+        },
+        "options": {
+          "typecast": true
+        }
+      }
+    },
+    {
+      "id": "1d6d9ead-789a-4795-9c53-d3fc6e6ef85b",
+      "name": "Build Review Alert Confirmation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2940,
+        720
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const gmail = $input.item.json || {};\nconst messageId = String(gmail.id || gmail.messageId || gmail.message_id || '').trim();\nif (!messageId) throw new Error('alert_delivery_missing_message_id');\nconst record = { id: $('Create Lead Record').item.json.id, welcome_sent: false, alert_sent: false, welcome_message_id: '', alert_message_id: '' };\nconst now = new Date().toISOString();\nreturn { json: {\n  record_id: record.id,\n  welcome_sent: Boolean(record.welcome_sent),\n  alert_sent: true,\n  delivery_state: 'SENT',\n  welcome_message_id: String(record.welcome_message_id || ''),\n  alert_message_id: messageId,\n  updated_at: now,\n  last_execution_id: $execution.id,\n} };"
+      }
+    },
+    {
+      "id": "2c30beab-8609-4c0e-a565-46330d596cea",
+      "name": "Update Review Alert Sent",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        3140,
+        720
+      ],
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "cachedResultName": "Your Airtable base"
+        },
+        "table": "={{ \"Leads\" }}",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.record_id }}",
+            "Updated At": "={{ $json.updated_at }}",
+            "Welcome Sent": "={{ $json.welcome_sent }}",
+            "Alert Sent": "={{ $json.alert_sent }}",
+            "Delivery State": "={{ $json.delivery_state }}",
+            "Welcome Message ID": "={{ $json.welcome_message_id }}",
+            "Alert Message ID": "={{ $json.alert_message_id }}",
+            "Last Execution ID": "={{ $json.last_execution_id }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Updated At",
+              "displayName": "Updated At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Welcome Sent",
+              "displayName": "Welcome Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Alert Sent",
+              "displayName": "Alert Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Delivery State",
+              "displayName": "Delivery State",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Welcome Message ID",
+              "displayName": "Welcome Message ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Alert Message ID",
+              "displayName": "Alert Message ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Execution ID",
+              "displayName": "Last Execution ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ]
+        },
+        "options": {
+          "typecast": true
+        }
+      }
+    },
+    {
+      "id": "23a72b1e-46a0-4f19-b4c3-fe1ef7403607",
+      "name": "Build Sensitive Alert Confirmation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2380,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const gmail = $input.item.json || {};\nconst messageId = String(gmail.id || gmail.messageId || gmail.message_id || '').trim();\nif (!messageId) throw new Error('alert_delivery_missing_message_id');\nconst record = { id: $('Create Sensitive Record').item.json.id, welcome_sent: false, alert_sent: false, welcome_message_id: '', alert_message_id: '' };\nconst now = new Date().toISOString();\nreturn { json: {\n  record_id: record.id,\n  welcome_sent: Boolean(record.welcome_sent),\n  alert_sent: true,\n  delivery_state: 'SENT',\n  welcome_message_id: String(record.welcome_message_id || ''),\n  alert_message_id: messageId,\n  updated_at: now,\n  last_execution_id: $execution.id,\n} };"
+      }
+    },
+    {
+      "id": "d4dd1308-ddf6-4b9a-abbe-475dc4fd3585",
+      "name": "Update Sensitive Alert Sent",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2580,
+        400
+      ],
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "cachedResultName": "Your Airtable base"
+        },
+        "table": "={{ \"Leads\" }}",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.record_id }}",
+            "Updated At": "={{ $json.updated_at }}",
+            "Welcome Sent": "={{ $json.welcome_sent }}",
+            "Alert Sent": "={{ $json.alert_sent }}",
+            "Delivery State": "={{ $json.delivery_state }}",
+            "Welcome Message ID": "={{ $json.welcome_message_id }}",
+            "Alert Message ID": "={{ $json.alert_message_id }}",
+            "Last Execution ID": "={{ $json.last_execution_id }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Updated At",
+              "displayName": "Updated At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Welcome Sent",
+              "displayName": "Welcome Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Alert Sent",
+              "displayName": "Alert Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Delivery State",
+              "displayName": "Delivery State",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Welcome Message ID",
+              "displayName": "Welcome Message ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Alert Message ID",
+              "displayName": "Alert Message ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Execution ID",
+              "displayName": "Last Execution ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ]
+        },
+        "options": {
+          "typecast": true
+        }
+      }
+    },
+    {
+      "id": "ca1f49dc-03aa-461f-8c2e-9841c79a5e42",
+      "name": "Lead Outbox Reconciliation Sweep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        1120
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a1447133-b06b-4928-929a-f6a36f293e21",
+      "name": "Find Pending Lead Deliveries",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        260,
+        1120
+      ],
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "cachedResultName": "Your Airtable base"
+        },
+        "table": "={{ \"Leads\" }}",
+        "filterByFormula": "={{ \"{Delivery State} = 'PENDING_SEND'\" }}",
+        "returnAll": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "35ca32d7-da33-4f64-b6bb-c38de389acb6",
+      "name": "Build Pending Lead Deliveries",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        1120
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const esc = (value) => String(value ?? '').replace(/[&<>\"']/g, (ch) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;' }[ch]));\nreturn $input.all().flatMap((item, index) => {\n  const record = item.json || {};\n  const fields = record.fields && typeof record.fields === 'object' ? record.fields : record;\n  const status = String(fields.Status || 'Needs Review');\n  const welcomeSent = fields['Welcome Sent'] === true || String(fields['Welcome Sent']).toLowerCase() === 'true';\n  const alertSent = fields['Alert Sent'] === true || String(fields['Alert Sent']).toLowerCase() === 'true';\n  let delivery_kind = '';\n  if (status === 'Approved' && !welcomeSent) delivery_kind = 'welcome';\n  else if (!alertSent) delivery_kind = 'alert';\n  if (!delivery_kind || !record.id) return [];\n  const company = esc(fields.Company || 'Unknown');\n  const email = esc(fields.Email || '');\n  const rawNeeds = esc(fields['Raw Needs'] || '');\n  const summary = esc(fields['Need Summary'] || '');\n  const reason = esc(fields['Review Reason'] || '');\n  const welcome = esc(fields['Welcome Message'] || 'Thank you for reaching out.');\n  const subject = delivery_kind === 'welcome' ? '[TEST] Welcome copy for ' + String(fields.Company || 'Unknown') : '[TEST] Lead delivery retry: ' + String(fields.Company || 'Unknown');\n  const message_html = delivery_kind === 'welcome'\n    ? '<p><strong>Lead test welcome email</strong></p><p>Controlled inbox only.</p><p>Lead email: ' + email + '</p><p>Submitted need: ' + rawNeeds + '</p><hr><p>' + welcome + '</p>'\n    : '<p><strong>Lead requires back-office review</strong></p><p>Company: ' + company + '</p><p>Email: ' + email + '</p><p>Status: ' + esc(status) + '</p><p>Summary: ' + summary + '</p><p>Reason: ' + reason + '</p>';\n  return [{ json: { record_id: record.id, submission_id: String(fields['Submission ID'] || ''), status, delivery_kind, welcome_sent: welcomeSent, alert_sent: alertSent, welcome_message_id: String(fields['Welcome Message ID'] || ''), alert_message_id: String(fields['Alert Message ID'] || ''), subject, message_html }, pairedItem: { item: index } }];\n});"
+      }
+    },
+    {
+      "id": "336591e0-da84-4ea3-bc6e-56c354369d17",
+      "name": "Send Pending Lead Delivery",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        780,
+        1120
+      ],
+      "parameters": {
+        "sendTo": "ops@example.com",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.message_html }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Acme Automation"
+        }
+      }
+    },
+    {
+      "id": "9826cb27-9342-4c3d-bd14-76bb90a1649c",
+      "name": "Build Reconciled Delivery Confirmation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        1120
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const gmail = $input.item.json || {};\nconst messageId = String(gmail.id || gmail.messageId || gmail.message_id || '').trim();\nif (!messageId) throw new Error('reconciled_delivery_missing_message_id');\nconst delivery = $('Build Pending Lead Deliveries').item.json;\nconst welcomeSent = delivery.welcome_sent || delivery.delivery_kind === 'welcome';\nconst alertSent = delivery.alert_sent || delivery.delivery_kind === 'alert';\nreturn { json: { ...delivery, welcome_sent: welcomeSent, alert_sent: alertSent, delivery_state: welcomeSent && alertSent || delivery.status !== 'Approved' && alertSent ? 'SENT' : 'PENDING_SEND', welcome_message_id: delivery.delivery_kind === 'welcome' ? messageId : delivery.welcome_message_id, alert_message_id: delivery.delivery_kind === 'alert' ? messageId : delivery.alert_message_id, updated_at: new Date().toISOString(), last_execution_id: $execution.id } };"
+      }
+    },
+    {
+      "id": "87ea031b-2452-443c-9f5c-6c258c72f525",
+      "name": "Update Reconciled Lead Delivery",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1300,
+        1120
+      ],
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "cachedResultName": "Your Airtable base"
+        },
+        "table": "={{ \"Leads\" }}",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.record_id }}",
+            "Updated At": "={{ $json.updated_at }}",
+            "Welcome Sent": "={{ $json.welcome_sent }}",
+            "Alert Sent": "={{ $json.alert_sent }}",
+            "Delivery State": "={{ $json.delivery_state }}",
+            "Welcome Message ID": "={{ $json.welcome_message_id }}",
+            "Alert Message ID": "={{ $json.alert_message_id }}",
+            "Last Execution ID": "={{ $json.last_execution_id }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Updated At",
+              "displayName": "Updated At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Welcome Sent",
+              "displayName": "Welcome Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Alert Sent",
+              "displayName": "Alert Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Delivery State",
+              "displayName": "Delivery State",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Welcome Message ID",
+              "displayName": "Welcome Message ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Alert Message ID",
+              "displayName": "Alert Message ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Execution ID",
+              "displayName": "Last Execution ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ]
+        },
+        "options": {
+          "typecast": true
+        }
+      }
+    },
+    {
+      "id": "952b3cb3-6a19-473f-af83-df5b5515e207",
+      "name": "Mark Reconciled Lead Claim",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        1120
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const pruneStore = (obj, max = 5000) => { const keys = Object.keys(obj); for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]]; };\nconst delivery = $('Build Reconciled Delivery Confirmation').item.json;\nconst store = $getWorkflowStaticData('global');\nstore.lead_intake_claims = store.lead_intake_claims || {};\npruneStore(store.lead_intake_claims);\nconst prior = store.lead_intake_claims[delivery.submission_id] || {};\nstore.lead_intake_claims[delivery.submission_id] = { ...prior, status: delivery.status, delivery_state: delivery.delivery_state, record_id: delivery.record_id, completed_at: delivery.delivery_state === 'SENT' ? new Date().toISOString() : prior.completed_at || '', first_execution_id: prior.first_execution_id || delivery.last_execution_id };\nreturn $input.item;"
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $(\"Validate AI and Build Record\").item.json.status }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "Approved"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "31ce3745-ec0d-4bbf-98a7-b23a8779f138",
+      "name": "Delivery Was Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3700,
+        620
       ]
     }
   ],
