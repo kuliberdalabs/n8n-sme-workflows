@@ -645,7 +645,7 @@
       "main": [
         [
           {
-            "node": "Respond Payment Unmatched",
+            "node": "Find Unmatched Payment Queue Row",
             "type": "main",
             "index": 0
           }
@@ -674,7 +674,7 @@
       "main": [
         [
           {
-            "node": "Respond Payment Unmatched",
+            "node": "Find Unmatched Payment Queue Row",
             "type": "main",
             "index": 0
           }
@@ -682,6 +682,57 @@
         [
           {
             "node": "Payment Already Paid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Unmatched Payment Queue Row": {
+      "main": [
+        [
+          {
+            "node": "Unmatched Payment Already Queued?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unmatched Payment Already Queued?": {
+      "main": [
+        [
+          {
+            "node": "Respond Payment Unmatched",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Unmatched Payment Queue Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Unmatched Payment Queue Row": {
+      "main": [
+        [
+          {
+            "node": "Insert Unmatched Payment Queue Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Unmatched Payment Queue Row": {
+      "main": [
+        [
+          {
+            "node": "Respond Payment Unmatched",
             "type": "main",
             "index": 0
           }
@@ -2441,7 +2492,7 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "const plannedItems = $('Claim Dunning Action').all();\nconst esc = (value) => String(value ?? '').replace(/[&<>\"']/g, ch => ({\n  '&': '&amp;',\n  '<': '&lt;',\n  '>': '&gt;',\n  '\"': '&quot;',\n  \"'\": '&#39;',\n}[ch]));\n\n// Stop logic is implicit: returning no item means no pending update, Gmail send, or sent-state update.\nreturn $input.all().flatMap((item, index) => {\n  const planned = (plannedItems[index] || {}).json || {};\n  const row = item.json || {};\n  if (!row.id) return [];\n  if (row.status === 'Paid' || row.paid_at) return [];\n  if (row.status === 'Escalated') return [];\n  if (planned.action === 'nudge' && Number(row.nudge_count || 0) >= Number(planned.next_nudge_number || 0)) {\n    return [];\n  }\n  return [{ json: {\n    ...planned,\n    ...row,\n    invoice_number_html: esc(row.invoice_number || planned.invoice_number),\n    company_html: esc(row.company || planned.company),\n    verified_email_html: esc(row.verified_email || planned.verified_email),\n    stop_chase: false,\n    stop_reason: '',\n  } }];\n});"
+        "jsCode": "const plannedItems = $('Claim Dunning Action').all();\nconst esc = (value) => String(value ?? '').replace(/[&<>\"']/g, ch => ({\n  '&': '&amp;',\n  '<': '&lt;',\n  '>': '&gt;',\n  '\"': '&quot;',\n  \"'\": '&#39;',\n}[ch]));\n\n// Stop logic is implicit: returning no item means no claim update, Gmail send, or sent-state update.\nreturn $input.all().flatMap((item, index) => {\n  const planned = (plannedItems[index] || {}).json || {};\n  const row = item.json || {};\n  if (!row.id) return [];\n  if (row.status === 'Paid' || row.paid_at) return [];\n  if (row.status === 'Escalated') return [];\n  if (planned.action === 'nudge' && Number(row.nudge_count || 0) >= Number(planned.next_nudge_number || 0)) {\n    return [];\n  }\n  return [{ json: {\n    ...planned,\n    ...row,\n    expected_status: row.status,\n    expected_claim_key: String(row.last_nudge_claim_key || ''),\n    invoice_number_html: esc(row.invoice_number || planned.invoice_number),\n    company_html: esc(row.company || planned.company),\n    verified_email_html: esc(row.verified_email || planned.verified_email),\n    stop_chase: false,\n    stop_reason: '',\n  } }];\n});"
       }
     },
     {
@@ -2456,7 +2507,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const row = $input.item.json;\nreturn { json: {\n  ...row,\n  updated_at: new Date().toISOString(),\n  review_reason: 'Nudge ' + row.next_nudge_number + ' claimed before controlled send',\n  last_execution_id: row.last_execution_id || $execution.id,\n} };"
+        "jsCode": "const row = $input.item.json;\nreturn { json: {\n  ...row,\n  status: row.expected_status,\n  updated_at: new Date().toISOString(),\n  last_nudge_claim_key: row.action_key,\n  review_reason: 'Nudge ' + row.next_nudge_number + ' claimed by action key before controlled send',\n  last_execution_id: row.last_execution_id || $execution.id,\n} };"
       }
     },
     {
@@ -2484,6 +2535,16 @@
               "keyName": "id",
               "condition": "eq",
               "keyValue": "={{ $json.id }}"
+            },
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "={{ $json.expected_status }}"
+            },
+            {
+              "keyName": "last_nudge_claim_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.expected_claim_key }}"
             }
           ]
         },
@@ -2491,11 +2552,20 @@
           "mappingMode": "defineBelow",
           "value": {
             "updated_at": "={{ $json.updated_at }}",
-            "last_nudge_claim_key": "={{ $json.action_key }}",
+            "last_nudge_claim_key": "={{ $json.last_nudge_claim_key }}",
             "review_reason": "={{ $json.review_reason }}",
             "last_execution_id": "={{ $json.last_execution_id }}"
           },
           "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
             {
               "id": "updated_at",
               "displayName": "updated_at",
@@ -2570,7 +2640,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const row = $('Build Dunning Recheck Decision').item.json;\nconst now = new Date();\nconst n = Number(row.next_nudge_number || 1);\nconst delayDays = n === 1 ? 4 : n === 2 ? 7 : 7;\nreturn { json: {\n  id: row.id,\n  status: 'Invoice Sent',\n  updated_at: now.toISOString(),\n  nudge_count: n,\n  last_nudge_number_sent: n,\n  last_nudge_at: now.toISOString(),\n  next_nudge_due_at: new Date(now.getTime() + delayDays * 24 * 60 * 60 * 1000).toISOString(),\n  last_nudge_claim_key: row.action_key,\n  review_reason: 'Controlled dunning nudge ' + n + ' sent; replay key ' + row.action_key,\n  last_execution_id: row.last_execution_id || $execution.id,\n} };"
+        "jsCode": "const row = $('Build Dunning Recheck Decision').item.json;\nconst now = new Date();\nconst n = Number(row.next_nudge_number || 1);\nconst delayDays = n === 1 ? 4 : n === 2 ? 7 : 7;\nreturn { json: {\n  id: row.id,\n  expected_status: row.expected_status,\n  status: 'Invoice Sent',\n  updated_at: now.toISOString(),\n  nudge_count: n,\n  last_nudge_number_sent: n,\n  last_nudge_at: now.toISOString(),\n  next_nudge_due_at: new Date(now.getTime() + delayDays * 24 * 60 * 60 * 1000).toISOString(),\n  last_nudge_claim_key: row.action_key,\n  review_reason: 'Controlled dunning nudge ' + n + ' sent; replay key ' + row.action_key,\n  last_execution_id: row.last_execution_id || $execution.id,\n} };"
       }
     },
     {
@@ -2598,6 +2668,16 @@
               "keyName": "id",
               "condition": "eq",
               "keyValue": "={{ $json.id }}"
+            },
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "={{ $json.expected_status }}"
+            },
+            {
+              "keyName": "last_nudge_claim_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.last_nudge_claim_key }}"
             }
           ]
         },
@@ -2843,7 +2923,7 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "const plannedItems = $('Claim Escalation Action').all();\nconst esc = (value) => String(value ?? '').replace(/[&<>\"']/g, ch => ({\n  '&': '&amp;',\n  '<': '&lt;',\n  '>': '&gt;',\n  '\"': '&quot;',\n  \"'\": '&#39;',\n}[ch]));\n\n// Stop logic is implicit: returning no item means no escalation pending update, Gmail alert, or escalated-state update.\nreturn $input.all().flatMap((item, index) => {\n  const planned = (plannedItems[index] || {}).json || {};\n  const row = item.json || {};\n  if (!row.id) return [];\n  if (row.status === 'Paid' || row.paid_at) return [];\n  if (row.status === 'Escalated') return [];\n  return [{ json: {\n    ...planned,\n    ...row,\n    action: 'escalate',\n    invoice_number_html: esc(row.invoice_number || planned.invoice_number),\n    company_html: esc(row.company || planned.company),\n    verified_email_html: esc(row.verified_email || planned.verified_email),\n  } }];\n});"
+        "jsCode": "const plannedItems = $('Claim Escalation Action').all();\nconst esc = (value) => String(value ?? '').replace(/[&<>\"']/g, ch => ({\n  '&': '&amp;',\n  '<': '&lt;',\n  '>': '&gt;',\n  '\"': '&quot;',\n  \"'\": '&#39;',\n}[ch]));\n\n// Stop logic is implicit: returning no item means no claim update, Gmail alert, or escalated-state update.\nreturn $input.all().flatMap((item, index) => {\n  const planned = (plannedItems[index] || {}).json || {};\n  const row = item.json || {};\n  if (!row.id) return [];\n  if (row.status === 'Paid' || row.paid_at) return [];\n  if (row.status === 'Escalated') return [];\n  return [{ json: {\n    ...planned,\n    ...row,\n    expected_status: row.status,\n    expected_claim_key: String(row.last_nudge_claim_key || ''),\n    action: 'escalate',\n    invoice_number_html: esc(row.invoice_number || planned.invoice_number),\n    company_html: esc(row.company || planned.company),\n    verified_email_html: esc(row.verified_email || planned.verified_email),\n  } }];\n});"
       }
     },
     {
@@ -2858,7 +2938,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const row = $input.item.json;\nconst esc = (value) => String(value ?? '').replace(/[&<>\"']/g, ch => ({\n  '&': '&amp;',\n  '<': '&lt;',\n  '>': '&gt;',\n  '\"': '&quot;',\n  \"'\": '&#39;',\n}[ch]));\nconst reason = row.high_value_stuck\n  ? 'High-value invoice stuck: gross >= 15000 PLN and age >= 14 days'\n  : 'Dunning exhausted: 3 reminders and age >= 21 days';\nreturn { json: {\n  ...row,\n  status: 'Escalation Pending Email',\n  updated_at: new Date().toISOString(),\n  review_reason: reason,\n  review_reason_html: esc(reason),\n  last_execution_id: row.last_execution_id || $execution.id,\n} };"
+        "jsCode": "const row = $input.item.json;\nconst esc = (value) => String(value ?? '').replace(/[&<>\"']/g, ch => ({\n  '&': '&amp;',\n  '<': '&lt;',\n  '>': '&gt;',\n  '\"': '&quot;',\n  \"'\": '&#39;',\n}[ch]));\nconst reason = row.high_value_stuck\n  ? 'High-value invoice stuck: gross >= 15000 PLN and age >= 14 days'\n  : 'Dunning exhausted: 3 reminders and age >= 21 days';\nreturn { json: {\n  ...row,\n  status: row.expected_status,\n  updated_at: new Date().toISOString(),\n  last_nudge_claim_key: row.action_key,\n  review_reason: reason,\n  review_reason_html: esc(reason),\n  last_execution_id: row.last_execution_id || $execution.id,\n} };"
       }
     },
     {
@@ -2886,16 +2966,25 @@
               "keyName": "id",
               "condition": "eq",
               "keyValue": "={{ $json.id }}"
+            },
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "={{ $json.expected_status }}"
+            },
+            {
+              "keyName": "last_nudge_claim_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.expected_claim_key }}"
             }
           ]
         },
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "status": "={{ $json.status }}",
             "updated_at": "={{ $json.updated_at }}",
             "review_reason": "={{ $json.review_reason }}",
-            "last_nudge_claim_key": "={{ $json.action_key }}",
+            "last_nudge_claim_key": "={{ $json.last_nudge_claim_key }}",
             "last_execution_id": "={{ $json.last_execution_id }}"
           },
           "schema": [
@@ -2982,7 +3071,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const row = $('Build Escalation Pending Update').item.json;\nconst now = new Date().toISOString();\nreturn { json: {\n  id: row.id,\n  status: 'Escalated',\n  updated_at: now,\n  escalated_at: now,\n  review_reason: row.review_reason,\n  last_execution_id: row.last_execution_id || $execution.id,\n} };"
+        "jsCode": "const row = $('Build Escalation Pending Update').item.json;\nconst now = new Date().toISOString();\nreturn { json: {\n  id: row.id,\n  expected_status: row.expected_status,\n  status: 'Escalated',\n  updated_at: now,\n  escalated_at: now,\n  last_nudge_claim_key: row.action_key,\n  review_reason: row.review_reason,\n  last_execution_id: row.last_execution_id || $execution.id,\n} };"
       }
     },
     {
@@ -3010,6 +3099,16 @@
               "keyName": "id",
               "condition": "eq",
               "keyValue": "={{ $json.id }}"
+            },
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "={{ $json.expected_status }}"
+            },
+            {
+              "keyName": "last_nudge_claim_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.last_nudge_claim_key }}"
             }
           ]
         },
@@ -3210,6 +3309,203 @@
             }
           ],
           "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "c302aa82-14ef-42bc-bdb2-b0a0fc22fa35",
+      "name": "Find Unmatched Payment Queue Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2340,
+        980
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_UNMATCHED_PAYMENT_TABLE_ID",
+          "cachedResultName": "Dunning_Unmatched_Payments"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "queue_key",
+              "condition": "eq",
+              "keyValue": "={{ $(\"Normalize Payment Event\").item.json.invoice_key + \":\" + $(\"Normalize Payment Event\").item.json.payment_event_id }}"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": 1
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "dfa85447-cb9e-4f7a-bd60-90d39d50da93",
+      "name": "Unmatched Payment Already Queued?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2600,
+        980
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.id || \"\" }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "196bf6a4-0a53-4f58-aa1b-456e2fe987ae",
+      "name": "Build Unmatched Payment Queue Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2860,
+        1040
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const payment = $('Normalize Payment Event').item.json;\nconst now = new Date().toISOString();\nreturn { json: {\n  queue_key: payment.invoice_key + ':' + payment.payment_event_id,\n  invoice_key: payment.invoice_key,\n  payment_event_id: payment.payment_event_id,\n  paid_at: payment.paid_at,\n  status: 'Needs Review',\n  review_reason: 'Payment references an invoice that is not present in Dunning_Invoices',\n  raw_event_json: payment.raw_event_json,\n  created_at: now,\n  last_execution_id: payment.last_execution_id || $execution.id,\n} };"
+      }
+    },
+    {
+      "id": "a0a42561-84c4-4455-90e7-6881d72f2b81",
+      "name": "Insert Unmatched Payment Queue Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        3120,
+        1040
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_UNMATCHED_PAYMENT_TABLE_ID",
+          "cachedResultName": "Dunning_Unmatched_Payments"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "queue_key": "={{ $json.queue_key }}",
+            "invoice_key": "={{ $json.invoice_key }}",
+            "payment_event_id": "={{ $json.payment_event_id }}",
+            "paid_at": "={{ $json.paid_at }}",
+            "status": "={{ $json.status }}",
+            "review_reason": "={{ $json.review_reason }}",
+            "raw_event_json": "={{ $json.raw_event_json }}",
+            "created_at": "={{ $json.created_at }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "queue_key",
+              "displayName": "queue_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "invoice_key",
+              "displayName": "invoice_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "payment_event_id",
+              "displayName": "payment_event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "review_reason",
+              "displayName": "review_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "raw_event_json",
+              "displayName": "raw_event_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
         }
       }
     }
