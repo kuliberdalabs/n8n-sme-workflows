@@ -588,6 +588,61 @@
           }
         ]
       ]
+    },
+    "Support Review Alert Reconciliation Sweep": {
+      "main": [
+        [
+          {
+            "node": "Find Unsent Support Review Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Unsent Support Review Alerts": {
+      "main": [
+        [
+          {
+            "node": "Build Unsent Support Review Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Unsent Support Review Alert": {
+      "main": [
+        [
+          {
+            "node": "Send Reconciled Support Review Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Reconciled Support Review Alert": {
+      "main": [
+        [
+          {
+            "node": "Build Reconciled Support Alert Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Reconciled Support Alert Update": {
+      "main": [
+        [
+          {
+            "node": "Update Reconciled Support Alert Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "nodes": [
@@ -1325,7 +1380,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const alert = $input.item.json || {};\nconst record = $('Build Draft Review Alert').item.json;\nreturn { json: { id: record.record_id, status: record.status, review_alert_sent: true, review_alert_id: alert.id || '', updated_at: new Date().toISOString(), last_execution_id: record.last_execution_id } };"
+        "jsCode": "const alert = $input.item.json || {};\nconst messageId = String(alert.id || alert.messageId || alert.message_id || '').trim();\nif (!messageId) throw new Error('support_review_alert_missing_message_id');\nconst record = $('Build Draft Review Alert').item.json;\nreturn { json: { id: record.record_id, review_alert_sent: true, review_alert_id: messageId, updated_at: new Date().toISOString(), last_execution_id: record.last_execution_id } };"
       }
     },
     {
@@ -1359,22 +1414,12 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "status": "={{ $json.status }}",
             "review_alert_sent": "={{ $json.review_alert_sent }}",
             "review_alert_id": "={{ $json.review_alert_id }}",
             "updated_at": "={{ $json.updated_at }}",
             "last_execution_id": "={{ $json.last_execution_id }}"
           },
           "schema": [
-            {
-              "id": "status",
-              "displayName": "status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
             {
               "id": "review_alert_sent",
               "displayName": "review_alert_sent",
@@ -1863,7 +1908,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const alert = $input.item.json || {};\nconst record = $('Build Escalation Review Alert').item.json;\nreturn { json: { id: record.record_id, status: record.status, review_alert_sent: true, review_alert_id: alert.id || '', updated_at: new Date().toISOString(), last_execution_id: record.last_execution_id } };"
+        "jsCode": "const alert = $input.item.json || {};\nconst messageId = String(alert.id || alert.messageId || alert.message_id || '').trim();\nif (!messageId) throw new Error('support_review_alert_missing_message_id');\nconst record = $('Build Escalation Review Alert').item.json;\nreturn { json: { id: record.record_id, review_alert_sent: true, review_alert_id: messageId, updated_at: new Date().toISOString(), last_execution_id: record.last_execution_id } };"
       }
     },
     {
@@ -1897,22 +1942,12 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "status": "={{ $json.status }}",
             "review_alert_sent": "={{ $json.review_alert_sent }}",
             "review_alert_id": "={{ $json.review_alert_id }}",
             "updated_at": "={{ $json.updated_at }}",
             "last_execution_id": "={{ $json.last_execution_id }}"
           },
           "schema": [
-            {
-              "id": "status",
-              "displayName": "status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
             {
               "id": "review_alert_sent",
               "displayName": "review_alert_sent",
@@ -3065,6 +3100,191 @@
         "responseBody": "={{ { ok: true, status: \"decision_recorded\", action: $(\"Normalize Support Approval\").item.json.action, ticket_key: $(\"Normalize Support Approval\").item.json.ticket_key } }}",
         "options": {
           "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "db411b08-8d56-4fad-b30b-c4696592d1ea",
+      "name": "Support Review Alert Reconciliation Sweep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        1160
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "b9dc3e9b-b06c-4b3b-b8d1-2c1f8064814a",
+      "name": "Find Unsent Support Review Alerts",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        260,
+        1160
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Support_Tickets"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "review_alert_sent",
+              "condition": "eq",
+              "keyValue": "={{ false }}"
+            }
+          ]
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "87da715a-88da-48fb-93be-0137ee42c105",
+      "name": "Build Unsent Support Review Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        1160
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const htmlEscape = (value) => String(value ?? '').replace(/[&<>\"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[ch]));\nconst boolish = (value) => value === true || String(value).toLowerCase() === 'true' || String(value) === '1';\nconst subjectText = (value) => String(value ?? '').replace(/[\\r\\n]+/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 180);\nconst eligible = new Set(['Draft Ready', 'Escalated']);\nreturn $input.all().flatMap((item, index) => {\n  const row = item.json || {};\n  const status = String(row.status || '');\n  if (!row.id || !eligible.has(status) || boolish(row.review_alert_sent)) return [];\n  const ticketKey = subjectText(row.ticket_key || 'unknown-ticket');\n  const queue = status === 'Draft Ready' ? 'HUMAN_REVIEW' : 'HUMAN_ESCALATION';\n  const messageHtml = [\n    '<p><strong>Support review alert retry</strong></p>',\n    '<p>Queue: ' + htmlEscape(queue) + '</p>',\n    '<p>Ticket: ' + htmlEscape(ticketKey) + '</p>',\n    '<p>Record: ' + htmlEscape(row.id) + '</p>',\n    '<p>Status: ' + htmlEscape(status) + '</p>',\n    '<p>Intent: ' + htmlEscape(row.intent || 'Other') + '</p>',\n    '<p>Question: ' + htmlEscape(row.question_summary || '') + '</p>',\n    '<p>KB source: ' + htmlEscape(row.matched_kb_title || row.matched_kb_id || '') + '</p>',\n    '<p>Draft: ' + htmlEscape(row.draft_reply || '') + '</p>',\n    '<p>Review reason: ' + htmlEscape(row.review_reason || row.validation_errors || '') + '</p>',\n    '<p>Security flags: ' + htmlEscape(row.security_flags || '') + '</p>',\n  ].join('');\n  return [{ json: { id: row.id, subject: '[TEST] Support review retry: ' + ticketKey, message_html: messageHtml }, pairedItem: { item: index } }];\n});"
+      }
+    },
+    {
+      "id": "51680ffe-c5e8-44fe-afbd-a23f8d05e179",
+      "name": "Send Reconciled Support Review Alert",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        780,
+        1160
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "ops@example.com",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.message_html }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Acme Automation"
+        }
+      }
+    },
+    {
+      "id": "8f99de11-cf11-493f-91dc-2e109bb06152",
+      "name": "Build Reconciled Support Alert Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        1160
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const alert = $input.item.json || {};\nconst messageId = String(alert.id || alert.messageId || alert.message_id || '').trim();\nif (!messageId) throw new Error('support_review_alert_missing_message_id');\nconst row = $('Build Unsent Support Review Alert').item.json;\nreturn { json: { id: row.id, review_alert_sent: true, review_alert_id: messageId, updated_at: new Date().toISOString(), last_execution_id: $execution.id } };"
+      }
+    },
+    {
+      "id": "e124bddb-9576-49a9-9c06-ba1e2a9c96ad",
+      "name": "Update Reconciled Support Alert Sent",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1300,
+        1160
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Support_Tickets"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            },
+            {
+              "keyName": "review_alert_sent",
+              "condition": "eq",
+              "keyValue": "={{ false }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "review_alert_sent": "={{ $json.review_alert_sent }}",
+            "review_alert_id": "={{ $json.review_alert_id }}",
+            "updated_at": "={{ $json.updated_at }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "review_alert_sent",
+              "displayName": "review_alert_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_alert_id",
+              "displayName": "review_alert_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
         }
       }
     }

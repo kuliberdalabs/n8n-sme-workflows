@@ -9,6 +9,7 @@ Turns repeated support questions into knowledge-base-grounded **draft** replies.
 - **KB miss:** escalation row (`Insert Support Escalation`) + ops alert email. No model call, no invented answer.
 - **KB match:** `Draft Grounded Reply` (OpenAI) drafts from the matched KB entry + redacted question only. `Validate Grounded Draft` then checks the output: closed intent enum, `cited_kb_id` must equal the retrieved source, confidence ≥ 0.62, and a denylist of disclosure- and action-phrasing. Pass → `Draft Ready` row + review alert; fail → `Escalated`.
 - **Approval trigger:** `POST /support-approval-test` with its own token. Actions are a closed enum. `approve`/`edit` on a ticket in `Draft Ready` status (with an `approved_reply` of 20+ characters) sends the reply to the configured test inbox, records the sent state, and optionally captures the approved Q&A pair for later KB curation. `reject`/`escalate` persist the decision on the ticket row (`Rejected`/`Escalated`) and respond `decision_recorded` without sending anything.
+- **Review-alert reconciliation:** the hourly `Support Review Alert Reconciliation Sweep` retries `Draft Ready` or `Escalated` rows whose `review_alert_sent` flag is still false. It does not make support replies sendable from the intake graph.
 
 ## Flow
 
@@ -27,6 +28,8 @@ flowchart TD
   T2 -- yes --> ACT{Sends reply?}
   ACT -- approve or edit --> SEND(Reply sent)
   ACT -- reject or escalate --> DEC(Decision recorded)
+  RS[Hourly review-alert sweep] --> UA{Unsent review alert?}
+  UA -- yes --> OPS(Notify controlled ops inbox)
 ```
 
 ## Design decisions
@@ -36,6 +39,7 @@ flowchart TD
 - **Recipients are constants.** Every Gmail node uses a fixed configured address. Nothing from the request payload or the model output ever selects a recipient.
 - **Grounding is enforced, not assumed.** The draft must cite the exact KB entry that retrieval matched (`cited_kb_id` check), so the model cannot answer from its own knowledge and pass it off as KB content.
 - **Replay protection on both webhooks.** Intake uses a two-layer duplicate check (in-flow claim + Data Table lookup); approval claims a key from ticket/action/reply and requires `Draft Ready` status, so a double-click cannot double-send.
+- **Durable alert recovery.** Draft and escalation rows are persisted with `review_alert_sent=false`. All alert confirmation nodes require a non-empty Gmail provider message id before changing that flag. The retry update compares the unsent flag and updates only alert metadata, so it cannot restore a stale ticket status over a concurrent approval decision.
 
 ## Setup
 
@@ -50,4 +54,5 @@ flowchart TD
 
 - The KB is an inline demo array with 4 sample entries. Production needs a maintained KB store with an owner, review dates, and a promotion process for captured Q&A pairs.
 - It is not connected to a real support mailbox — intake is a webhook, and approved replies go to the single configured address, not to the original customer, until you deliberately rewire that.
+- Gmail send and the following Data Table update are not transactional. A successful Gmail call followed by an update failure, or overlapping sweeps, can duplicate an alert; the stored provider message id supports audit and recovery but not cross-system exactly-once delivery.
 - Token comparison is plain string equality and the dedup claims are not atomic locks. Before public or high-concurrency exposure, front the webhooks with a platform auth layer and add unique-key constraints or a queue.

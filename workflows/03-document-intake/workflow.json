@@ -355,6 +355,61 @@
           }
         ]
       ]
+    },
+    "Document Review Alert Reconciliation Sweep": {
+      "main": [
+        [
+          {
+            "node": "Find Unsent Document Review Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Unsent Document Review Alerts": {
+      "main": [
+        [
+          {
+            "node": "Build Unsent Document Review Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Unsent Document Review Alert": {
+      "main": [
+        [
+          {
+            "node": "Send Reconciled Document Review Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Reconciled Document Review Alert": {
+      "main": [
+        [
+          {
+            "node": "Build Reconciled Document Alert Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Reconciled Document Alert Update": {
+      "main": [
+        [
+          {
+            "node": "Update Reconciled Document Alert Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "nodes": [
@@ -1764,7 +1819,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const row = $('Insert AI Needs Review').item.json;\nconst email = $input.item.json || {};\nreturn { json: { id: row.id, status: 'Needs Review', review_alert_sent: true, review_alert_id: email.id || '', updated_at: new Date().toISOString(), last_execution_id: $('Validate AI Extraction').item.json.last_execution_id } };"
+        "jsCode": "const row = $('Insert AI Needs Review').item.json;\nconst email = $input.item.json || {};\nconst messageId = String(email.id || email.messageId || email.message_id || '').trim();\nif (!messageId) throw new Error('document_review_alert_missing_message_id');\nreturn { json: { id: row.id, review_alert_sent: true, review_alert_id: messageId, updated_at: new Date().toISOString(), last_execution_id: $('Validate AI Extraction').item.json.last_execution_id } };"
       }
     },
     {
@@ -1798,22 +1853,12 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "status": "={{ $json.status }}",
             "review_alert_sent": "={{ $json.review_alert_sent }}",
             "review_alert_id": "={{ $json.review_alert_id }}",
             "updated_at": "={{ $json.updated_at }}",
             "last_execution_id": "={{ $json.last_execution_id }}"
           },
           "schema": [
-            {
-              "id": "status",
-              "displayName": "status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
             {
               "id": "review_alert_sent",
               "displayName": "review_alert_sent",
@@ -2227,7 +2272,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const row = $('Insert OCR Needs Review').item.json;\nconst email = $input.item.json || {};\nreturn { json: { id: row.id, status: 'Needs Review', review_alert_sent: true, review_alert_id: email.id || '', updated_at: new Date().toISOString(), last_execution_id: $('Normalize Document Intake').item.json.last_execution_id } };"
+        "jsCode": "const row = $('Insert OCR Needs Review').item.json;\nconst email = $input.item.json || {};\nconst messageId = String(email.id || email.messageId || email.message_id || '').trim();\nif (!messageId) throw new Error('document_review_alert_missing_message_id');\nreturn { json: { id: row.id, review_alert_sent: true, review_alert_id: messageId, updated_at: new Date().toISOString(), last_execution_id: $('Normalize Document Intake').item.json.last_execution_id } };"
       }
     },
     {
@@ -2261,22 +2306,12 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "status": "={{ $json.status }}",
             "review_alert_sent": "={{ $json.review_alert_sent }}",
             "review_alert_id": "={{ $json.review_alert_id }}",
             "updated_at": "={{ $json.updated_at }}",
             "last_execution_id": "={{ $json.last_execution_id }}"
           },
           "schema": [
-            {
-              "id": "status",
-              "displayName": "status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
             {
               "id": "review_alert_sent",
               "displayName": "review_alert_sent",
@@ -2363,6 +2398,196 @@
         "responseBody": "={{ { ok: false, status: \"unauthorized\", reason: $json.auth_reason } }}",
         "options": {
           "responseCode": 401
+        }
+      }
+    },
+    {
+      "id": "f39e028e-5b9e-49e1-8298-697eb7f98b99",
+      "name": "Document Review Alert Reconciliation Sweep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        880
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a62e4fec-cb34-4e9d-85f7-42755b21cb21",
+      "name": "Find Unsent Document Review Alerts",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        260,
+        880
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Intake_Documents"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "Needs Review"
+            },
+            {
+              "keyName": "review_alert_sent",
+              "condition": "eq",
+              "keyValue": "={{ false }}"
+            }
+          ]
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "19f128d3-5860-42af-8bb5-0be901877102",
+      "name": "Build Unsent Document Review Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        880
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const htmlEscape = (value) => String(value ?? '').replace(/[&<>\"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[ch]));\nconst boolish = (value) => value === true || String(value).toLowerCase() === 'true' || String(value) === '1';\nconst subjectText = (value) => String(value ?? '').replace(/[\\r\\n]+/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 180);\nreturn $input.all().flatMap((item, index) => {\n  const row = item.json || {};\n  if (!row.id || String(row.status || '') !== 'Needs Review' || boolish(row.review_alert_sent)) return [];\n  const filename = subjectText(row.filename || 'unnamed-document');\n  const reason = String(row.review_reason || row.validation_errors || 'human_review_required');\n  const messageHtml = [\n    '<p><strong>Document review alert retry</strong></p>',\n    '<p>Filename: ' + htmlEscape(filename) + '</p>',\n    '<p>Type: ' + htmlEscape(row.document_type || 'Unknown') + '</p>',\n    '<p>Party: ' + htmlEscape(row.party_name || '') + '</p>',\n    '<p>Confidence: ' + htmlEscape(row.confidence ?? '') + '</p>',\n    '<p>Reason: ' + htmlEscape(reason) + '</p>',\n    '<p>Safe review path: ' + htmlEscape(row.archive_path || '') + '</p>',\n    '<p>Record: ' + htmlEscape(row.id) + '</p>',\n  ].join('');\n  return [{ json: { id: row.id, subject: '[TEST] Document review retry: ' + filename, message_html: messageHtml }, pairedItem: { item: index } }];\n});"
+      }
+    },
+    {
+      "id": "e9f6b55a-c897-41ce-a29f-1b1e298efa72",
+      "name": "Send Reconciled Document Review Alert",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        780,
+        880
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "ops@example.com",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.message_html }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Acme Automation"
+        }
+      }
+    },
+    {
+      "id": "520d4f65-e444-42cb-ac4a-7af0a927f2ab",
+      "name": "Build Reconciled Document Alert Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        880
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const email = $input.item.json || {};\nconst messageId = String(email.id || email.messageId || email.message_id || '').trim();\nif (!messageId) throw new Error('document_review_alert_missing_message_id');\nconst row = $('Build Unsent Document Review Alert').item.json;\nreturn { json: { id: row.id, review_alert_sent: true, review_alert_id: messageId, updated_at: new Date().toISOString(), last_execution_id: $execution.id } };"
+      }
+    },
+    {
+      "id": "318bff2b-76fa-4146-9a41-e5f5ef5bbf6c",
+      "name": "Update Reconciled Document Alert Sent",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1300,
+        880
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Intake_Documents"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            },
+            {
+              "keyName": "review_alert_sent",
+              "condition": "eq",
+              "keyValue": "={{ false }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "review_alert_sent": "={{ $json.review_alert_sent }}",
+            "review_alert_id": "={{ $json.review_alert_id }}",
+            "updated_at": "={{ $json.updated_at }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "review_alert_sent",
+              "displayName": "review_alert_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_alert_id",
+              "displayName": "review_alert_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
         }
       }
     }
