@@ -272,28 +272,6 @@
         ]
       ]
     },
-    "Insert Webhook Summary Row": {
-      "main": [
-        [
-          {
-            "node": "Send Controlled Webhook Summary",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Insert Runtime Summary Row": {
-      "main": [
-        [
-          {
-            "node": "Send Controlled Runtime Summary",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Send Controlled Webhook Summary": {
       "main": [
         [
@@ -420,6 +398,204 @@
         [
           {
             "node": "Run Runtime Reconciliation Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Webhook Summary Row": {
+      "main": [
+        [
+          {
+            "node": "Read Back Webhook Transaction Writes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Back Webhook Transaction Writes": {
+      "main": [
+        [
+          {
+            "node": "Read Back Webhook Invoice Writes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Back Webhook Invoice Writes": {
+      "main": [
+        [
+          {
+            "node": "Read Back Webhook Allocation Writes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Back Webhook Allocation Writes": {
+      "main": [
+        [
+          {
+            "node": "Read Back Webhook Review Writes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Back Webhook Review Writes": {
+      "main": [
+        [
+          {
+            "node": "Read Back Webhook Paid Signal Writes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Back Webhook Paid Signal Writes": {
+      "main": [
+        [
+          {
+            "node": "Read Back Webhook Summary Writes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Back Webhook Summary Writes": {
+      "main": [
+        [
+          {
+            "node": "Verify Webhook Persistence Readback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Webhook Persistence Readback": {
+      "main": [
+        [
+          {
+            "node": "Commit Webhook Seen Markers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Commit Webhook Seen Markers": {
+      "main": [
+        [
+          {
+            "node": "Send Controlled Webhook Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Runtime Summary Row": {
+      "main": [
+        [
+          {
+            "node": "Read Back Runtime Transaction Writes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Back Runtime Transaction Writes": {
+      "main": [
+        [
+          {
+            "node": "Read Back Runtime Invoice Writes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Back Runtime Invoice Writes": {
+      "main": [
+        [
+          {
+            "node": "Read Back Runtime Allocation Writes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Back Runtime Allocation Writes": {
+      "main": [
+        [
+          {
+            "node": "Read Back Runtime Review Writes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Back Runtime Review Writes": {
+      "main": [
+        [
+          {
+            "node": "Read Back Runtime Paid Signal Writes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Back Runtime Paid Signal Writes": {
+      "main": [
+        [
+          {
+            "node": "Read Back Runtime Summary Writes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Back Runtime Summary Writes": {
+      "main": [
+        [
+          {
+            "node": "Verify Runtime Persistence Readback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Runtime Persistence Readback": {
+      "main": [
+        [
+          {
+            "node": "Commit Runtime Seen Markers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Commit Runtime Seen Markers": {
+      "main": [
+        [
+          {
+            "node": "Send Controlled Runtime Summary",
             "type": "main",
             "index": 0
           }
@@ -569,7 +745,7 @@
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst crypto = require('crypto');\nconst root = $input.item.json || {};\nconst now = root.now_utc || new Date().toISOString();\nconst collapse = (value) => String(value ?? '').replace(/\\s+/g, ' ').trim();\nconst esc = (value) => collapse(value).replace(/[&<>\"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[ch]));\nconst hash = (value) => crypto.createHash('sha256').update(String(value)).digest('hex');\nconst money = (value) => Math.round(Number(value) * 100) / 100;\nconst norm = (value) => collapse(value).toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');\nconst normText = (value) => norm(value).replace(/[^a-z0-9]+/g, ' ').trim();\nconst tokens = (value) => normText(value).split(/\\s+/).filter(Boolean);\nconst tokenKey = (value) => tokens(value).join('|');\nconst hasTokenSubsequence = (haystackValue, needleValue) => {\n  const hay = tokens(haystackValue);\n  const needle = tokens(needleValue);\n  if (!needle.length || hay.length < needle.length) return false;\n  for (let i = 0; i <= hay.length - needle.length; i++) {\n    let ok = true;\n    for (let j = 0; j < needle.length; j++) if (hay[i + j] !== needle[j]) ok = false;\n    if (ok) return true;\n  }\n  return false;\n};\nconst tokenSetContains = (haystackValue, needleValue) => {\n  const hay = new Set(tokens(haystackValue));\n  const needle = tokens(needleValue);\n  return needle.length > 0 && needle.every((t) => hay.has(t));\n};\nconst invoiceKey = (jobId) => jobId ? hash('invoice.v1\\n' + collapse(jobId)) : 'unmapped';\nconst hasMojibake = (value) => /(?:Ã|Å|Ä|Â)/.test(String(value || ''));\nconst evidence = (obj) => JSON.stringify(obj).slice(0, 4500);\nconst staticData = $getWorkflowStaticData ? $getWorkflowStaticData('global') : {};\nstaticData.recon_seen_transactions = staticData.recon_seen_transactions || {};\npruneStore(staticData.recon_seen_transactions);\nstaticData.recon_seen_natural = staticData.recon_seen_natural || {};\npruneStore(staticData.recon_seen_natural);\nstaticData.recon_seen_signals = staticData.recon_seen_signals || {};\npruneStore(staticData.recon_seen_signals);\nconst amountTolerance = Number.isFinite(Number(root.amount_tolerance_grosz)) ? Math.max(0, Number(root.amount_tolerance_grosz)) / 100 : 0;\nconst amountsEqual = (a, b) => Math.abs(money(a) - money(b)) <= amountTolerance;\nconst seenExactInBatch = new Set();\nconst seenNaturalInBatch = new Map();\nconst existingTransactionKeys = new Set((Array.isArray(root.existing_transactions) ? root.existing_transactions : []).map((row) => collapse(row.transaction_key || row.exact_transaction_key || '')).filter(Boolean));\nconst transactions = [];\nconst invoiceRows = [];\nconst allocations = [];\nconst reviews = [];\nconst signals = [];\nconst configWarnings = [];\nconst invoices = (Array.isArray(root.open_invoices) ? root.open_invoices : []).map((inv) => {\n  const rawClientKey = norm(inv.client_key || '');\n  const validClientKey = rawClientKey.length >= 3 ? rawClientKey : '';\n  if (!validClientKey) configWarnings.push({ type: 'invalid_client_key', invoice_number: collapse(inv.invoice_number || ''), client_name: collapse(inv.client_name || '') });\n  const explicitInvoice = collapse(inv.invoice_key || '');\n  const jobId = collapse(inv.job_id || '');\n  const mappingStatus = explicitInvoice || jobId ? 'mapped' : 'unmapped';\n  const row = {\n    invoice_key: explicitInvoice || (jobId ? invoiceKey(jobId) : hash('recon:invoice:' + rawClientKey + ':' + inv.invoice_number)),\n    job_id: jobId,\n    client_key: validClientKey,\n    client_name: collapse(inv.client_name || inv.client_key || ''),\n    invoice_number: collapse(inv.invoice_number || ''),\n    gross_amount: money(inv.gross_amount || inv.open_amount || 0),\n    open_amount: money(inv.open_amount || inv.gross_amount || 0),\n    currency: collapse(inv.currency || 'PLN').toUpperCase(),\n    status: collapse(inv.status || 'Open'),\n    due_date: collapse(inv.due_date || ''),\n    paid_signal_status: mappingStatus === 'mapped' ? 'not_signalled' : 'unmapped_invoice_key',\n    smoke_tag: collapse(root.smoke_tag || ''),\n    created_at_utc: now,\n    last_execution_id: $execution.id,\n  };\n  invoiceRows.push(row);\n  return row;\n});\nconst clientKeys = new Set(invoices.map((inv) => inv.client_key).filter(Boolean));\nconst aliasRows = [];\nfor (const a of Array.isArray(root.payer_aliases) ? root.payer_aliases : []) {\n  const aliasName = collapse(a.payer_name || a.alias || '');\n  const aliasNorm = normText(aliasName);\n  const clientKey = norm(a.client_key || '');\n  if (!aliasNorm || aliasNorm.length < 3 || !clientKey || clientKey.length < 3 || !clientKeys.has(clientKey)) {\n    configWarnings.push({ type: 'invalid_payer_alias', alias: aliasName, client_key: clientKey });\n    continue;\n  }\n  aliasRows.push({ alias_name: aliasName, alias_norm: aliasNorm, client_key: clientKey });\n}\nconst remainingOpen = new Map(invoices.map((inv) => [inv.invoice_key, inv.open_amount]));\nconst partialTouched = new Set();\nconst isOpenInvoice = (inv) => inv && inv.client_key && remainingOpen.get(inv.invoice_key) > 0 && !/^paid$/i.test(inv.status);\nconst openForClient = (clientKey) => invoices.filter((inv) => inv.client_key === clientKey && isOpenInvoice(inv));\nconst collectClientCandidates = (row) => {\n  const payer = collapse(row.payer_name || '');\n  const matches = new Map();\n  for (const alias of aliasRows) {\n    if (normText(payer) === alias.alias_norm || tokenSetContains(payer, alias.alias_name)) matches.set(alias.client_key, { source: 'explicit_alias', alias: alias.alias_name });\n  }\n  for (const inv of invoices) {\n    if (!inv.client_key) continue;\n    if (tokenSetContains(payer, inv.client_key) || (inv.client_name && tokenSetContains(payer, inv.client_name))) matches.set(inv.client_key, { source: 'client_catalog', client_name: inv.client_name });\n  }\n  return Array.from(matches.entries()).map(([client_key, meta]) => ({ client_key, ...meta }));\n};\nconst exactFingerprint = (row) => collapse(row.bank_txn_id) ? hash('recon:bank-txn-id:' + norm(row.source_bank) + ':' + norm(row.source_account_ref) + ':' + collapse(row.bank_txn_id)) : '';\nconst naturalFingerprint = (row) => hash('recon:bank-natural:' + [row.booking_date, money(row.amount || 0), row.currency, norm(row.payer_iban || '') || norm(row.payer_name)].join('|'));\nconst candidateDetails = (candidates) => (candidates || []).map((c) => ({ invoice_key: c.invoice_key, invoice_number: c.invoice_number, open_amount: remainingOpen.get(c.invoice_key) ?? c.open_amount, due_date: c.due_date, client_key: c.client_key }));\nconst addReview = (tx, reason, summary, candidates, facts) => {\n  const details = candidateDetails(candidates);\n  reviews.push({\n    review_key: hash('recon:review:' + tx.transaction_key + ':' + reason),\n    transaction_key: tx.transaction_key,\n    queue_reason: reason,\n    human_summary: summary,\n    candidate_invoice_keys: details.map((c) => c.invoice_key).join(','),\n    candidate_invoice_numbers: details.map((c) => c.invoice_number).join(','),\n    candidate_invoice_amounts: details.map((c) => c.open_amount).join(','),\n    candidate_invoice_due_dates: details.map((c) => c.due_date).join(','),\n    candidate_invoice_details_json: evidence(details),\n    evidence_json: evidence({ ...facts, candidates: details }),\n    smoke_tag: tx.smoke_tag,\n    created_at_utc: now,\n    last_execution_id: $execution.id,\n  });\n};\nconst allocate = (tx, inv, amount, status, confidence, facts) => {\n  const allocAmount = money(amount);\n  const allocationKey = hash('recon:allocation:' + tx.transaction_key + ':' + inv.invoice_key + ':' + allocAmount);\n  allocations.push({\n    allocation_key: allocationKey,\n    transaction_key: tx.transaction_key,\n    invoice_key: inv.invoice_key,\n    invoice_key: inv.invoice_key,\n    allocated_amount: allocAmount,\n    allocation_status: status,\n    confidence_label: confidence,\n    evidence_json: evidence(facts),\n    smoke_tag: tx.smoke_tag,\n    created_at_utc: now,\n    last_execution_id: $execution.id,\n  });\n  remainingOpen.set(inv.invoice_key, money((remainingOpen.get(inv.invoice_key) || 0) - allocAmount));\n  if (status === 'matched_partial_no_paid_signal') partialTouched.add(inv.invoice_key);\n  if (status === 'matched_full' && inv.invoice_key !== 'unmapped') {\n    const eventId = 'recon-' + allocationKey.slice(0, 24);\n    const signalKey = hash('recon:paid-signal:' + inv.invoice_key + ':' + eventId);\n    if (!staticData.recon_seen_signals[signalKey]) {\n      staticData.recon_seen_signals[signalKey] = now;\n      signals.push({\n        signal_key: signalKey,\n        invoice_key: inv.invoice_key,\n        invoice_payment_event_id: eventId,\n        transaction_key: tx.transaction_key,\n        invoice_key: inv.invoice_key,\n        event_type: 'invoice.paid',\n        paid_at: tx.booking_date || now,\n        payload_json: evidence({ event_type: 'invoice.paid', invoice_key: inv.invoice_key, source_invoice_key: inv.invoice_key, job_id: inv.job_id, invoice_payment_event_id: eventId, payment_event_id: eventId, paid_at: tx.booking_date || now, mapping_status: 'mapped', source: 'Recon_Paid_Signals' }),\n        signal_status: 'pending_invoice_delivery',\n        smoke_tag: tx.smoke_tag,\n        created_at_utc: now,\n        last_execution_id: $execution.id,\n      });\n    }\n  }\n};\nconst mentionedOpenInvoices = (title, currency) => invoices.filter((inv) => isOpenInvoice(inv) && inv.invoice_number && (!currency || collapse(inv.currency || 'PLN') === currency) && hasTokenSubsequence(title, inv.invoice_number));\nconst mentionedClosedInvoices = (title) => invoices.filter((inv) => inv.invoice_number && !isOpenInvoice(inv) && hasTokenSubsequence(title, inv.invoice_number));\nconst subsetSums = (arr, target, maxSize = 3) => {\n  const out = [];\n  const walk = (start, chosen, sum) => {\n    if (chosen.length > 0 && amountsEqual(sum, target)) out.push([...chosen]);\n    if (chosen.length >= maxSize || sum >= target + amountTolerance) return;\n    for (let i = start; i < arr.length; i++) walk(i + 1, [...chosen, arr[i]], money(sum + (remainingOpen.get(arr[i].invoice_key) || 0)));\n  };\n  walk(0, [], 0);\n  return out;\n};\nfor (const raw of Array.isArray(root.bank_rows) ? root.bank_rows : []) {\n  const amount = Number(raw.amount);\n  const currency = collapse(raw.currency || 'PLN').toUpperCase();\n  const rawHash = hash('recon:raw-row:' + JSON.stringify(raw));\n  const exactKey = exactFingerprint(raw);\n  const naturalKey = naturalFingerprint({ ...raw, amount, currency });\n  const txKey = exactKey || naturalKey;\n  const tx = {\n    transaction_key: txKey,\n    import_run_key: collapse(root.import_run_key || ('recon-' + $execution.id)),\n    source_bank: collapse(raw.source_bank || ''),\n    source_account_ref: collapse(raw.source_account_ref || ''),\n    source_file_id: collapse(raw.source_file_id || ''),\n    source_row_number: Number(raw.source_row_number || 0),\n    booking_date: collapse(raw.booking_date || ''),\n    amount: Number.isFinite(amount) ? money(amount) : 0,\n    currency,\n    payer_name: collapse(raw.payer_name || ''),\n    payer_iban_hash: raw.payer_iban ? hash('iban:' + collapse(raw.payer_iban)) : '',\n    title: collapse(raw.title || ''),\n    raw_row_hash: rawHash,\n    match_status: 'held_for_review',\n    held_reason: '',\n    evidence_json: '',\n    smoke_tag: collapse(root.smoke_tag || ''),\n    created_at_utc: now,\n    last_execution_id: $execution.id,\n  };\n  const facts = { scenario_id: raw.scenario_id || '', source_file_id: tx.source_file_id, source_row_number: tx.source_row_number, amount: tx.amount, currency, title: tx.title, payer_name: tx.payer_name, exact_transaction_key: exactKey, natural_fingerprint: naturalKey };\n  if (!tx.booking_date || !Number.isFinite(amount) || amount <= 0 || !currency) {\n    tx.match_status = 'malformed_held';\n    tx.held_reason = 'malformed_csv_row';\n    tx.evidence_json = evidence({ ...facts, failure: 'required bank row fields missing or invalid' });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Malformed bank CSV row held before matching.', [], facts);\n    continue;\n  }\n  const duplicateKey = txKey;\n  const durableDuplicate = existingTransactionKeys.has(duplicateKey);\n  const staticDuplicate = Boolean(staticData.recon_seen_transactions[duplicateKey]);\n  const batchExactDuplicate = Boolean(exactKey && seenExactInBatch.has(exactKey));\n  if (durableDuplicate || staticDuplicate || batchExactDuplicate) {\n    tx.match_status = 'duplicate_suppressed';\n    tx.held_reason = 'duplicate_statement_import';\n    tx.evidence_json = evidence({ ...facts, duplicate_key: duplicateKey, duplicate_layer: durableDuplicate ? 'durable_existing_transactions' : 'static_or_batch', duplicate_identity: exactKey ? 'exact_bank_transaction_id' : 'natural_transaction_key' });\n    transactions.push(tx);\n    continue;\n  }\n  const naturalCollision = Boolean(!exactKey && (seenNaturalInBatch.has(naturalKey) || staticData.recon_seen_natural[naturalKey]));\n  if (naturalCollision) {\n    const previous = seenNaturalInBatch.get(naturalKey) || { source: 'existing_or_static' };\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'possible_cross_bank_duplicate';\n    tx.evidence_json = evidence({ ...facts, previous, identity_rule: 'booking_date_amount_currency_counterparty_without_title' });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Possible cross-bank duplicate held; title is evidence only and no invoice is marked paid.', [], { ...facts, previous });\n    staticData.recon_seen_transactions[tx.transaction_key] = now;\n    continue;\n  }\n  if (exactKey) seenExactInBatch.add(exactKey);\n  seenNaturalInBatch.set(naturalKey, { scenario_id: raw.scenario_id || '', source_bank: tx.source_bank, source_file_id: tx.source_file_id, source_row_number: tx.source_row_number, exact_transaction_key: exactKey || '' });\n  staticData.recon_seen_transactions[tx.transaction_key] = now;\n  staticData.recon_seen_natural[naturalKey] = now;\n  if (hasMojibake(raw.payer_name) || hasMojibake(raw.title)) {\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'encoding_garbage_bank_export';\n    tx.evidence_json = evidence({ ...facts, encoding: 'mojibake markers present' });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Bank export encoding is damaged; hold for human decoding.', [], facts);\n    continue;\n  }\n  const clientCandidates = collectClientCandidates(raw);\n  if (clientCandidates.length > 1) {\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'ambiguous_payer_multiple_clients';\n    tx.evidence_json = evidence({ ...facts, client_candidates: clientCandidates });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Payer identity matches more than one client; no invoice is marked paid.', clientCandidates.flatMap((c) => openForClient(c.client_key)), { ...facts, client_candidates: clientCandidates });\n    continue;\n  }\n  const clientKey = clientCandidates[0]?.client_key || '';\n  const clientInvoices = clientKey ? openForClient(clientKey) : [];\n  const mentioned = mentionedOpenInvoices(raw.title || '', collapse(raw.currency || 'PLN'));\n  const mentionedClosed = mentionedClosedInvoices(raw.title || '');\n  if (!mentioned.length && mentionedClosed.length) {\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'invoice_number_not_open';\n    tx.evidence_json = evidence({ ...facts, closed_invoice_numbers: mentionedClosed.map((i) => i.invoice_number) });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Invoice number appears in title but it is not open; no dunning stop signal emitted.', mentionedClosed, facts);\n    continue;\n  }\n  if (!clientKey && mentioned.length === 0) {\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'unknown_or_invalid_payer_no_invoice_number';\n    tx.evidence_json = evidence({ ...facts, config_warning_count: configWarnings.length });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Unknown or invalid payer and no usable open invoice number; no dunning stop signal emitted.', [], facts);\n    continue;\n  }\n  if (mentioned.length) {\n    const totalOpen = money(mentioned.reduce((sum, inv) => sum + (remainingOpen.get(inv.invoice_key) || 0), 0));\n    if (tx.amount > totalOpen && !amountsEqual(tx.amount, totalOpen)) {\n      tx.match_status = 'held_for_review';\n      tx.held_reason = 'overpayment_requires_policy';\n      tx.evidence_json = evidence({ ...facts, total_open: totalOpen, mentioned_invoice_numbers: mentioned.map((i) => i.invoice_number) });\n      transactions.push(tx);\n      addReview(tx, tx.held_reason, 'Payment exceeds mentioned open invoice total; hold until overpayment policy is known.', mentioned, facts);\n      continue;\n    }\n    if (tx.amount < totalOpen && !amountsEqual(tx.amount, totalOpen)) {\n      tx.match_status = 'partial_matched_no_paid_signal';\n      tx.held_reason = 'partial_payment_no_paid_signal';\n      tx.evidence_json = evidence({ ...facts, mentioned_invoice_numbers: mentioned.map((i) => i.invoice_number), total_open: totalOpen });\n      transactions.push(tx);\n      if (mentioned.length === 1) allocate(tx, mentioned[0], tx.amount, 'matched_partial_no_paid_signal', 'deterministic_invoice_number_partial', facts);\n      addReview(tx, tx.held_reason, 'Partial payment recorded as evidence but invoice is not marked paid.', mentioned, facts);\n      continue;\n    }\n    if (mentioned.some((inv) => partialTouched.has(inv.invoice_key))) {\n      tx.match_status = 'partial_matched_no_paid_signal';\n      tx.held_reason = 'partial_payment_sequence_no_paid_signal';\n      tx.evidence_json = evidence({ ...facts, mentioned_invoice_numbers: mentioned.map((i) => i.invoice_number), total_open: totalOpen });\n      transactions.push(tx);\n      if (mentioned.length === 1) allocate(tx, mentioned[0], tx.amount, 'matched_partial_no_paid_signal', 'intrabatch_partial_sequence', facts);\n      addReview(tx, tx.held_reason, 'Second same-batch partial would close the invoice only cumulatively; held for human confirmation and no paid signal emitted.', mentioned, facts);\n      continue;\n    }\n    tx.match_status = mentioned.length > 1 ? 'matched_full_multi_invoice' : 'matched_full_single_invoice';\n    tx.held_reason = '';\n    tx.evidence_json = evidence({ ...facts, matched_invoice_numbers: mentioned.map((i) => i.invoice_number), total_open: totalOpen });\n    transactions.push(tx);\n    for (const inv of mentioned) allocate(tx, inv, remainingOpen.get(inv.invoice_key) || inv.open_amount, 'matched_full', mentioned.length > 1 ? 'deterministic_invoice_numbers_total_exact' : 'deterministic_invoice_number_amount_exact', facts);\n    continue;\n  }\n  const sameAmountCandidates = clientInvoices.filter((inv) => inv.currency === currency && amountsEqual(remainingOpen.get(inv.invoice_key) || 0, tx.amount));\n  if (sameAmountCandidates.length > 1) {\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'ambiguous_same_amount_open_invoices';\n    tx.evidence_json = evidence({ ...facts, candidate_invoice_numbers: sameAmountCandidates.map((c) => c.invoice_number) });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Same amount fits more than one open invoice; false match risk is higher than no match.', sameAmountCandidates, facts);\n    continue;\n  }\n  if (sameAmountCandidates.length === 1) {\n    const alternatives = subsetSums(clientInvoices.filter((inv) => inv.invoice_key !== sameAmountCandidates[0].invoice_key), tx.amount, 3).filter((set) => set.length >= 2);\n    if (alternatives.length > 0) {\n      tx.match_status = 'held_for_review';\n      tx.held_reason = 'ambiguous_subset_sum';\n      tx.evidence_json = evidence({ ...facts, exact_invoice: sameAmountCandidates[0].invoice_number, alternative_subsets: alternatives.map((set) => set.map((i) => i.invoice_number)) });\n      transactions.push(tx);\n      addReview(tx, tx.held_reason, 'Amount fits one invoice and also another invoice subset; held instead of pick-first.', [sameAmountCandidates[0]].concat(alternatives.flat()), facts);\n      continue;\n    }\n    tx.match_status = 'matched_full_single_invoice';\n    tx.held_reason = '';\n    tx.evidence_json = evidence({ ...facts, matched_invoice_number: sameAmountCandidates[0].invoice_number });\n    transactions.push(tx);\n    allocate(tx, sameAmountCandidates[0], tx.amount, 'matched_full', 'deterministic_alias_amount_unique', facts);\n    continue;\n  }\n  tx.match_status = 'held_for_review';\n  tx.held_reason = 'below_threshold_no_safe_match';\n  tx.evidence_json = evidence(facts);\n  transactions.push(tx);\n  addReview(tx, tx.held_reason, 'Below matching threshold: do nothing irreversible and give evidence to a human.', mentioned.concat(clientInvoices), facts);\n}\nconst needsReview = transactions.filter((t) => t.match_status.includes('held') || t.match_status === 'malformed_held' || t.match_status === 'partial_matched_no_paid_signal');\nconst existingOpenReviews = (Array.isArray(root.existing_review_rows) ? root.existing_review_rows : []).filter((row) => !row.resolved_at_utc);\nconst ageDays = (created) => {\n  const ms = Date.parse(now) - Date.parse(created || now);\n  return Number.isFinite(ms) && ms > 0 ? Math.floor(ms / 86400000) : 0;\n};\nconst oldestAge = Math.max(0, ...reviews.map((r) => ageDays(r.created_at_utc)), ...existingOpenReviews.map((r) => ageDays(r.created_at_utc)));\nconst simulatedWriteFailures = root.simulated_write_failures && typeof root.simulated_write_failures === 'object' ? root.simulated_write_failures : {};\nconst writeFailureCount = Object.values(simulatedWriteFailures).reduce((sum, value) => sum + (Number(value) || 0), 0);\nconst counts = {\n  total_rows: transactions.length,\n  auto_matched_count: transactions.filter((t) => /^matched_full/.test(t.match_status)).length,\n  held_count: needsReview.length,\n  duplicate_count: transactions.filter((t) => t.match_status === 'duplicate_suppressed').length,\n  malformed_count: transactions.filter((t) => t.match_status === 'malformed_held').length,\n  partial_count: transactions.filter((t) => t.match_status === 'partial_matched_no_paid_signal').length,\n  paid_signal_count: signals.length,\n  needs_review_count: needsReview.length,\n  review_queue_size: reviews.length + existingOpenReviews.length,\n  oldest_unresolved_review_age_days: oldestAge,\n  incomplete_ledger_flag: root.ledger_complete === false ? 'true' : 'false',\n  write_failure_count: writeFailureCount,\n  config_warning_count: configWarnings.length,\n};\nconst summaryKey = hash('recon:summary:' + (root.import_run_key || $execution.id) + ':' + $execution.id);\nconst rowsHtml = transactions.map((t) => '<li><strong>' + esc(t.match_status) + '</strong> ' + esc(t.source_bank) + ' row ' + esc(t.source_row_number) + ' amount ' + esc(t.amount) + ' title \"' + esc(t.title) + '\"' + (t.held_reason ? ' reason ' + esc(t.held_reason) : '') + '</li>').join('');\nconst operatorSubject = '[TEST] Bank reconciliation: ' + counts.auto_matched_count + ' matched, ' + counts.needs_review_count + ' need review';\nconst operatorBody = '<p>Draft-only reconciliation summary for the reconciliation operator.</p><p>False match policy: below threshold does nothing irreversible and creates review evidence.</p><p>Review queue size: ' + esc(counts.review_queue_size) + '; oldest unresolved age days: ' + esc(counts.oldest_unresolved_review_age_days) + '; incomplete ledger: ' + esc(counts.incomplete_ledger_flag) + '; write failures: ' + esc(counts.write_failure_count) + '; config warnings: ' + esc(counts.config_warning_count) + '.</p><ul>' + rowsHtml + '</ul>';\nreturn { json: {\n  transaction_rows_json: JSON.stringify(transactions),\n  invoice_rows_json: JSON.stringify(invoiceRows),\n  allocation_rows_json: JSON.stringify(allocations),\n  review_rows_json: JSON.stringify(reviews),\n  paid_signal_rows_json: JSON.stringify(signals),\n  summary_row_json: JSON.stringify({\n    summary_key: summaryKey,\n    import_run_key: collapse(root.import_run_key || ('recon-' + $execution.id)),\n    batch_source: collapse(root.batch_source || ''),\n    ...counts,\n    operator_subject: operatorSubject,\n    operator_body_html: operatorBody,\n    smoke_tag: collapse(root.smoke_tag || ''),\n    created_at_utc: now,\n    last_execution_id: $execution.id,\n  }),\n  response_status: 'reconciled_draft_only',\n  quoted_field_values: 'payer_name=\"' + (transactions[0]?.payer_name || '') + '\" title=\"' + (transactions[0]?.title || '') + '\" matched_invoice_key=\"' + (allocations[0]?.invoice_key || '') + '\" held_reason=\"' + (transactions.find((t) => t.held_reason)?.held_reason || '') + '\"',\n} };"
+        "jsCode": "const crypto = require('crypto');\nconst root = $input.item.json || {};\nconst now = root.now_utc || new Date().toISOString();\nconst collapse = (value) => String(value ?? '').replace(/\\s+/g, ' ').trim();\nconst esc = (value) => collapse(value).replace(/[&<>\"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[ch]));\nconst hash = (value) => crypto.createHash('sha256').update(String(value)).digest('hex');\nconst money = (value) => Math.round(Number(value) * 100) / 100;\nconst norm = (value) => collapse(value).toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');\nconst normText = (value) => norm(value).replace(/[^a-z0-9]+/g, ' ').trim();\nconst tokens = (value) => normText(value).split(/\\s+/).filter(Boolean);\nconst tokenKey = (value) => tokens(value).join('|');\nconst hasTokenSubsequence = (haystackValue, needleValue) => {\n  const hay = tokens(haystackValue);\n  const needle = tokens(needleValue);\n  if (!needle.length || hay.length < needle.length) return false;\n  for (let i = 0; i <= hay.length - needle.length; i++) {\n    let ok = true;\n    for (let j = 0; j < needle.length; j++) if (hay[i + j] !== needle[j]) ok = false;\n    if (ok) return true;\n  }\n  return false;\n};\nconst tokenSetContains = (haystackValue, needleValue) => {\n  const hay = new Set(tokens(haystackValue));\n  const needle = tokens(needleValue);\n  return needle.length > 0 && needle.every((t) => hay.has(t));\n};\nconst invoiceKey = (jobId) => jobId ? hash('invoice.v1\\n' + collapse(jobId)) : 'unmapped';\nconst hasMojibake = (value) => /(?:Ã|Å|Ä|Â)/.test(String(value || ''));\nconst evidence = (obj) => JSON.stringify(obj).slice(0, 4500);\nconst staticData = $getWorkflowStaticData ? $getWorkflowStaticData('global') : {};\nconst committedSeenTransactions = staticData.recon_seen_transactions || {};\nconst committedSeenNatural = staticData.recon_seen_natural || {};\nconst committedSeenSignals = staticData.recon_seen_signals || {};\nconst pendingSeenTransactions = {};\nconst pendingSeenNatural = {};\nconst pendingSeenSignals = {};\nconst seenSignalKeysInBatch = new Set();\nconst amountTolerance = Number.isFinite(Number(root.amount_tolerance_grosz)) ? Math.max(0, Number(root.amount_tolerance_grosz)) / 100 : 0;\nconst amountsEqual = (a, b) => Math.abs(money(a) - money(b)) <= amountTolerance;\nconst seenExactInBatch = new Set();\nconst seenNaturalInBatch = new Map();\nconst existingTransactionKeys = new Set((Array.isArray(root.existing_transactions) ? root.existing_transactions : []).map((row) => collapse(row.transaction_key || row.exact_transaction_key || '')).filter(Boolean));\nconst transactions = [];\nconst invoiceRows = [];\nconst allocations = [];\nconst reviews = [];\nconst signals = [];\nconst configWarnings = [];\nconst invoices = (Array.isArray(root.open_invoices) ? root.open_invoices : []).map((inv) => {\n  const rawClientKey = norm(inv.client_key || '');\n  const validClientKey = rawClientKey.length >= 3 ? rawClientKey : '';\n  if (!validClientKey) configWarnings.push({ type: 'invalid_client_key', invoice_number: collapse(inv.invoice_number || ''), client_name: collapse(inv.client_name || '') });\n  const explicitInvoice = collapse(inv.invoice_key || '');\n  const jobId = collapse(inv.job_id || '');\n  const mappingStatus = explicitInvoice || jobId ? 'mapped' : 'unmapped';\n  const row = {\n    invoice_key: explicitInvoice || (jobId ? invoiceKey(jobId) : hash('recon:invoice:' + rawClientKey + ':' + inv.invoice_number)),\n    job_id: jobId,\n    client_key: validClientKey,\n    client_name: collapse(inv.client_name || inv.client_key || ''),\n    invoice_number: collapse(inv.invoice_number || ''),\n    gross_amount: money(inv.gross_amount || inv.open_amount || 0),\n    open_amount: money(inv.open_amount || inv.gross_amount || 0),\n    currency: collapse(inv.currency || 'PLN').toUpperCase(),\n    status: collapse(inv.status || 'Open'),\n    due_date: collapse(inv.due_date || ''),\n    paid_signal_status: mappingStatus === 'mapped' ? 'not_signalled' : 'unmapped_invoice_key',\n    smoke_tag: collapse(root.smoke_tag || ''),\n    created_at_utc: now,\n    last_execution_id: $execution.id,\n  };\n  invoiceRows.push(row);\n  return row;\n});\nconst clientKeys = new Set(invoices.map((inv) => inv.client_key).filter(Boolean));\nconst aliasRows = [];\nfor (const a of Array.isArray(root.payer_aliases) ? root.payer_aliases : []) {\n  const aliasName = collapse(a.payer_name || a.alias || '');\n  const aliasNorm = normText(aliasName);\n  const clientKey = norm(a.client_key || '');\n  if (!aliasNorm || aliasNorm.length < 3 || !clientKey || clientKey.length < 3 || !clientKeys.has(clientKey)) {\n    configWarnings.push({ type: 'invalid_payer_alias', alias: aliasName, client_key: clientKey });\n    continue;\n  }\n  aliasRows.push({ alias_name: aliasName, alias_norm: aliasNorm, client_key: clientKey });\n}\nconst remainingOpen = new Map(invoices.map((inv) => [inv.invoice_key, inv.open_amount]));\nconst partialTouched = new Set();\nconst isOpenInvoice = (inv) => inv && inv.client_key && remainingOpen.get(inv.invoice_key) > 0 && !/^paid$/i.test(inv.status);\nconst openForClient = (clientKey) => invoices.filter((inv) => inv.client_key === clientKey && isOpenInvoice(inv));\nconst collectClientCandidates = (row) => {\n  const payer = collapse(row.payer_name || '');\n  const matches = new Map();\n  for (const alias of aliasRows) {\n    if (normText(payer) === alias.alias_norm || tokenSetContains(payer, alias.alias_name)) matches.set(alias.client_key, { source: 'explicit_alias', alias: alias.alias_name });\n  }\n  for (const inv of invoices) {\n    if (!inv.client_key) continue;\n    if (tokenSetContains(payer, inv.client_key) || (inv.client_name && tokenSetContains(payer, inv.client_name))) matches.set(inv.client_key, { source: 'client_catalog', client_name: inv.client_name });\n  }\n  return Array.from(matches.entries()).map(([client_key, meta]) => ({ client_key, ...meta }));\n};\nconst exactFingerprint = (row) => collapse(row.bank_txn_id) ? hash('recon:bank-txn-id:' + norm(row.source_bank) + ':' + norm(row.source_account_ref) + ':' + collapse(row.bank_txn_id)) : '';\nconst naturalFingerprint = (row) => hash('recon:bank-natural:' + [row.booking_date, money(row.amount || 0), row.currency, norm(row.payer_iban || '') || norm(row.payer_name)].join('|'));\nconst candidateDetails = (candidates) => (candidates || []).map((c) => ({ invoice_key: c.invoice_key, invoice_number: c.invoice_number, open_amount: remainingOpen.get(c.invoice_key) ?? c.open_amount, due_date: c.due_date, client_key: c.client_key }));\nconst addReview = (tx, reason, summary, candidates, facts) => {\n  const details = candidateDetails(candidates);\n  reviews.push({\n    review_key: hash('recon:review:' + tx.transaction_key + ':' + reason),\n    transaction_key: tx.transaction_key,\n    queue_reason: reason,\n    human_summary: summary,\n    candidate_invoice_keys: details.map((c) => c.invoice_key).join(','),\n    candidate_invoice_numbers: details.map((c) => c.invoice_number).join(','),\n    candidate_invoice_amounts: details.map((c) => c.open_amount).join(','),\n    candidate_invoice_due_dates: details.map((c) => c.due_date).join(','),\n    candidate_invoice_details_json: evidence(details),\n    evidence_json: evidence({ ...facts, candidates: details }),\n    smoke_tag: tx.smoke_tag,\n    created_at_utc: now,\n    last_execution_id: $execution.id,\n  });\n};\nconst allocate = (tx, inv, amount, status, confidence, facts) => {\n  const allocAmount = money(amount);\n  const allocationKey = hash('recon:allocation:' + tx.transaction_key + ':' + inv.invoice_key + ':' + allocAmount);\n  allocations.push({\n    allocation_key: allocationKey,\n    transaction_key: tx.transaction_key,\n    invoice_key: inv.invoice_key,\n    invoice_key: inv.invoice_key,\n    allocated_amount: allocAmount,\n    allocation_status: status,\n    confidence_label: confidence,\n    evidence_json: evidence(facts),\n    smoke_tag: tx.smoke_tag,\n    created_at_utc: now,\n    last_execution_id: $execution.id,\n  });\n  remainingOpen.set(inv.invoice_key, money((remainingOpen.get(inv.invoice_key) || 0) - allocAmount));\n  if (status === 'matched_partial_no_paid_signal') partialTouched.add(inv.invoice_key);\n  if (status === 'matched_full' && inv.invoice_key !== 'unmapped') {\n    const eventId = 'recon-' + allocationKey.slice(0, 24);\n    const signalKey = hash('recon:paid-signal:' + inv.invoice_key + ':' + eventId);\n    if (!committedSeenSignals[signalKey] && !seenSignalKeysInBatch.has(signalKey)) {\n      seenSignalKeysInBatch.add(signalKey);\n      pendingSeenSignals[signalKey] = now;\n      signals.push({\n        signal_key: signalKey,\n        invoice_key: inv.invoice_key,\n        invoice_payment_event_id: eventId,\n        transaction_key: tx.transaction_key,\n        invoice_key: inv.invoice_key,\n        event_type: 'invoice.paid',\n        paid_at: tx.booking_date || now,\n        payload_json: evidence({ event_type: 'invoice.paid', invoice_key: inv.invoice_key, source_invoice_key: inv.invoice_key, job_id: inv.job_id, invoice_payment_event_id: eventId, payment_event_id: eventId, paid_at: tx.booking_date || now, mapping_status: 'mapped', source: 'Recon_Paid_Signals' }),\n        signal_status: 'pending_invoice_delivery',\n        smoke_tag: tx.smoke_tag,\n        created_at_utc: now,\n        last_execution_id: $execution.id,\n      });\n    }\n  }\n};\nconst mentionedOpenInvoices = (title, currency) => invoices.filter((inv) => isOpenInvoice(inv) && inv.invoice_number && (!currency || collapse(inv.currency || 'PLN') === currency) && hasTokenSubsequence(title, inv.invoice_number));\nconst mentionedClosedInvoices = (title) => invoices.filter((inv) => inv.invoice_number && !isOpenInvoice(inv) && hasTokenSubsequence(title, inv.invoice_number));\nconst subsetSums = (arr, target, maxSize = 3) => {\n  const out = [];\n  const walk = (start, chosen, sum) => {\n    if (chosen.length > 0 && amountsEqual(sum, target)) out.push([...chosen]);\n    if (chosen.length >= maxSize || sum >= target + amountTolerance) return;\n    for (let i = start; i < arr.length; i++) walk(i + 1, [...chosen, arr[i]], money(sum + (remainingOpen.get(arr[i].invoice_key) || 0)));\n  };\n  walk(0, [], 0);\n  return out;\n};\nfor (const raw of Array.isArray(root.bank_rows) ? root.bank_rows : []) {\n  const amount = Number(raw.amount);\n  const currency = collapse(raw.currency || 'PLN').toUpperCase();\n  const rawHash = hash('recon:raw-row:' + JSON.stringify(raw));\n  const exactKey = exactFingerprint(raw);\n  const naturalKey = naturalFingerprint({ ...raw, amount, currency });\n  const txKey = exactKey || naturalKey;\n  const tx = {\n    transaction_key: txKey,\n    import_run_key: collapse(root.import_run_key || ('recon-' + $execution.id)),\n    source_bank: collapse(raw.source_bank || ''),\n    source_account_ref: collapse(raw.source_account_ref || ''),\n    source_file_id: collapse(raw.source_file_id || ''),\n    source_row_number: Number(raw.source_row_number || 0),\n    booking_date: collapse(raw.booking_date || ''),\n    amount: Number.isFinite(amount) ? money(amount) : 0,\n    currency,\n    payer_name: collapse(raw.payer_name || ''),\n    payer_iban_hash: raw.payer_iban ? hash('iban:' + collapse(raw.payer_iban)) : '',\n    title: collapse(raw.title || ''),\n    raw_row_hash: rawHash,\n    match_status: 'held_for_review',\n    held_reason: '',\n    evidence_json: '',\n    smoke_tag: collapse(root.smoke_tag || ''),\n    created_at_utc: now,\n    last_execution_id: $execution.id,\n  };\n  const facts = { scenario_id: raw.scenario_id || '', source_file_id: tx.source_file_id, source_row_number: tx.source_row_number, amount: tx.amount, currency, title: tx.title, payer_name: tx.payer_name, exact_transaction_key: exactKey, natural_fingerprint: naturalKey };\n  if (!tx.booking_date || !Number.isFinite(amount) || amount <= 0 || !currency) {\n    tx.match_status = 'malformed_held';\n    tx.held_reason = 'malformed_csv_row';\n    tx.evidence_json = evidence({ ...facts, failure: 'required bank row fields missing or invalid' });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Malformed bank CSV row held before matching.', [], facts);\n    continue;\n  }\n  const duplicateKey = txKey;\n  const durableDuplicate = existingTransactionKeys.has(duplicateKey);\n  const staticDuplicate = Boolean(committedSeenTransactions[duplicateKey]);\n  const batchExactDuplicate = Boolean(exactKey && seenExactInBatch.has(exactKey));\n  if (durableDuplicate || staticDuplicate || batchExactDuplicate) {\n    tx.match_status = 'duplicate_suppressed';\n    tx.held_reason = 'duplicate_statement_import';\n    tx.evidence_json = evidence({ ...facts, duplicate_key: duplicateKey, duplicate_layer: durableDuplicate ? 'durable_existing_transactions' : 'static_or_batch', duplicate_identity: exactKey ? 'exact_bank_transaction_id' : 'natural_transaction_key' });\n    transactions.push(tx);\n    continue;\n  }\n  const naturalCollision = Boolean(!exactKey && (seenNaturalInBatch.has(naturalKey) || committedSeenNatural[naturalKey]));\n  if (naturalCollision) {\n    const previous = seenNaturalInBatch.get(naturalKey) || { source: 'existing_or_static' };\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'possible_cross_bank_duplicate';\n    tx.evidence_json = evidence({ ...facts, previous, identity_rule: 'booking_date_amount_currency_counterparty_without_title' });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Possible cross-bank duplicate held; title is evidence only and no invoice is marked paid.', [], { ...facts, previous });\n    pendingSeenTransactions[tx.transaction_key] = now;\n    continue;\n  }\n  if (exactKey) seenExactInBatch.add(exactKey);\n  seenNaturalInBatch.set(naturalKey, { scenario_id: raw.scenario_id || '', source_bank: tx.source_bank, source_file_id: tx.source_file_id, source_row_number: tx.source_row_number, exact_transaction_key: exactKey || '' });\n  pendingSeenTransactions[tx.transaction_key] = now;\n  pendingSeenNatural[naturalKey] = now;\n  if (hasMojibake(raw.payer_name) || hasMojibake(raw.title)) {\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'encoding_garbage_bank_export';\n    tx.evidence_json = evidence({ ...facts, encoding: 'mojibake markers present' });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Bank export encoding is damaged; hold for human decoding.', [], facts);\n    continue;\n  }\n  const clientCandidates = collectClientCandidates(raw);\n  if (clientCandidates.length > 1) {\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'ambiguous_payer_multiple_clients';\n    tx.evidence_json = evidence({ ...facts, client_candidates: clientCandidates });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Payer identity matches more than one client; no invoice is marked paid.', clientCandidates.flatMap((c) => openForClient(c.client_key)), { ...facts, client_candidates: clientCandidates });\n    continue;\n  }\n  const clientKey = clientCandidates[0]?.client_key || '';\n  const clientInvoices = clientKey ? openForClient(clientKey) : [];\n  const mentioned = mentionedOpenInvoices(raw.title || '', collapse(raw.currency || 'PLN'));\n  const mentionedClosed = mentionedClosedInvoices(raw.title || '');\n  if (!mentioned.length && mentionedClosed.length) {\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'invoice_number_not_open';\n    tx.evidence_json = evidence({ ...facts, closed_invoice_numbers: mentionedClosed.map((i) => i.invoice_number) });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Invoice number appears in title but it is not open; no dunning stop signal emitted.', mentionedClosed, facts);\n    continue;\n  }\n  if (!clientKey && mentioned.length === 0) {\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'unknown_or_invalid_payer_no_invoice_number';\n    tx.evidence_json = evidence({ ...facts, config_warning_count: configWarnings.length });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Unknown or invalid payer and no usable open invoice number; no dunning stop signal emitted.', [], facts);\n    continue;\n  }\n  if (mentioned.length) {\n    const totalOpen = money(mentioned.reduce((sum, inv) => sum + (remainingOpen.get(inv.invoice_key) || 0), 0));\n    if (tx.amount > totalOpen && !amountsEqual(tx.amount, totalOpen)) {\n      tx.match_status = 'held_for_review';\n      tx.held_reason = 'overpayment_requires_policy';\n      tx.evidence_json = evidence({ ...facts, total_open: totalOpen, mentioned_invoice_numbers: mentioned.map((i) => i.invoice_number) });\n      transactions.push(tx);\n      addReview(tx, tx.held_reason, 'Payment exceeds mentioned open invoice total; hold until overpayment policy is known.', mentioned, facts);\n      continue;\n    }\n    if (tx.amount < totalOpen && !amountsEqual(tx.amount, totalOpen)) {\n      tx.match_status = 'partial_matched_no_paid_signal';\n      tx.held_reason = 'partial_payment_no_paid_signal';\n      tx.evidence_json = evidence({ ...facts, mentioned_invoice_numbers: mentioned.map((i) => i.invoice_number), total_open: totalOpen });\n      transactions.push(tx);\n      if (mentioned.length === 1) allocate(tx, mentioned[0], tx.amount, 'matched_partial_no_paid_signal', 'deterministic_invoice_number_partial', facts);\n      addReview(tx, tx.held_reason, 'Partial payment recorded as evidence but invoice is not marked paid.', mentioned, facts);\n      continue;\n    }\n    if (mentioned.some((inv) => partialTouched.has(inv.invoice_key))) {\n      tx.match_status = 'partial_matched_no_paid_signal';\n      tx.held_reason = 'partial_payment_sequence_no_paid_signal';\n      tx.evidence_json = evidence({ ...facts, mentioned_invoice_numbers: mentioned.map((i) => i.invoice_number), total_open: totalOpen });\n      transactions.push(tx);\n      if (mentioned.length === 1) allocate(tx, mentioned[0], tx.amount, 'matched_partial_no_paid_signal', 'intrabatch_partial_sequence', facts);\n      addReview(tx, tx.held_reason, 'Second same-batch partial would close the invoice only cumulatively; held for human confirmation and no paid signal emitted.', mentioned, facts);\n      continue;\n    }\n    tx.match_status = mentioned.length > 1 ? 'matched_full_multi_invoice' : 'matched_full_single_invoice';\n    tx.held_reason = '';\n    tx.evidence_json = evidence({ ...facts, matched_invoice_numbers: mentioned.map((i) => i.invoice_number), total_open: totalOpen });\n    transactions.push(tx);\n    for (const inv of mentioned) allocate(tx, inv, remainingOpen.get(inv.invoice_key) || inv.open_amount, 'matched_full', mentioned.length > 1 ? 'deterministic_invoice_numbers_total_exact' : 'deterministic_invoice_number_amount_exact', facts);\n    continue;\n  }\n  const sameAmountCandidates = clientInvoices.filter((inv) => inv.currency === currency && amountsEqual(remainingOpen.get(inv.invoice_key) || 0, tx.amount));\n  if (sameAmountCandidates.length > 1) {\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'ambiguous_same_amount_open_invoices';\n    tx.evidence_json = evidence({ ...facts, candidate_invoice_numbers: sameAmountCandidates.map((c) => c.invoice_number) });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Same amount fits more than one open invoice; false match risk is higher than no match.', sameAmountCandidates, facts);\n    continue;\n  }\n  if (sameAmountCandidates.length === 1) {\n    const alternatives = subsetSums(clientInvoices.filter((inv) => inv.invoice_key !== sameAmountCandidates[0].invoice_key), tx.amount, 3).filter((set) => set.length >= 2);\n    if (alternatives.length > 0) {\n      tx.match_status = 'held_for_review';\n      tx.held_reason = 'ambiguous_subset_sum';\n      tx.evidence_json = evidence({ ...facts, exact_invoice: sameAmountCandidates[0].invoice_number, alternative_subsets: alternatives.map((set) => set.map((i) => i.invoice_number)) });\n      transactions.push(tx);\n      addReview(tx, tx.held_reason, 'Amount fits one invoice and also another invoice subset; held instead of pick-first.', [sameAmountCandidates[0]].concat(alternatives.flat()), facts);\n      continue;\n    }\n    tx.match_status = 'matched_full_single_invoice';\n    tx.held_reason = '';\n    tx.evidence_json = evidence({ ...facts, matched_invoice_number: sameAmountCandidates[0].invoice_number });\n    transactions.push(tx);\n    allocate(tx, sameAmountCandidates[0], tx.amount, 'matched_full', 'deterministic_alias_amount_unique', facts);\n    continue;\n  }\n  tx.match_status = 'held_for_review';\n  tx.held_reason = 'below_threshold_no_safe_match';\n  tx.evidence_json = evidence(facts);\n  transactions.push(tx);\n  addReview(tx, tx.held_reason, 'Below matching threshold: do nothing irreversible and give evidence to a human.', mentioned.concat(clientInvoices), facts);\n}\nconst needsReview = transactions.filter((t) => t.match_status.includes('held') || t.match_status === 'malformed_held' || t.match_status === 'partial_matched_no_paid_signal');\nconst existingOpenReviews = (Array.isArray(root.existing_review_rows) ? root.existing_review_rows : []).filter((row) => !row.resolved_at_utc);\nconst ageDays = (created) => {\n  const ms = Date.parse(now) - Date.parse(created || now);\n  return Number.isFinite(ms) && ms > 0 ? Math.floor(ms / 86400000) : 0;\n};\nconst oldestAge = Math.max(0, ...reviews.map((r) => ageDays(r.created_at_utc)), ...existingOpenReviews.map((r) => ageDays(r.created_at_utc)));\nconst simulatedWriteFailures = root.simulated_write_failures && typeof root.simulated_write_failures === 'object' ? root.simulated_write_failures : {};\nconst writeFailureCount = Object.values(simulatedWriteFailures).reduce((sum, value) => sum + (Number(value) || 0), 0);\nconst counts = {\n  total_rows: transactions.length,\n  auto_matched_count: transactions.filter((t) => /^matched_full/.test(t.match_status)).length,\n  held_count: needsReview.length,\n  duplicate_count: transactions.filter((t) => t.match_status === 'duplicate_suppressed').length,\n  malformed_count: transactions.filter((t) => t.match_status === 'malformed_held').length,\n  partial_count: transactions.filter((t) => t.match_status === 'partial_matched_no_paid_signal').length,\n  paid_signal_count: signals.length,\n  needs_review_count: needsReview.length,\n  review_queue_size: reviews.length + existingOpenReviews.length,\n  oldest_unresolved_review_age_days: oldestAge,\n  incomplete_ledger_flag: root.ledger_complete === false ? 'true' : 'false',\n  write_failure_count: writeFailureCount,\n  config_warning_count: configWarnings.length,\n};\nconst summaryKey = hash('recon:summary:' + (root.import_run_key || $execution.id) + ':' + $execution.id);\nconst rowsHtml = transactions.map((t) => '<li><strong>' + esc(t.match_status) + '</strong> ' + esc(t.source_bank) + ' row ' + esc(t.source_row_number) + ' amount ' + esc(t.amount) + ' title \"' + esc(t.title) + '\"' + (t.held_reason ? ' reason ' + esc(t.held_reason) : '') + '</li>').join('');\nconst operatorSubject = '[TEST] Bank reconciliation: ' + counts.auto_matched_count + ' matched, ' + counts.needs_review_count + ' need review';\nconst operatorBody = '<p>Draft-only reconciliation summary for the reconciliation operator.</p><p>False match policy: below threshold does nothing irreversible and creates review evidence.</p><p>Review queue size: ' + esc(counts.review_queue_size) + '; oldest unresolved age days: ' + esc(counts.oldest_unresolved_review_age_days) + '; incomplete ledger: ' + esc(counts.incomplete_ledger_flag) + '; write failures: ' + esc(counts.write_failure_count) + '; config warnings: ' + esc(counts.config_warning_count) + '.</p><ul>' + rowsHtml + '</ul>';\nreturn { json: {\n  transaction_rows_json: JSON.stringify(transactions),\n  invoice_rows_json: JSON.stringify(invoiceRows),\n  allocation_rows_json: JSON.stringify(allocations),\n  review_rows_json: JSON.stringify(reviews),\n  paid_signal_rows_json: JSON.stringify(signals),\n  pending_seen_transactions_json: JSON.stringify(pendingSeenTransactions),\n  pending_seen_natural_json: JSON.stringify(pendingSeenNatural),\n  pending_seen_signals_json: JSON.stringify(pendingSeenSignals),\n  summary_row_json: JSON.stringify({\n    summary_key: summaryKey,\n    import_run_key: collapse(root.import_run_key || ('recon-' + $execution.id)),\n    batch_source: collapse(root.batch_source || ''),\n    ...counts,\n    operator_subject: operatorSubject,\n    operator_body_html: operatorBody,\n    smoke_tag: collapse(root.smoke_tag || ''),\n    created_at_utc: now,\n    last_execution_id: $execution.id,\n  }),\n  response_status: 'reconciled_draft_only',\n  quoted_field_values: 'payer_name=\"' + (transactions[0]?.payer_name || '') + '\" title=\"' + (transactions[0]?.title || '') + '\" matched_invoice_key=\"' + (allocations[0]?.invoice_key || '') + '\" held_reason=\"' + (transactions.find((t) => t.held_reason)?.held_reason || '') + '\"',\n} };"
       }
     },
     {
@@ -583,7 +759,7 @@
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst crypto = require('crypto');\nconst root = $input.item.json || {};\nconst now = root.now_utc || new Date().toISOString();\nconst collapse = (value) => String(value ?? '').replace(/\\s+/g, ' ').trim();\nconst esc = (value) => collapse(value).replace(/[&<>\"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[ch]));\nconst hash = (value) => crypto.createHash('sha256').update(String(value)).digest('hex');\nconst money = (value) => Math.round(Number(value) * 100) / 100;\nconst norm = (value) => collapse(value).toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');\nconst normText = (value) => norm(value).replace(/[^a-z0-9]+/g, ' ').trim();\nconst tokens = (value) => normText(value).split(/\\s+/).filter(Boolean);\nconst tokenKey = (value) => tokens(value).join('|');\nconst hasTokenSubsequence = (haystackValue, needleValue) => {\n  const hay = tokens(haystackValue);\n  const needle = tokens(needleValue);\n  if (!needle.length || hay.length < needle.length) return false;\n  for (let i = 0; i <= hay.length - needle.length; i++) {\n    let ok = true;\n    for (let j = 0; j < needle.length; j++) if (hay[i + j] !== needle[j]) ok = false;\n    if (ok) return true;\n  }\n  return false;\n};\nconst tokenSetContains = (haystackValue, needleValue) => {\n  const hay = new Set(tokens(haystackValue));\n  const needle = tokens(needleValue);\n  return needle.length > 0 && needle.every((t) => hay.has(t));\n};\nconst invoiceKey = (jobId) => jobId ? hash('invoice.v1\\n' + collapse(jobId)) : 'unmapped';\nconst hasMojibake = (value) => /(?:Ã|Å|Ä|Â)/.test(String(value || ''));\nconst evidence = (obj) => JSON.stringify(obj).slice(0, 4500);\nconst staticData = $getWorkflowStaticData ? $getWorkflowStaticData('global') : {};\nstaticData.recon_seen_transactions = staticData.recon_seen_transactions || {};\npruneStore(staticData.recon_seen_transactions);\nstaticData.recon_seen_natural = staticData.recon_seen_natural || {};\npruneStore(staticData.recon_seen_natural);\nstaticData.recon_seen_signals = staticData.recon_seen_signals || {};\npruneStore(staticData.recon_seen_signals);\nconst amountTolerance = Number.isFinite(Number(root.amount_tolerance_grosz)) ? Math.max(0, Number(root.amount_tolerance_grosz)) / 100 : 0;\nconst amountsEqual = (a, b) => Math.abs(money(a) - money(b)) <= amountTolerance;\nconst seenExactInBatch = new Set();\nconst seenNaturalInBatch = new Map();\nconst existingTransactionKeys = new Set((Array.isArray(root.existing_transactions) ? root.existing_transactions : []).map((row) => collapse(row.transaction_key || row.exact_transaction_key || '')).filter(Boolean));\nconst transactions = [];\nconst invoiceRows = [];\nconst allocations = [];\nconst reviews = [];\nconst signals = [];\nconst configWarnings = [];\nconst invoices = (Array.isArray(root.open_invoices) ? root.open_invoices : []).map((inv) => {\n  const rawClientKey = norm(inv.client_key || '');\n  const validClientKey = rawClientKey.length >= 3 ? rawClientKey : '';\n  if (!validClientKey) configWarnings.push({ type: 'invalid_client_key', invoice_number: collapse(inv.invoice_number || ''), client_name: collapse(inv.client_name || '') });\n  const explicitInvoice = collapse(inv.invoice_key || '');\n  const jobId = collapse(inv.job_id || '');\n  const mappingStatus = explicitInvoice || jobId ? 'mapped' : 'unmapped';\n  const row = {\n    invoice_key: explicitInvoice || (jobId ? invoiceKey(jobId) : hash('recon:invoice:' + rawClientKey + ':' + inv.invoice_number)),\n    job_id: jobId,\n    client_key: validClientKey,\n    client_name: collapse(inv.client_name || inv.client_key || ''),\n    invoice_number: collapse(inv.invoice_number || ''),\n    gross_amount: money(inv.gross_amount || inv.open_amount || 0),\n    open_amount: money(inv.open_amount || inv.gross_amount || 0),\n    currency: collapse(inv.currency || 'PLN').toUpperCase(),\n    status: collapse(inv.status || 'Open'),\n    due_date: collapse(inv.due_date || ''),\n    paid_signal_status: mappingStatus === 'mapped' ? 'not_signalled' : 'unmapped_invoice_key',\n    smoke_tag: collapse(root.smoke_tag || ''),\n    created_at_utc: now,\n    last_execution_id: $execution.id,\n  };\n  invoiceRows.push(row);\n  return row;\n});\nconst clientKeys = new Set(invoices.map((inv) => inv.client_key).filter(Boolean));\nconst aliasRows = [];\nfor (const a of Array.isArray(root.payer_aliases) ? root.payer_aliases : []) {\n  const aliasName = collapse(a.payer_name || a.alias || '');\n  const aliasNorm = normText(aliasName);\n  const clientKey = norm(a.client_key || '');\n  if (!aliasNorm || aliasNorm.length < 3 || !clientKey || clientKey.length < 3 || !clientKeys.has(clientKey)) {\n    configWarnings.push({ type: 'invalid_payer_alias', alias: aliasName, client_key: clientKey });\n    continue;\n  }\n  aliasRows.push({ alias_name: aliasName, alias_norm: aliasNorm, client_key: clientKey });\n}\nconst remainingOpen = new Map(invoices.map((inv) => [inv.invoice_key, inv.open_amount]));\nconst partialTouched = new Set();\nconst isOpenInvoice = (inv) => inv && inv.client_key && remainingOpen.get(inv.invoice_key) > 0 && !/^paid$/i.test(inv.status);\nconst openForClient = (clientKey) => invoices.filter((inv) => inv.client_key === clientKey && isOpenInvoice(inv));\nconst collectClientCandidates = (row) => {\n  const payer = collapse(row.payer_name || '');\n  const matches = new Map();\n  for (const alias of aliasRows) {\n    if (normText(payer) === alias.alias_norm || tokenSetContains(payer, alias.alias_name)) matches.set(alias.client_key, { source: 'explicit_alias', alias: alias.alias_name });\n  }\n  for (const inv of invoices) {\n    if (!inv.client_key) continue;\n    if (tokenSetContains(payer, inv.client_key) || (inv.client_name && tokenSetContains(payer, inv.client_name))) matches.set(inv.client_key, { source: 'client_catalog', client_name: inv.client_name });\n  }\n  return Array.from(matches.entries()).map(([client_key, meta]) => ({ client_key, ...meta }));\n};\nconst exactFingerprint = (row) => collapse(row.bank_txn_id) ? hash('recon:bank-txn-id:' + norm(row.source_bank) + ':' + norm(row.source_account_ref) + ':' + collapse(row.bank_txn_id)) : '';\nconst naturalFingerprint = (row) => hash('recon:bank-natural:' + [row.booking_date, money(row.amount || 0), row.currency, norm(row.payer_iban || '') || norm(row.payer_name)].join('|'));\nconst candidateDetails = (candidates) => (candidates || []).map((c) => ({ invoice_key: c.invoice_key, invoice_number: c.invoice_number, open_amount: remainingOpen.get(c.invoice_key) ?? c.open_amount, due_date: c.due_date, client_key: c.client_key }));\nconst addReview = (tx, reason, summary, candidates, facts) => {\n  const details = candidateDetails(candidates);\n  reviews.push({\n    review_key: hash('recon:review:' + tx.transaction_key + ':' + reason),\n    transaction_key: tx.transaction_key,\n    queue_reason: reason,\n    human_summary: summary,\n    candidate_invoice_keys: details.map((c) => c.invoice_key).join(','),\n    candidate_invoice_numbers: details.map((c) => c.invoice_number).join(','),\n    candidate_invoice_amounts: details.map((c) => c.open_amount).join(','),\n    candidate_invoice_due_dates: details.map((c) => c.due_date).join(','),\n    candidate_invoice_details_json: evidence(details),\n    evidence_json: evidence({ ...facts, candidates: details }),\n    smoke_tag: tx.smoke_tag,\n    created_at_utc: now,\n    last_execution_id: $execution.id,\n  });\n};\nconst allocate = (tx, inv, amount, status, confidence, facts) => {\n  const allocAmount = money(amount);\n  const allocationKey = hash('recon:allocation:' + tx.transaction_key + ':' + inv.invoice_key + ':' + allocAmount);\n  allocations.push({\n    allocation_key: allocationKey,\n    transaction_key: tx.transaction_key,\n    invoice_key: inv.invoice_key,\n    invoice_key: inv.invoice_key,\n    allocated_amount: allocAmount,\n    allocation_status: status,\n    confidence_label: confidence,\n    evidence_json: evidence(facts),\n    smoke_tag: tx.smoke_tag,\n    created_at_utc: now,\n    last_execution_id: $execution.id,\n  });\n  remainingOpen.set(inv.invoice_key, money((remainingOpen.get(inv.invoice_key) || 0) - allocAmount));\n  if (status === 'matched_partial_no_paid_signal') partialTouched.add(inv.invoice_key);\n  if (status === 'matched_full' && inv.invoice_key !== 'unmapped') {\n    const eventId = 'recon-' + allocationKey.slice(0, 24);\n    const signalKey = hash('recon:paid-signal:' + inv.invoice_key + ':' + eventId);\n    if (!staticData.recon_seen_signals[signalKey]) {\n      staticData.recon_seen_signals[signalKey] = now;\n      signals.push({\n        signal_key: signalKey,\n        invoice_key: inv.invoice_key,\n        invoice_payment_event_id: eventId,\n        transaction_key: tx.transaction_key,\n        invoice_key: inv.invoice_key,\n        event_type: 'invoice.paid',\n        paid_at: tx.booking_date || now,\n        payload_json: evidence({ event_type: 'invoice.paid', invoice_key: inv.invoice_key, source_invoice_key: inv.invoice_key, job_id: inv.job_id, invoice_payment_event_id: eventId, payment_event_id: eventId, paid_at: tx.booking_date || now, mapping_status: 'mapped', source: 'Recon_Paid_Signals' }),\n        signal_status: 'pending_invoice_delivery',\n        smoke_tag: tx.smoke_tag,\n        created_at_utc: now,\n        last_execution_id: $execution.id,\n      });\n    }\n  }\n};\nconst mentionedOpenInvoices = (title, currency) => invoices.filter((inv) => isOpenInvoice(inv) && inv.invoice_number && (!currency || collapse(inv.currency || 'PLN') === currency) && hasTokenSubsequence(title, inv.invoice_number));\nconst mentionedClosedInvoices = (title) => invoices.filter((inv) => inv.invoice_number && !isOpenInvoice(inv) && hasTokenSubsequence(title, inv.invoice_number));\nconst subsetSums = (arr, target, maxSize = 3) => {\n  const out = [];\n  const walk = (start, chosen, sum) => {\n    if (chosen.length > 0 && amountsEqual(sum, target)) out.push([...chosen]);\n    if (chosen.length >= maxSize || sum >= target + amountTolerance) return;\n    for (let i = start; i < arr.length; i++) walk(i + 1, [...chosen, arr[i]], money(sum + (remainingOpen.get(arr[i].invoice_key) || 0)));\n  };\n  walk(0, [], 0);\n  return out;\n};\nfor (const raw of Array.isArray(root.bank_rows) ? root.bank_rows : []) {\n  const amount = Number(raw.amount);\n  const currency = collapse(raw.currency || 'PLN').toUpperCase();\n  const rawHash = hash('recon:raw-row:' + JSON.stringify(raw));\n  const exactKey = exactFingerprint(raw);\n  const naturalKey = naturalFingerprint({ ...raw, amount, currency });\n  const txKey = exactKey || naturalKey;\n  const tx = {\n    transaction_key: txKey,\n    import_run_key: collapse(root.import_run_key || ('recon-' + $execution.id)),\n    source_bank: collapse(raw.source_bank || ''),\n    source_account_ref: collapse(raw.source_account_ref || ''),\n    source_file_id: collapse(raw.source_file_id || ''),\n    source_row_number: Number(raw.source_row_number || 0),\n    booking_date: collapse(raw.booking_date || ''),\n    amount: Number.isFinite(amount) ? money(amount) : 0,\n    currency,\n    payer_name: collapse(raw.payer_name || ''),\n    payer_iban_hash: raw.payer_iban ? hash('iban:' + collapse(raw.payer_iban)) : '',\n    title: collapse(raw.title || ''),\n    raw_row_hash: rawHash,\n    match_status: 'held_for_review',\n    held_reason: '',\n    evidence_json: '',\n    smoke_tag: collapse(root.smoke_tag || ''),\n    created_at_utc: now,\n    last_execution_id: $execution.id,\n  };\n  const facts = { scenario_id: raw.scenario_id || '', source_file_id: tx.source_file_id, source_row_number: tx.source_row_number, amount: tx.amount, currency, title: tx.title, payer_name: tx.payer_name, exact_transaction_key: exactKey, natural_fingerprint: naturalKey };\n  if (!tx.booking_date || !Number.isFinite(amount) || amount <= 0 || !currency) {\n    tx.match_status = 'malformed_held';\n    tx.held_reason = 'malformed_csv_row';\n    tx.evidence_json = evidence({ ...facts, failure: 'required bank row fields missing or invalid' });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Malformed bank CSV row held before matching.', [], facts);\n    continue;\n  }\n  const duplicateKey = txKey;\n  const durableDuplicate = existingTransactionKeys.has(duplicateKey);\n  const staticDuplicate = Boolean(staticData.recon_seen_transactions[duplicateKey]);\n  const batchExactDuplicate = Boolean(exactKey && seenExactInBatch.has(exactKey));\n  if (durableDuplicate || staticDuplicate || batchExactDuplicate) {\n    tx.match_status = 'duplicate_suppressed';\n    tx.held_reason = 'duplicate_statement_import';\n    tx.evidence_json = evidence({ ...facts, duplicate_key: duplicateKey, duplicate_layer: durableDuplicate ? 'durable_existing_transactions' : 'static_or_batch', duplicate_identity: exactKey ? 'exact_bank_transaction_id' : 'natural_transaction_key' });\n    transactions.push(tx);\n    continue;\n  }\n  const naturalCollision = Boolean(!exactKey && (seenNaturalInBatch.has(naturalKey) || staticData.recon_seen_natural[naturalKey]));\n  if (naturalCollision) {\n    const previous = seenNaturalInBatch.get(naturalKey) || { source: 'existing_or_static' };\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'possible_cross_bank_duplicate';\n    tx.evidence_json = evidence({ ...facts, previous, identity_rule: 'booking_date_amount_currency_counterparty_without_title' });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Possible cross-bank duplicate held; title is evidence only and no invoice is marked paid.', [], { ...facts, previous });\n    staticData.recon_seen_transactions[tx.transaction_key] = now;\n    continue;\n  }\n  if (exactKey) seenExactInBatch.add(exactKey);\n  seenNaturalInBatch.set(naturalKey, { scenario_id: raw.scenario_id || '', source_bank: tx.source_bank, source_file_id: tx.source_file_id, source_row_number: tx.source_row_number, exact_transaction_key: exactKey || '' });\n  staticData.recon_seen_transactions[tx.transaction_key] = now;\n  staticData.recon_seen_natural[naturalKey] = now;\n  if (hasMojibake(raw.payer_name) || hasMojibake(raw.title)) {\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'encoding_garbage_bank_export';\n    tx.evidence_json = evidence({ ...facts, encoding: 'mojibake markers present' });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Bank export encoding is damaged; hold for human decoding.', [], facts);\n    continue;\n  }\n  const clientCandidates = collectClientCandidates(raw);\n  if (clientCandidates.length > 1) {\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'ambiguous_payer_multiple_clients';\n    tx.evidence_json = evidence({ ...facts, client_candidates: clientCandidates });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Payer identity matches more than one client; no invoice is marked paid.', clientCandidates.flatMap((c) => openForClient(c.client_key)), { ...facts, client_candidates: clientCandidates });\n    continue;\n  }\n  const clientKey = clientCandidates[0]?.client_key || '';\n  const clientInvoices = clientKey ? openForClient(clientKey) : [];\n  const mentioned = mentionedOpenInvoices(raw.title || '', collapse(raw.currency || 'PLN'));\n  const mentionedClosed = mentionedClosedInvoices(raw.title || '');\n  if (!mentioned.length && mentionedClosed.length) {\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'invoice_number_not_open';\n    tx.evidence_json = evidence({ ...facts, closed_invoice_numbers: mentionedClosed.map((i) => i.invoice_number) });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Invoice number appears in title but it is not open; no dunning stop signal emitted.', mentionedClosed, facts);\n    continue;\n  }\n  if (!clientKey && mentioned.length === 0) {\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'unknown_or_invalid_payer_no_invoice_number';\n    tx.evidence_json = evidence({ ...facts, config_warning_count: configWarnings.length });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Unknown or invalid payer and no usable open invoice number; no dunning stop signal emitted.', [], facts);\n    continue;\n  }\n  if (mentioned.length) {\n    const totalOpen = money(mentioned.reduce((sum, inv) => sum + (remainingOpen.get(inv.invoice_key) || 0), 0));\n    if (tx.amount > totalOpen && !amountsEqual(tx.amount, totalOpen)) {\n      tx.match_status = 'held_for_review';\n      tx.held_reason = 'overpayment_requires_policy';\n      tx.evidence_json = evidence({ ...facts, total_open: totalOpen, mentioned_invoice_numbers: mentioned.map((i) => i.invoice_number) });\n      transactions.push(tx);\n      addReview(tx, tx.held_reason, 'Payment exceeds mentioned open invoice total; hold until overpayment policy is known.', mentioned, facts);\n      continue;\n    }\n    if (tx.amount < totalOpen && !amountsEqual(tx.amount, totalOpen)) {\n      tx.match_status = 'partial_matched_no_paid_signal';\n      tx.held_reason = 'partial_payment_no_paid_signal';\n      tx.evidence_json = evidence({ ...facts, mentioned_invoice_numbers: mentioned.map((i) => i.invoice_number), total_open: totalOpen });\n      transactions.push(tx);\n      if (mentioned.length === 1) allocate(tx, mentioned[0], tx.amount, 'matched_partial_no_paid_signal', 'deterministic_invoice_number_partial', facts);\n      addReview(tx, tx.held_reason, 'Partial payment recorded as evidence but invoice is not marked paid.', mentioned, facts);\n      continue;\n    }\n    if (mentioned.some((inv) => partialTouched.has(inv.invoice_key))) {\n      tx.match_status = 'partial_matched_no_paid_signal';\n      tx.held_reason = 'partial_payment_sequence_no_paid_signal';\n      tx.evidence_json = evidence({ ...facts, mentioned_invoice_numbers: mentioned.map((i) => i.invoice_number), total_open: totalOpen });\n      transactions.push(tx);\n      if (mentioned.length === 1) allocate(tx, mentioned[0], tx.amount, 'matched_partial_no_paid_signal', 'intrabatch_partial_sequence', facts);\n      addReview(tx, tx.held_reason, 'Second same-batch partial would close the invoice only cumulatively; held for human confirmation and no paid signal emitted.', mentioned, facts);\n      continue;\n    }\n    tx.match_status = mentioned.length > 1 ? 'matched_full_multi_invoice' : 'matched_full_single_invoice';\n    tx.held_reason = '';\n    tx.evidence_json = evidence({ ...facts, matched_invoice_numbers: mentioned.map((i) => i.invoice_number), total_open: totalOpen });\n    transactions.push(tx);\n    for (const inv of mentioned) allocate(tx, inv, remainingOpen.get(inv.invoice_key) || inv.open_amount, 'matched_full', mentioned.length > 1 ? 'deterministic_invoice_numbers_total_exact' : 'deterministic_invoice_number_amount_exact', facts);\n    continue;\n  }\n  const sameAmountCandidates = clientInvoices.filter((inv) => inv.currency === currency && amountsEqual(remainingOpen.get(inv.invoice_key) || 0, tx.amount));\n  if (sameAmountCandidates.length > 1) {\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'ambiguous_same_amount_open_invoices';\n    tx.evidence_json = evidence({ ...facts, candidate_invoice_numbers: sameAmountCandidates.map((c) => c.invoice_number) });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Same amount fits more than one open invoice; false match risk is higher than no match.', sameAmountCandidates, facts);\n    continue;\n  }\n  if (sameAmountCandidates.length === 1) {\n    const alternatives = subsetSums(clientInvoices.filter((inv) => inv.invoice_key !== sameAmountCandidates[0].invoice_key), tx.amount, 3).filter((set) => set.length >= 2);\n    if (alternatives.length > 0) {\n      tx.match_status = 'held_for_review';\n      tx.held_reason = 'ambiguous_subset_sum';\n      tx.evidence_json = evidence({ ...facts, exact_invoice: sameAmountCandidates[0].invoice_number, alternative_subsets: alternatives.map((set) => set.map((i) => i.invoice_number)) });\n      transactions.push(tx);\n      addReview(tx, tx.held_reason, 'Amount fits one invoice and also another invoice subset; held instead of pick-first.', [sameAmountCandidates[0]].concat(alternatives.flat()), facts);\n      continue;\n    }\n    tx.match_status = 'matched_full_single_invoice';\n    tx.held_reason = '';\n    tx.evidence_json = evidence({ ...facts, matched_invoice_number: sameAmountCandidates[0].invoice_number });\n    transactions.push(tx);\n    allocate(tx, sameAmountCandidates[0], tx.amount, 'matched_full', 'deterministic_alias_amount_unique', facts);\n    continue;\n  }\n  tx.match_status = 'held_for_review';\n  tx.held_reason = 'below_threshold_no_safe_match';\n  tx.evidence_json = evidence(facts);\n  transactions.push(tx);\n  addReview(tx, tx.held_reason, 'Below matching threshold: do nothing irreversible and give evidence to a human.', mentioned.concat(clientInvoices), facts);\n}\nconst needsReview = transactions.filter((t) => t.match_status.includes('held') || t.match_status === 'malformed_held' || t.match_status === 'partial_matched_no_paid_signal');\nconst existingOpenReviews = (Array.isArray(root.existing_review_rows) ? root.existing_review_rows : []).filter((row) => !row.resolved_at_utc);\nconst ageDays = (created) => {\n  const ms = Date.parse(now) - Date.parse(created || now);\n  return Number.isFinite(ms) && ms > 0 ? Math.floor(ms / 86400000) : 0;\n};\nconst oldestAge = Math.max(0, ...reviews.map((r) => ageDays(r.created_at_utc)), ...existingOpenReviews.map((r) => ageDays(r.created_at_utc)));\nconst simulatedWriteFailures = root.simulated_write_failures && typeof root.simulated_write_failures === 'object' ? root.simulated_write_failures : {};\nconst writeFailureCount = Object.values(simulatedWriteFailures).reduce((sum, value) => sum + (Number(value) || 0), 0);\nconst counts = {\n  total_rows: transactions.length,\n  auto_matched_count: transactions.filter((t) => /^matched_full/.test(t.match_status)).length,\n  held_count: needsReview.length,\n  duplicate_count: transactions.filter((t) => t.match_status === 'duplicate_suppressed').length,\n  malformed_count: transactions.filter((t) => t.match_status === 'malformed_held').length,\n  partial_count: transactions.filter((t) => t.match_status === 'partial_matched_no_paid_signal').length,\n  paid_signal_count: signals.length,\n  needs_review_count: needsReview.length,\n  review_queue_size: reviews.length + existingOpenReviews.length,\n  oldest_unresolved_review_age_days: oldestAge,\n  incomplete_ledger_flag: root.ledger_complete === false ? 'true' : 'false',\n  write_failure_count: writeFailureCount,\n  config_warning_count: configWarnings.length,\n};\nconst summaryKey = hash('recon:summary:' + (root.import_run_key || $execution.id) + ':' + $execution.id);\nconst rowsHtml = transactions.map((t) => '<li><strong>' + esc(t.match_status) + '</strong> ' + esc(t.source_bank) + ' row ' + esc(t.source_row_number) + ' amount ' + esc(t.amount) + ' title \"' + esc(t.title) + '\"' + (t.held_reason ? ' reason ' + esc(t.held_reason) : '') + '</li>').join('');\nconst operatorSubject = '[TEST] Bank reconciliation: ' + counts.auto_matched_count + ' matched, ' + counts.needs_review_count + ' need review';\nconst operatorBody = '<p>Draft-only reconciliation summary for the reconciliation operator.</p><p>False match policy: below threshold does nothing irreversible and creates review evidence.</p><p>Review queue size: ' + esc(counts.review_queue_size) + '; oldest unresolved age days: ' + esc(counts.oldest_unresolved_review_age_days) + '; incomplete ledger: ' + esc(counts.incomplete_ledger_flag) + '; write failures: ' + esc(counts.write_failure_count) + '; config warnings: ' + esc(counts.config_warning_count) + '.</p><ul>' + rowsHtml + '</ul>';\nreturn { json: {\n  transaction_rows_json: JSON.stringify(transactions),\n  invoice_rows_json: JSON.stringify(invoiceRows),\n  allocation_rows_json: JSON.stringify(allocations),\n  review_rows_json: JSON.stringify(reviews),\n  paid_signal_rows_json: JSON.stringify(signals),\n  summary_row_json: JSON.stringify({\n    summary_key: summaryKey,\n    import_run_key: collapse(root.import_run_key || ('recon-' + $execution.id)),\n    batch_source: collapse(root.batch_source || ''),\n    ...counts,\n    operator_subject: operatorSubject,\n    operator_body_html: operatorBody,\n    smoke_tag: collapse(root.smoke_tag || ''),\n    created_at_utc: now,\n    last_execution_id: $execution.id,\n  }),\n  response_status: 'reconciled_draft_only',\n  quoted_field_values: 'payer_name=\"' + (transactions[0]?.payer_name || '') + '\" title=\"' + (transactions[0]?.title || '') + '\" matched_invoice_key=\"' + (allocations[0]?.invoice_key || '') + '\" held_reason=\"' + (transactions.find((t) => t.held_reason)?.held_reason || '') + '\"',\n} };"
+        "jsCode": "const crypto = require('crypto');\nconst root = $input.item.json || {};\nconst now = root.now_utc || new Date().toISOString();\nconst collapse = (value) => String(value ?? '').replace(/\\s+/g, ' ').trim();\nconst esc = (value) => collapse(value).replace(/[&<>\"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[ch]));\nconst hash = (value) => crypto.createHash('sha256').update(String(value)).digest('hex');\nconst money = (value) => Math.round(Number(value) * 100) / 100;\nconst norm = (value) => collapse(value).toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');\nconst normText = (value) => norm(value).replace(/[^a-z0-9]+/g, ' ').trim();\nconst tokens = (value) => normText(value).split(/\\s+/).filter(Boolean);\nconst tokenKey = (value) => tokens(value).join('|');\nconst hasTokenSubsequence = (haystackValue, needleValue) => {\n  const hay = tokens(haystackValue);\n  const needle = tokens(needleValue);\n  if (!needle.length || hay.length < needle.length) return false;\n  for (let i = 0; i <= hay.length - needle.length; i++) {\n    let ok = true;\n    for (let j = 0; j < needle.length; j++) if (hay[i + j] !== needle[j]) ok = false;\n    if (ok) return true;\n  }\n  return false;\n};\nconst tokenSetContains = (haystackValue, needleValue) => {\n  const hay = new Set(tokens(haystackValue));\n  const needle = tokens(needleValue);\n  return needle.length > 0 && needle.every((t) => hay.has(t));\n};\nconst invoiceKey = (jobId) => jobId ? hash('invoice.v1\\n' + collapse(jobId)) : 'unmapped';\nconst hasMojibake = (value) => /(?:Ã|Å|Ä|Â)/.test(String(value || ''));\nconst evidence = (obj) => JSON.stringify(obj).slice(0, 4500);\nconst staticData = $getWorkflowStaticData ? $getWorkflowStaticData('global') : {};\nconst committedSeenTransactions = staticData.recon_seen_transactions || {};\nconst committedSeenNatural = staticData.recon_seen_natural || {};\nconst committedSeenSignals = staticData.recon_seen_signals || {};\nconst pendingSeenTransactions = {};\nconst pendingSeenNatural = {};\nconst pendingSeenSignals = {};\nconst seenSignalKeysInBatch = new Set();\nconst amountTolerance = Number.isFinite(Number(root.amount_tolerance_grosz)) ? Math.max(0, Number(root.amount_tolerance_grosz)) / 100 : 0;\nconst amountsEqual = (a, b) => Math.abs(money(a) - money(b)) <= amountTolerance;\nconst seenExactInBatch = new Set();\nconst seenNaturalInBatch = new Map();\nconst existingTransactionKeys = new Set((Array.isArray(root.existing_transactions) ? root.existing_transactions : []).map((row) => collapse(row.transaction_key || row.exact_transaction_key || '')).filter(Boolean));\nconst transactions = [];\nconst invoiceRows = [];\nconst allocations = [];\nconst reviews = [];\nconst signals = [];\nconst configWarnings = [];\nconst invoices = (Array.isArray(root.open_invoices) ? root.open_invoices : []).map((inv) => {\n  const rawClientKey = norm(inv.client_key || '');\n  const validClientKey = rawClientKey.length >= 3 ? rawClientKey : '';\n  if (!validClientKey) configWarnings.push({ type: 'invalid_client_key', invoice_number: collapse(inv.invoice_number || ''), client_name: collapse(inv.client_name || '') });\n  const explicitInvoice = collapse(inv.invoice_key || '');\n  const jobId = collapse(inv.job_id || '');\n  const mappingStatus = explicitInvoice || jobId ? 'mapped' : 'unmapped';\n  const row = {\n    invoice_key: explicitInvoice || (jobId ? invoiceKey(jobId) : hash('recon:invoice:' + rawClientKey + ':' + inv.invoice_number)),\n    job_id: jobId,\n    client_key: validClientKey,\n    client_name: collapse(inv.client_name || inv.client_key || ''),\n    invoice_number: collapse(inv.invoice_number || ''),\n    gross_amount: money(inv.gross_amount || inv.open_amount || 0),\n    open_amount: money(inv.open_amount || inv.gross_amount || 0),\n    currency: collapse(inv.currency || 'PLN').toUpperCase(),\n    status: collapse(inv.status || 'Open'),\n    due_date: collapse(inv.due_date || ''),\n    paid_signal_status: mappingStatus === 'mapped' ? 'not_signalled' : 'unmapped_invoice_key',\n    smoke_tag: collapse(root.smoke_tag || ''),\n    created_at_utc: now,\n    last_execution_id: $execution.id,\n  };\n  invoiceRows.push(row);\n  return row;\n});\nconst clientKeys = new Set(invoices.map((inv) => inv.client_key).filter(Boolean));\nconst aliasRows = [];\nfor (const a of Array.isArray(root.payer_aliases) ? root.payer_aliases : []) {\n  const aliasName = collapse(a.payer_name || a.alias || '');\n  const aliasNorm = normText(aliasName);\n  const clientKey = norm(a.client_key || '');\n  if (!aliasNorm || aliasNorm.length < 3 || !clientKey || clientKey.length < 3 || !clientKeys.has(clientKey)) {\n    configWarnings.push({ type: 'invalid_payer_alias', alias: aliasName, client_key: clientKey });\n    continue;\n  }\n  aliasRows.push({ alias_name: aliasName, alias_norm: aliasNorm, client_key: clientKey });\n}\nconst remainingOpen = new Map(invoices.map((inv) => [inv.invoice_key, inv.open_amount]));\nconst partialTouched = new Set();\nconst isOpenInvoice = (inv) => inv && inv.client_key && remainingOpen.get(inv.invoice_key) > 0 && !/^paid$/i.test(inv.status);\nconst openForClient = (clientKey) => invoices.filter((inv) => inv.client_key === clientKey && isOpenInvoice(inv));\nconst collectClientCandidates = (row) => {\n  const payer = collapse(row.payer_name || '');\n  const matches = new Map();\n  for (const alias of aliasRows) {\n    if (normText(payer) === alias.alias_norm || tokenSetContains(payer, alias.alias_name)) matches.set(alias.client_key, { source: 'explicit_alias', alias: alias.alias_name });\n  }\n  for (const inv of invoices) {\n    if (!inv.client_key) continue;\n    if (tokenSetContains(payer, inv.client_key) || (inv.client_name && tokenSetContains(payer, inv.client_name))) matches.set(inv.client_key, { source: 'client_catalog', client_name: inv.client_name });\n  }\n  return Array.from(matches.entries()).map(([client_key, meta]) => ({ client_key, ...meta }));\n};\nconst exactFingerprint = (row) => collapse(row.bank_txn_id) ? hash('recon:bank-txn-id:' + norm(row.source_bank) + ':' + norm(row.source_account_ref) + ':' + collapse(row.bank_txn_id)) : '';\nconst naturalFingerprint = (row) => hash('recon:bank-natural:' + [row.booking_date, money(row.amount || 0), row.currency, norm(row.payer_iban || '') || norm(row.payer_name)].join('|'));\nconst candidateDetails = (candidates) => (candidates || []).map((c) => ({ invoice_key: c.invoice_key, invoice_number: c.invoice_number, open_amount: remainingOpen.get(c.invoice_key) ?? c.open_amount, due_date: c.due_date, client_key: c.client_key }));\nconst addReview = (tx, reason, summary, candidates, facts) => {\n  const details = candidateDetails(candidates);\n  reviews.push({\n    review_key: hash('recon:review:' + tx.transaction_key + ':' + reason),\n    transaction_key: tx.transaction_key,\n    queue_reason: reason,\n    human_summary: summary,\n    candidate_invoice_keys: details.map((c) => c.invoice_key).join(','),\n    candidate_invoice_numbers: details.map((c) => c.invoice_number).join(','),\n    candidate_invoice_amounts: details.map((c) => c.open_amount).join(','),\n    candidate_invoice_due_dates: details.map((c) => c.due_date).join(','),\n    candidate_invoice_details_json: evidence(details),\n    evidence_json: evidence({ ...facts, candidates: details }),\n    smoke_tag: tx.smoke_tag,\n    created_at_utc: now,\n    last_execution_id: $execution.id,\n  });\n};\nconst allocate = (tx, inv, amount, status, confidence, facts) => {\n  const allocAmount = money(amount);\n  const allocationKey = hash('recon:allocation:' + tx.transaction_key + ':' + inv.invoice_key + ':' + allocAmount);\n  allocations.push({\n    allocation_key: allocationKey,\n    transaction_key: tx.transaction_key,\n    invoice_key: inv.invoice_key,\n    invoice_key: inv.invoice_key,\n    allocated_amount: allocAmount,\n    allocation_status: status,\n    confidence_label: confidence,\n    evidence_json: evidence(facts),\n    smoke_tag: tx.smoke_tag,\n    created_at_utc: now,\n    last_execution_id: $execution.id,\n  });\n  remainingOpen.set(inv.invoice_key, money((remainingOpen.get(inv.invoice_key) || 0) - allocAmount));\n  if (status === 'matched_partial_no_paid_signal') partialTouched.add(inv.invoice_key);\n  if (status === 'matched_full' && inv.invoice_key !== 'unmapped') {\n    const eventId = 'recon-' + allocationKey.slice(0, 24);\n    const signalKey = hash('recon:paid-signal:' + inv.invoice_key + ':' + eventId);\n    if (!committedSeenSignals[signalKey] && !seenSignalKeysInBatch.has(signalKey)) {\n      seenSignalKeysInBatch.add(signalKey);\n      pendingSeenSignals[signalKey] = now;\n      signals.push({\n        signal_key: signalKey,\n        invoice_key: inv.invoice_key,\n        invoice_payment_event_id: eventId,\n        transaction_key: tx.transaction_key,\n        invoice_key: inv.invoice_key,\n        event_type: 'invoice.paid',\n        paid_at: tx.booking_date || now,\n        payload_json: evidence({ event_type: 'invoice.paid', invoice_key: inv.invoice_key, source_invoice_key: inv.invoice_key, job_id: inv.job_id, invoice_payment_event_id: eventId, payment_event_id: eventId, paid_at: tx.booking_date || now, mapping_status: 'mapped', source: 'Recon_Paid_Signals' }),\n        signal_status: 'pending_invoice_delivery',\n        smoke_tag: tx.smoke_tag,\n        created_at_utc: now,\n        last_execution_id: $execution.id,\n      });\n    }\n  }\n};\nconst mentionedOpenInvoices = (title, currency) => invoices.filter((inv) => isOpenInvoice(inv) && inv.invoice_number && (!currency || collapse(inv.currency || 'PLN') === currency) && hasTokenSubsequence(title, inv.invoice_number));\nconst mentionedClosedInvoices = (title) => invoices.filter((inv) => inv.invoice_number && !isOpenInvoice(inv) && hasTokenSubsequence(title, inv.invoice_number));\nconst subsetSums = (arr, target, maxSize = 3) => {\n  const out = [];\n  const walk = (start, chosen, sum) => {\n    if (chosen.length > 0 && amountsEqual(sum, target)) out.push([...chosen]);\n    if (chosen.length >= maxSize || sum >= target + amountTolerance) return;\n    for (let i = start; i < arr.length; i++) walk(i + 1, [...chosen, arr[i]], money(sum + (remainingOpen.get(arr[i].invoice_key) || 0)));\n  };\n  walk(0, [], 0);\n  return out;\n};\nfor (const raw of Array.isArray(root.bank_rows) ? root.bank_rows : []) {\n  const amount = Number(raw.amount);\n  const currency = collapse(raw.currency || 'PLN').toUpperCase();\n  const rawHash = hash('recon:raw-row:' + JSON.stringify(raw));\n  const exactKey = exactFingerprint(raw);\n  const naturalKey = naturalFingerprint({ ...raw, amount, currency });\n  const txKey = exactKey || naturalKey;\n  const tx = {\n    transaction_key: txKey,\n    import_run_key: collapse(root.import_run_key || ('recon-' + $execution.id)),\n    source_bank: collapse(raw.source_bank || ''),\n    source_account_ref: collapse(raw.source_account_ref || ''),\n    source_file_id: collapse(raw.source_file_id || ''),\n    source_row_number: Number(raw.source_row_number || 0),\n    booking_date: collapse(raw.booking_date || ''),\n    amount: Number.isFinite(amount) ? money(amount) : 0,\n    currency,\n    payer_name: collapse(raw.payer_name || ''),\n    payer_iban_hash: raw.payer_iban ? hash('iban:' + collapse(raw.payer_iban)) : '',\n    title: collapse(raw.title || ''),\n    raw_row_hash: rawHash,\n    match_status: 'held_for_review',\n    held_reason: '',\n    evidence_json: '',\n    smoke_tag: collapse(root.smoke_tag || ''),\n    created_at_utc: now,\n    last_execution_id: $execution.id,\n  };\n  const facts = { scenario_id: raw.scenario_id || '', source_file_id: tx.source_file_id, source_row_number: tx.source_row_number, amount: tx.amount, currency, title: tx.title, payer_name: tx.payer_name, exact_transaction_key: exactKey, natural_fingerprint: naturalKey };\n  if (!tx.booking_date || !Number.isFinite(amount) || amount <= 0 || !currency) {\n    tx.match_status = 'malformed_held';\n    tx.held_reason = 'malformed_csv_row';\n    tx.evidence_json = evidence({ ...facts, failure: 'required bank row fields missing or invalid' });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Malformed bank CSV row held before matching.', [], facts);\n    continue;\n  }\n  const duplicateKey = txKey;\n  const durableDuplicate = existingTransactionKeys.has(duplicateKey);\n  const staticDuplicate = Boolean(committedSeenTransactions[duplicateKey]);\n  const batchExactDuplicate = Boolean(exactKey && seenExactInBatch.has(exactKey));\n  if (durableDuplicate || staticDuplicate || batchExactDuplicate) {\n    tx.match_status = 'duplicate_suppressed';\n    tx.held_reason = 'duplicate_statement_import';\n    tx.evidence_json = evidence({ ...facts, duplicate_key: duplicateKey, duplicate_layer: durableDuplicate ? 'durable_existing_transactions' : 'static_or_batch', duplicate_identity: exactKey ? 'exact_bank_transaction_id' : 'natural_transaction_key' });\n    transactions.push(tx);\n    continue;\n  }\n  const naturalCollision = Boolean(!exactKey && (seenNaturalInBatch.has(naturalKey) || committedSeenNatural[naturalKey]));\n  if (naturalCollision) {\n    const previous = seenNaturalInBatch.get(naturalKey) || { source: 'existing_or_static' };\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'possible_cross_bank_duplicate';\n    tx.evidence_json = evidence({ ...facts, previous, identity_rule: 'booking_date_amount_currency_counterparty_without_title' });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Possible cross-bank duplicate held; title is evidence only and no invoice is marked paid.', [], { ...facts, previous });\n    pendingSeenTransactions[tx.transaction_key] = now;\n    continue;\n  }\n  if (exactKey) seenExactInBatch.add(exactKey);\n  seenNaturalInBatch.set(naturalKey, { scenario_id: raw.scenario_id || '', source_bank: tx.source_bank, source_file_id: tx.source_file_id, source_row_number: tx.source_row_number, exact_transaction_key: exactKey || '' });\n  pendingSeenTransactions[tx.transaction_key] = now;\n  pendingSeenNatural[naturalKey] = now;\n  if (hasMojibake(raw.payer_name) || hasMojibake(raw.title)) {\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'encoding_garbage_bank_export';\n    tx.evidence_json = evidence({ ...facts, encoding: 'mojibake markers present' });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Bank export encoding is damaged; hold for human decoding.', [], facts);\n    continue;\n  }\n  const clientCandidates = collectClientCandidates(raw);\n  if (clientCandidates.length > 1) {\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'ambiguous_payer_multiple_clients';\n    tx.evidence_json = evidence({ ...facts, client_candidates: clientCandidates });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Payer identity matches more than one client; no invoice is marked paid.', clientCandidates.flatMap((c) => openForClient(c.client_key)), { ...facts, client_candidates: clientCandidates });\n    continue;\n  }\n  const clientKey = clientCandidates[0]?.client_key || '';\n  const clientInvoices = clientKey ? openForClient(clientKey) : [];\n  const mentioned = mentionedOpenInvoices(raw.title || '', collapse(raw.currency || 'PLN'));\n  const mentionedClosed = mentionedClosedInvoices(raw.title || '');\n  if (!mentioned.length && mentionedClosed.length) {\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'invoice_number_not_open';\n    tx.evidence_json = evidence({ ...facts, closed_invoice_numbers: mentionedClosed.map((i) => i.invoice_number) });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Invoice number appears in title but it is not open; no dunning stop signal emitted.', mentionedClosed, facts);\n    continue;\n  }\n  if (!clientKey && mentioned.length === 0) {\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'unknown_or_invalid_payer_no_invoice_number';\n    tx.evidence_json = evidence({ ...facts, config_warning_count: configWarnings.length });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Unknown or invalid payer and no usable open invoice number; no dunning stop signal emitted.', [], facts);\n    continue;\n  }\n  if (mentioned.length) {\n    const totalOpen = money(mentioned.reduce((sum, inv) => sum + (remainingOpen.get(inv.invoice_key) || 0), 0));\n    if (tx.amount > totalOpen && !amountsEqual(tx.amount, totalOpen)) {\n      tx.match_status = 'held_for_review';\n      tx.held_reason = 'overpayment_requires_policy';\n      tx.evidence_json = evidence({ ...facts, total_open: totalOpen, mentioned_invoice_numbers: mentioned.map((i) => i.invoice_number) });\n      transactions.push(tx);\n      addReview(tx, tx.held_reason, 'Payment exceeds mentioned open invoice total; hold until overpayment policy is known.', mentioned, facts);\n      continue;\n    }\n    if (tx.amount < totalOpen && !amountsEqual(tx.amount, totalOpen)) {\n      tx.match_status = 'partial_matched_no_paid_signal';\n      tx.held_reason = 'partial_payment_no_paid_signal';\n      tx.evidence_json = evidence({ ...facts, mentioned_invoice_numbers: mentioned.map((i) => i.invoice_number), total_open: totalOpen });\n      transactions.push(tx);\n      if (mentioned.length === 1) allocate(tx, mentioned[0], tx.amount, 'matched_partial_no_paid_signal', 'deterministic_invoice_number_partial', facts);\n      addReview(tx, tx.held_reason, 'Partial payment recorded as evidence but invoice is not marked paid.', mentioned, facts);\n      continue;\n    }\n    if (mentioned.some((inv) => partialTouched.has(inv.invoice_key))) {\n      tx.match_status = 'partial_matched_no_paid_signal';\n      tx.held_reason = 'partial_payment_sequence_no_paid_signal';\n      tx.evidence_json = evidence({ ...facts, mentioned_invoice_numbers: mentioned.map((i) => i.invoice_number), total_open: totalOpen });\n      transactions.push(tx);\n      if (mentioned.length === 1) allocate(tx, mentioned[0], tx.amount, 'matched_partial_no_paid_signal', 'intrabatch_partial_sequence', facts);\n      addReview(tx, tx.held_reason, 'Second same-batch partial would close the invoice only cumulatively; held for human confirmation and no paid signal emitted.', mentioned, facts);\n      continue;\n    }\n    tx.match_status = mentioned.length > 1 ? 'matched_full_multi_invoice' : 'matched_full_single_invoice';\n    tx.held_reason = '';\n    tx.evidence_json = evidence({ ...facts, matched_invoice_numbers: mentioned.map((i) => i.invoice_number), total_open: totalOpen });\n    transactions.push(tx);\n    for (const inv of mentioned) allocate(tx, inv, remainingOpen.get(inv.invoice_key) || inv.open_amount, 'matched_full', mentioned.length > 1 ? 'deterministic_invoice_numbers_total_exact' : 'deterministic_invoice_number_amount_exact', facts);\n    continue;\n  }\n  const sameAmountCandidates = clientInvoices.filter((inv) => inv.currency === currency && amountsEqual(remainingOpen.get(inv.invoice_key) || 0, tx.amount));\n  if (sameAmountCandidates.length > 1) {\n    tx.match_status = 'held_for_review';\n    tx.held_reason = 'ambiguous_same_amount_open_invoices';\n    tx.evidence_json = evidence({ ...facts, candidate_invoice_numbers: sameAmountCandidates.map((c) => c.invoice_number) });\n    transactions.push(tx);\n    addReview(tx, tx.held_reason, 'Same amount fits more than one open invoice; false match risk is higher than no match.', sameAmountCandidates, facts);\n    continue;\n  }\n  if (sameAmountCandidates.length === 1) {\n    const alternatives = subsetSums(clientInvoices.filter((inv) => inv.invoice_key !== sameAmountCandidates[0].invoice_key), tx.amount, 3).filter((set) => set.length >= 2);\n    if (alternatives.length > 0) {\n      tx.match_status = 'held_for_review';\n      tx.held_reason = 'ambiguous_subset_sum';\n      tx.evidence_json = evidence({ ...facts, exact_invoice: sameAmountCandidates[0].invoice_number, alternative_subsets: alternatives.map((set) => set.map((i) => i.invoice_number)) });\n      transactions.push(tx);\n      addReview(tx, tx.held_reason, 'Amount fits one invoice and also another invoice subset; held instead of pick-first.', [sameAmountCandidates[0]].concat(alternatives.flat()), facts);\n      continue;\n    }\n    tx.match_status = 'matched_full_single_invoice';\n    tx.held_reason = '';\n    tx.evidence_json = evidence({ ...facts, matched_invoice_number: sameAmountCandidates[0].invoice_number });\n    transactions.push(tx);\n    allocate(tx, sameAmountCandidates[0], tx.amount, 'matched_full', 'deterministic_alias_amount_unique', facts);\n    continue;\n  }\n  tx.match_status = 'held_for_review';\n  tx.held_reason = 'below_threshold_no_safe_match';\n  tx.evidence_json = evidence(facts);\n  transactions.push(tx);\n  addReview(tx, tx.held_reason, 'Below matching threshold: do nothing irreversible and give evidence to a human.', mentioned.concat(clientInvoices), facts);\n}\nconst needsReview = transactions.filter((t) => t.match_status.includes('held') || t.match_status === 'malformed_held' || t.match_status === 'partial_matched_no_paid_signal');\nconst existingOpenReviews = (Array.isArray(root.existing_review_rows) ? root.existing_review_rows : []).filter((row) => !row.resolved_at_utc);\nconst ageDays = (created) => {\n  const ms = Date.parse(now) - Date.parse(created || now);\n  return Number.isFinite(ms) && ms > 0 ? Math.floor(ms / 86400000) : 0;\n};\nconst oldestAge = Math.max(0, ...reviews.map((r) => ageDays(r.created_at_utc)), ...existingOpenReviews.map((r) => ageDays(r.created_at_utc)));\nconst simulatedWriteFailures = root.simulated_write_failures && typeof root.simulated_write_failures === 'object' ? root.simulated_write_failures : {};\nconst writeFailureCount = Object.values(simulatedWriteFailures).reduce((sum, value) => sum + (Number(value) || 0), 0);\nconst counts = {\n  total_rows: transactions.length,\n  auto_matched_count: transactions.filter((t) => /^matched_full/.test(t.match_status)).length,\n  held_count: needsReview.length,\n  duplicate_count: transactions.filter((t) => t.match_status === 'duplicate_suppressed').length,\n  malformed_count: transactions.filter((t) => t.match_status === 'malformed_held').length,\n  partial_count: transactions.filter((t) => t.match_status === 'partial_matched_no_paid_signal').length,\n  paid_signal_count: signals.length,\n  needs_review_count: needsReview.length,\n  review_queue_size: reviews.length + existingOpenReviews.length,\n  oldest_unresolved_review_age_days: oldestAge,\n  incomplete_ledger_flag: root.ledger_complete === false ? 'true' : 'false',\n  write_failure_count: writeFailureCount,\n  config_warning_count: configWarnings.length,\n};\nconst summaryKey = hash('recon:summary:' + (root.import_run_key || $execution.id) + ':' + $execution.id);\nconst rowsHtml = transactions.map((t) => '<li><strong>' + esc(t.match_status) + '</strong> ' + esc(t.source_bank) + ' row ' + esc(t.source_row_number) + ' amount ' + esc(t.amount) + ' title \"' + esc(t.title) + '\"' + (t.held_reason ? ' reason ' + esc(t.held_reason) : '') + '</li>').join('');\nconst operatorSubject = '[TEST] Bank reconciliation: ' + counts.auto_matched_count + ' matched, ' + counts.needs_review_count + ' need review';\nconst operatorBody = '<p>Draft-only reconciliation summary for the reconciliation operator.</p><p>False match policy: below threshold does nothing irreversible and creates review evidence.</p><p>Review queue size: ' + esc(counts.review_queue_size) + '; oldest unresolved age days: ' + esc(counts.oldest_unresolved_review_age_days) + '; incomplete ledger: ' + esc(counts.incomplete_ledger_flag) + '; write failures: ' + esc(counts.write_failure_count) + '; config warnings: ' + esc(counts.config_warning_count) + '.</p><ul>' + rowsHtml + '</ul>';\nreturn { json: {\n  transaction_rows_json: JSON.stringify(transactions),\n  invoice_rows_json: JSON.stringify(invoiceRows),\n  allocation_rows_json: JSON.stringify(allocations),\n  review_rows_json: JSON.stringify(reviews),\n  paid_signal_rows_json: JSON.stringify(signals),\n  pending_seen_transactions_json: JSON.stringify(pendingSeenTransactions),\n  pending_seen_natural_json: JSON.stringify(pendingSeenNatural),\n  pending_seen_signals_json: JSON.stringify(pendingSeenSignals),\n  summary_row_json: JSON.stringify({\n    summary_key: summaryKey,\n    import_run_key: collapse(root.import_run_key || ('recon-' + $execution.id)),\n    batch_source: collapse(root.batch_source || ''),\n    ...counts,\n    operator_subject: operatorSubject,\n    operator_body_html: operatorBody,\n    smoke_tag: collapse(root.smoke_tag || ''),\n    created_at_utc: now,\n    last_execution_id: $execution.id,\n  }),\n  response_status: 'reconciled_draft_only',\n  quoted_field_values: 'payer_name=\"' + (transactions[0]?.payer_name || '') + '\" title=\"' + (transactions[0]?.title || '') + '\" matched_invoice_key=\"' + (allocations[0]?.invoice_key || '') + '\" held_reason=\"' + (transactions.find((t) => t.held_reason)?.held_reason || '') + '\"',\n} };"
       }
     },
     {
@@ -969,8 +1145,7 @@
             }
           ]
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
       "id": "1b4141c2-99a8-4d8b-9fb0-9fa958f4798d",
@@ -1146,8 +1321,7 @@
             }
           ]
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
       "id": "665b67e8-c438-4af4-9601-4348b3e9d020",
@@ -1283,8 +1457,7 @@
             }
           ]
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
       "id": "d22da317-4e93-41e5-9aec-5eb5bde7573e",
@@ -1441,8 +1614,7 @@
             }
           ]
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
       "id": "8f6ab4db-c4a3-4cb0-bc73-9f3912bbcdcd",
@@ -1588,8 +1760,7 @@
             }
           ]
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
       "id": "a6096816-6fc3-4fc9-ab7a-3d9baf6d4a49",
@@ -1826,8 +1997,7 @@
             }
           ]
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
       "id": "97c9a265-9056-4230-bda6-1ab932e727ca",
@@ -2044,8 +2214,7 @@
             }
           ]
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
       "id": "fb572acf-d20b-4cf1-b521-49fff7d7e1ec",
@@ -2221,8 +2390,7 @@
             }
           ]
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
       "id": "c3108e33-d8b0-477d-aa61-b113ed8589e8",
@@ -2358,8 +2526,7 @@
             }
           ]
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
       "id": "f12bf0c9-a764-459e-965a-8dd20a6d3f07",
@@ -2516,8 +2683,7 @@
             }
           ]
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
       "id": "1165ef8e-f9d1-4ef9-afdc-52e53e07beae",
@@ -2663,8 +2829,7 @@
             }
           ]
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
       "id": "2ae5fae7-28d6-4c37-82bd-7ae88489cce8",
@@ -2901,8 +3066,7 @@
             }
           ]
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
       "id": "e98fa4fb-e9de-4a3b-b418-428579dbdf76",
@@ -2910,7 +3074,7 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        1760,
+        3840,
         340
       ],
       "parameters": {
@@ -2935,7 +3099,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2020,
+        4100,
         340
       ],
       "parameters": {
@@ -2949,7 +3113,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        2260,
+        4360,
         340
       ],
       "parameters": {
@@ -2966,7 +3130,7 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        1300,
+        3380,
         860
       ],
       "parameters": {
@@ -3005,7 +3169,6 @@
         },
         "returnAll": true
       },
-      "onError": "continueRegularOutput",
       "alwaysOutputData": true,
       "executeOnce": true
     },
@@ -3043,7 +3206,6 @@
         },
         "returnAll": true
       },
-      "onError": "continueRegularOutput",
       "alwaysOutputData": true,
       "executeOnce": true
     },
@@ -3081,7 +3243,6 @@
         },
         "returnAll": true
       },
-      "onError": "continueRegularOutput",
       "alwaysOutputData": true,
       "executeOnce": true
     },
@@ -3119,7 +3280,6 @@
         },
         "returnAll": true
       },
-      "onError": "continueRegularOutput",
       "alwaysOutputData": true,
       "executeOnce": true
     },
@@ -3135,6 +3295,462 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const base = $('Merge Runtime Existing Transactions').item.json || {};\nconst bodyRows = Array.isArray(base.existing_review_rows) ? base.existing_review_rows : [];\nconst allTableRows = $input.all().map((item) => item.json || {}).filter((row) => row.review_key);\nconst tableRows = String(base.smoke_tag || '') === 'RECON-RUNTIME-SMOKE' ? allTableRows.filter((row) => row.smoke_tag !== 'RECON-RUNTIME-SMOKE') : allTableRows;\nreturn { json: { ...base, existing_review_rows: bodyRows.concat(tableRows) } };"
+      }
+    },
+    {
+      "id": "73d2c219-d1d7-4abe-af2b-509e677c487d",
+      "name": "Read Back Webhook Transaction Writes",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1760,
+        340
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Recon_Bank_Transactions"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "last_execution_id",
+              "condition": "eq",
+              "keyValue": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "f9726ee2-c916-43ed-bce2-82523a81c259",
+      "name": "Read Back Webhook Invoice Writes",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2020,
+        340
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Recon_Invoices"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "last_execution_id",
+              "condition": "eq",
+              "keyValue": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "2ce1e63d-a5c4-4701-be65-b0d6fabe4ad5",
+      "name": "Read Back Webhook Allocation Writes",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2280,
+        340
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Recon_Allocations"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "last_execution_id",
+              "condition": "eq",
+              "keyValue": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "1deae467-376f-4a2a-ab5c-b24e26e3bab7",
+      "name": "Read Back Webhook Review Writes",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2540,
+        340
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Recon_Review_Queue"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "last_execution_id",
+              "condition": "eq",
+              "keyValue": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "35d67495-1346-4457-943b-c23b3d35d85c",
+      "name": "Read Back Webhook Paid Signal Writes",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2800,
+        340
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Recon_Paid_Signals"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "last_execution_id",
+              "condition": "eq",
+              "keyValue": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "d668bf73-ab2e-41f7-8f67-cb246bc903ae",
+      "name": "Read Back Webhook Summary Writes",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        3060,
+        340
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Recon_Run_Summaries"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "last_execution_id",
+              "condition": "eq",
+              "keyValue": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "717d004b-3af3-45ab-80cb-b77acb5c7471",
+      "name": "Verify Webhook Persistence Readback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3320,
+        340
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const engine = $('Run Webhook Reconciliation Engine').item.json || {};\nconst specs = [{\"label\":\"Transactions\",\"field\":\"transaction_rows_json\",\"node\":\"Read Back Webhook Transaction Writes\",\"key\":\"transaction_key\"},{\"label\":\"Invoices\",\"field\":\"invoice_rows_json\",\"node\":\"Read Back Webhook Invoice Writes\",\"key\":\"invoice_key\"},{\"label\":\"Allocations\",\"field\":\"allocation_rows_json\",\"node\":\"Read Back Webhook Allocation Writes\",\"key\":\"allocation_key\"},{\"label\":\"Reviews\",\"field\":\"review_rows_json\",\"node\":\"Read Back Webhook Review Writes\",\"key\":\"review_key\"},{\"label\":\"Paid Signals\",\"field\":\"paid_signal_rows_json\",\"node\":\"Read Back Webhook Paid Signal Writes\",\"key\":\"signal_key\"},{\"label\":\"Summaries\",\"field\":\"summary_row_json\",\"node\":\"Read Back Webhook Summary Writes\",\"key\":\"summary_key\"}];\nconst parseJson = (value, label) => {\n  try { return JSON.parse(value); } catch (error) { throw new Error('persistence_expectation_json_invalid:' + label); }\n};\nconst unwrapRows = (nodeName) => $items(nodeName)\n  .map((item) => item.json && item.json.fields && typeof item.json.fields === 'object' ? { ...item.json.fields, id: item.json.id } : (item.json || {}))\n  .filter((row) => Object.keys(row).length > 0 && String(row.last_execution_id || '') === String($execution.id));\nconst multiset = (rows, key) => {\n  const counts = {};\n  for (const row of rows) {\n    const value = String(row[key] || '');\n    if (!value) throw new Error('persistence_readback_missing_key:' + key);\n    counts[value] = (counts[value] || 0) + 1;\n  }\n  return counts;\n};\nconst mismatches = [];\nfor (const spec of specs) {\n  const parsed = parseJson(engine[spec.field] || (spec.field === 'summary_row_json' ? '{}' : '[]'), spec.field);\n  const expected = spec.field === 'summary_row_json' ? [parsed] : parsed;\n  if (!Array.isArray(expected)) throw new Error('persistence_expectation_shape_invalid:' + spec.field);\n  const actual = unwrapRows(spec.node);\n  const expectedSet = multiset(expected, spec.key);\n  const actualSet = multiset(actual, spec.key);\n  const signature = (counts) => JSON.stringify(Object.entries(counts).sort(([left], [right]) => left.localeCompare(right)));\n  if (expected.length !== actual.length || signature(expectedSet) !== signature(actualSet)) {\n    mismatches.push({ table: spec.label, expected_count: expected.length, actual_count: actual.length, expected_keys: expectedSet, actual_keys: actualSet });\n  }\n}\nif (mismatches.length) throw new Error('persistence_readback_mismatch:' + JSON.stringify(mismatches));\nreturn { json: { persistence_verified: true, execution_id: $execution.id } };"
+      }
+    },
+    {
+      "id": "dcf09a61-1c10-4320-b814-976d8df89369",
+      "name": "Commit Webhook Seen Markers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3580,
+        340
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const engine = $('Run Webhook Reconciliation Engine').item.json || {};\nconst parseObject = (value) => {\n  try {\n    const parsed = JSON.parse(value || '{}');\n    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};\n  } catch (error) {\n    throw new Error('pending_seen_marker_json_invalid');\n  }\n};\nconst pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst staticData = $getWorkflowStaticData('global');\nstaticData.recon_seen_transactions = staticData.recon_seen_transactions || {};\nstaticData.recon_seen_natural = staticData.recon_seen_natural || {};\nstaticData.recon_seen_signals = staticData.recon_seen_signals || {};\nObject.assign(staticData.recon_seen_transactions, parseObject(engine.pending_seen_transactions_json));\nObject.assign(staticData.recon_seen_natural, parseObject(engine.pending_seen_natural_json));\nObject.assign(staticData.recon_seen_signals, parseObject(engine.pending_seen_signals_json));\npruneStore(staticData.recon_seen_transactions);\npruneStore(staticData.recon_seen_natural);\npruneStore(staticData.recon_seen_signals);\nreturn $input.item;"
+      }
+    },
+    {
+      "id": "fdfd79e0-93d0-4174-885f-f1b7ff283ab2",
+      "name": "Read Back Runtime Transaction Writes",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1300,
+        860
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Recon_Bank_Transactions"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "last_execution_id",
+              "condition": "eq",
+              "keyValue": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "9c2607ad-584c-4b18-86ac-0eef5552eb50",
+      "name": "Read Back Runtime Invoice Writes",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1560,
+        860
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Recon_Invoices"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "last_execution_id",
+              "condition": "eq",
+              "keyValue": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "af656970-8f12-43f6-b379-e654d46bbda8",
+      "name": "Read Back Runtime Allocation Writes",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1820,
+        860
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Recon_Allocations"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "last_execution_id",
+              "condition": "eq",
+              "keyValue": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "71422dfc-cdba-41b8-96a0-a3e58f674002",
+      "name": "Read Back Runtime Review Writes",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2080,
+        860
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Recon_Review_Queue"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "last_execution_id",
+              "condition": "eq",
+              "keyValue": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "1cc09a29-e322-4ca3-a580-1649790ef86d",
+      "name": "Read Back Runtime Paid Signal Writes",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2340,
+        860
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Recon_Paid_Signals"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "last_execution_id",
+              "condition": "eq",
+              "keyValue": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "53e793bd-7003-4b32-9a31-5cce42b73cb3",
+      "name": "Read Back Runtime Summary Writes",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2600,
+        860
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Recon_Run_Summaries"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "last_execution_id",
+              "condition": "eq",
+              "keyValue": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "24f9cce3-f1c1-4138-9861-accc808d048c",
+      "name": "Verify Runtime Persistence Readback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2860,
+        860
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const engine = $('Run Runtime Reconciliation Engine').item.json || {};\nconst specs = [{\"label\":\"Transactions\",\"field\":\"transaction_rows_json\",\"node\":\"Read Back Runtime Transaction Writes\",\"key\":\"transaction_key\"},{\"label\":\"Invoices\",\"field\":\"invoice_rows_json\",\"node\":\"Read Back Runtime Invoice Writes\",\"key\":\"invoice_key\"},{\"label\":\"Allocations\",\"field\":\"allocation_rows_json\",\"node\":\"Read Back Runtime Allocation Writes\",\"key\":\"allocation_key\"},{\"label\":\"Reviews\",\"field\":\"review_rows_json\",\"node\":\"Read Back Runtime Review Writes\",\"key\":\"review_key\"},{\"label\":\"Paid Signals\",\"field\":\"paid_signal_rows_json\",\"node\":\"Read Back Runtime Paid Signal Writes\",\"key\":\"signal_key\"},{\"label\":\"Summaries\",\"field\":\"summary_row_json\",\"node\":\"Read Back Runtime Summary Writes\",\"key\":\"summary_key\"}];\nconst parseJson = (value, label) => {\n  try { return JSON.parse(value); } catch (error) { throw new Error('persistence_expectation_json_invalid:' + label); }\n};\nconst unwrapRows = (nodeName) => $items(nodeName)\n  .map((item) => item.json && item.json.fields && typeof item.json.fields === 'object' ? { ...item.json.fields, id: item.json.id } : (item.json || {}))\n  .filter((row) => Object.keys(row).length > 0 && String(row.last_execution_id || '') === String($execution.id));\nconst multiset = (rows, key) => {\n  const counts = {};\n  for (const row of rows) {\n    const value = String(row[key] || '');\n    if (!value) throw new Error('persistence_readback_missing_key:' + key);\n    counts[value] = (counts[value] || 0) + 1;\n  }\n  return counts;\n};\nconst mismatches = [];\nfor (const spec of specs) {\n  const parsed = parseJson(engine[spec.field] || (spec.field === 'summary_row_json' ? '{}' : '[]'), spec.field);\n  const expected = spec.field === 'summary_row_json' ? [parsed] : parsed;\n  if (!Array.isArray(expected)) throw new Error('persistence_expectation_shape_invalid:' + spec.field);\n  const actual = unwrapRows(spec.node);\n  const expectedSet = multiset(expected, spec.key);\n  const actualSet = multiset(actual, spec.key);\n  const signature = (counts) => JSON.stringify(Object.entries(counts).sort(([left], [right]) => left.localeCompare(right)));\n  if (expected.length !== actual.length || signature(expectedSet) !== signature(actualSet)) {\n    mismatches.push({ table: spec.label, expected_count: expected.length, actual_count: actual.length, expected_keys: expectedSet, actual_keys: actualSet });\n  }\n}\nif (mismatches.length) throw new Error('persistence_readback_mismatch:' + JSON.stringify(mismatches));\nreturn { json: { persistence_verified: true, execution_id: $execution.id } };"
+      }
+    },
+    {
+      "id": "3b991cad-0a0b-4b56-b120-4b5f45957814",
+      "name": "Commit Runtime Seen Markers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3120,
+        860
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const engine = $('Run Runtime Reconciliation Engine').item.json || {};\nconst parseObject = (value) => {\n  try {\n    const parsed = JSON.parse(value || '{}');\n    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};\n  } catch (error) {\n    throw new Error('pending_seen_marker_json_invalid');\n  }\n};\nconst pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst staticData = $getWorkflowStaticData('global');\nstaticData.recon_seen_transactions = staticData.recon_seen_transactions || {};\nstaticData.recon_seen_natural = staticData.recon_seen_natural || {};\nstaticData.recon_seen_signals = staticData.recon_seen_signals || {};\nObject.assign(staticData.recon_seen_transactions, parseObject(engine.pending_seen_transactions_json));\nObject.assign(staticData.recon_seen_natural, parseObject(engine.pending_seen_natural_json));\nObject.assign(staticData.recon_seen_signals, parseObject(engine.pending_seen_signals_json));\npruneStore(staticData.recon_seen_transactions);\npruneStore(staticData.recon_seen_natural);\npruneStore(staticData.recon_seen_signals);\nreturn $input.item;"
       }
     }
   ],
