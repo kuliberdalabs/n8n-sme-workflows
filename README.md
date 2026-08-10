@@ -2,6 +2,8 @@
 
 [n8n](https://n8n.io) workflow templates for SME back-office automation, engineered well past demo grade: lead intake, invoicing and dunning, document intake, support triage, ops reporting, bank reconciliation, Polish KSeF e-invoicing, and client onboarding.
 
+Agent cold start: read [`AGENTS.md`](AGENTS.md), select its one primary task route, and follow that route's ordered local sources and gates.
+
 Each workflow is an import-ready JSON built to a consistent engineering standard, with a README documenting the business problem, the design decisions, and safe-test instructions.
 
 ## Workflows
