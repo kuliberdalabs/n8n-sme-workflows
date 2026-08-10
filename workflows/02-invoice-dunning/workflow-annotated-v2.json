@@ -1,0 +1,3712 @@
+{
+  "name": "Invoice Dunning (idempotent, stop-on-paid)",
+  "activeVersionId": null,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "connections": {
+    "Job Completion Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Completion Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Completion Token": {
+      "main": [
+        [
+          {
+            "node": "Completion Authorized?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Completion Authorized?": {
+      "main": [
+        [
+          {
+            "node": "Normalize Completion Event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Completion Unauthorized",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Completion Event": {
+      "main": [
+        [
+          {
+            "node": "Completion Event Ignored?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Completion Event Ignored?": {
+      "main": [
+        [
+          {
+            "node": "Respond Completion Ignored",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Claim Completion Side Effect",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claim Completion Side Effect": {
+      "main": [
+        [
+          {
+            "node": "Completion Claim Duplicate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Completion Claim Duplicate?": {
+      "main": [
+        [
+          {
+            "node": "Find Claimed Completion Row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Find Existing Invoice Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Claimed Completion Row": {
+      "main": [
+        [
+          {
+            "node": "Respond Invoice Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Existing Invoice Row": {
+      "main": [
+        [
+          {
+            "node": "Persistent Invoice Duplicate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Persistent Invoice Duplicate?": {
+      "main": [
+        [
+          {
+            "node": "Respond Invoice Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Completion Invalid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Completion Invalid?": {
+      "main": [
+        [
+          {
+            "node": "Insert Completion Dead Letter",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insert Invoice Pending Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Completion Dead Letter": {
+      "main": [
+        [
+          {
+            "node": "Mark Completion Claim Dead Letter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Completion Claim Dead Letter": {
+      "main": [
+        [
+          {
+            "node": "Respond Completion Dead Letter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Invoice Pending Email": {
+      "main": [
+        [
+          {
+            "node": "Send Controlled Invoice Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Controlled Invoice Email": {
+      "main": [
+        [
+          {
+            "node": "Build Invoice Email Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Invoice Email Update": {
+      "main": [
+        [
+          {
+            "node": "Update Invoice Email Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Invoice Email Sent": {
+      "main": [
+        [
+          {
+            "node": "Mark Invoice Claim Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Invoice Claim Sent": {
+      "main": [
+        [
+          {
+            "node": "Respond Invoice Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payment Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Payment Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Payment Token": {
+      "main": [
+        [
+          {
+            "node": "Payment Authorized?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payment Authorized?": {
+      "main": [
+        [
+          {
+            "node": "Normalize Payment Event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Payment Unauthorized",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Payment Event": {
+      "main": [
+        [
+          {
+            "node": "Payment Invalid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payment Invalid?": {
+      "main": [
+        [
+          {
+            "node": "Respond Payment Dead Letter",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Claim Payment Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claim Payment Event": {
+      "main": [
+        [
+          {
+            "node": "Payment Claim Duplicate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payment Already Paid?": {
+      "main": [
+        [
+          {
+            "node": "Respond Payment Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Paid Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Paid Update": {
+      "main": [
+        [
+          {
+            "node": "Update Invoice Paid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Invoice Paid": {
+      "main": [
+        [
+          {
+            "node": "Mark Payment Claim Paid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Payment Claim Paid": {
+      "main": [
+        [
+          {
+            "node": "Respond Payment Marked Paid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Dunning Sweep": {
+      "main": [
+        [
+          {
+            "node": "Find Invoice Sent Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Invoice Sent Rows": {
+      "main": [
+        [
+          {
+            "node": "Build Due Dunning Actions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Due Dunning Actions": {
+      "main": [
+        [
+          {
+            "node": "Claim Dunning Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claim Dunning Action": {
+      "main": [
+        [
+          {
+            "node": "Find Dunning Recheck Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Dunning Recheck Row": {
+      "main": [
+        [
+          {
+            "node": "Build Dunning Recheck Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Dunning Recheck Decision": {
+      "main": [
+        [
+          {
+            "node": "Build Dunning Pending Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Dunning Pending Update": {
+      "main": [
+        [
+          {
+            "node": "Update Dunning Pending Claim",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Dunning Pending Claim": {
+      "main": [
+        [
+          {
+            "node": "Send Controlled Dunning Nudge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Controlled Dunning Nudge": {
+      "main": [
+        [
+          {
+            "node": "Build Dunning Sent Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Dunning Sent Update": {
+      "main": [
+        [
+          {
+            "node": "Update Dunning Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Dunning Sent": {
+      "main": [
+        [
+          {
+            "node": "Mark Dunning Claim Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Dunning Escalation Sweep": {
+      "main": [
+        [
+          {
+            "node": "Find Escalation Invoice Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Escalation Invoice Rows": {
+      "main": [
+        [
+          {
+            "node": "Build Due Escalation Actions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Due Escalation Actions": {
+      "main": [
+        [
+          {
+            "node": "Claim Escalation Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claim Escalation Action": {
+      "main": [
+        [
+          {
+            "node": "Find Escalation Recheck Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Escalation Recheck Row": {
+      "main": [
+        [
+          {
+            "node": "Build Escalation Recheck Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Escalation Recheck Decision": {
+      "main": [
+        [
+          {
+            "node": "Build Escalation Pending Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Escalation Pending Update": {
+      "main": [
+        [
+          {
+            "node": "Update Escalation Pending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Escalation Pending": {
+      "main": [
+        [
+          {
+            "node": "Send Controlled Escalation Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Controlled Escalation Alert": {
+      "main": [
+        [
+          {
+            "node": "Build Escalation Sent Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Escalation Sent Update": {
+      "main": [
+        [
+          {
+            "node": "Update Escalation Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Escalation Sent": {
+      "main": [
+        [
+          {
+            "node": "Mark Dunning Claim Escalated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payment Claim Duplicate?": {
+      "main": [
+        [
+          {
+            "node": "Find Duplicate Payment Invoice Row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Find New Payment Invoice Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Duplicate Payment Invoice Row": {
+      "main": [
+        [
+          {
+            "node": "Duplicate Payment Invoice Missing?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Duplicate Payment Invoice Missing?": {
+      "main": [
+        [
+          {
+            "node": "Find Unmatched Payment Queue Row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Payment Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find New Payment Invoice Row": {
+      "main": [
+        [
+          {
+            "node": "New Payment Invoice Missing?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Payment Invoice Missing?": {
+      "main": [
+        [
+          {
+            "node": "Find Unmatched Payment Queue Row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Payment Already Paid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Unmatched Payment Queue Row": {
+      "main": [
+        [
+          {
+            "node": "Unmatched Payment Already Queued?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unmatched Payment Already Queued?": {
+      "main": [
+        [
+          {
+            "node": "Respond Payment Unmatched",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Unmatched Payment Queue Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Unmatched Payment Queue Row": {
+      "main": [
+        [
+          {
+            "node": "Insert Unmatched Payment Queue Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Unmatched Payment Queue Row": {
+      "main": [
+        [
+          {
+            "node": "Respond Payment Unmatched",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodes": [
+    {
+      "id": "8cefc6c4-a073-46df-acda-428b3ffcc822",
+      "name": "Overview — Send invoices and chase overdue payments",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -928,
+        0
+      ],
+      "parameters": {
+        "content": "## Send invoices and chase overdue payments\n\n### How it works\n1. Receives job-completion events, validates the token, and stores malformed inputs as dead letters.\n2. Prices completed work from a fixed price book, creates a deterministic invoice key, and persists the invoice before sending email.\n3. Receives payment events, deduplicates them, and marks matched invoices paid before later reminder updates can overwrite them.\n4. Runs daily reminder and escalation sweeps with a fresh status recheck immediately before each controlled email.\n5. Queues unmatched payments for human review and stops after the configured reminder or escalation threshold.\n\n### Setup steps\n- [ ] Create the required n8n Data Tables and re-select them in every Data Table node.\n- [ ] Connect Gmail OAuth and replace `ops@example.com` in every Gmail node.\n- [ ] Set `DUNNING_WEBHOOK_TOKEN` and send it in the documented request header.\n- [ ] Configure the price book, VAT, currency, reminder timing, and escalation thresholds.\n- [ ] Test completion, duplicate, invalid, payment, and sweep paths while the workflow is inactive.\n\n### Customization\nAdjust service prices, payment matching, reminder cadence, escalation rules, and the controlled operator inbox to match your invoicing process.",
+        "width": 800,
+        "height": 640
+      }
+    },
+    {
+      "id": "07ce7842-33fc-4785-ab6d-d7958ad746d1",
+      "name": "Section 1 — Receive completion event",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "content": "## Receive completion event\nValidates the completion webhook, normalizes the job, handles ignored events, and claims the side effect.",
+        "width": 2304,
+        "height": 320,
+        "color": 7
+      }
+    },
+    {
+      "id": "8a1cee47-dd50-4585-aa2e-a1a839b50b42",
+      "name": "Section 2 — Deduplicate completion",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2368,
+        0
+      ],
+      "parameters": {
+        "content": "## Deduplicate completion\nReuses an existing invoice result and prevents replayed completion events from creating another invoice.",
+        "width": 1536,
+        "height": 320,
+        "color": 7
+      }
+    },
+    {
+      "id": "92ea2bb4-08ce-4a2b-a06f-a6b4426a2c2c",
+      "name": "Section 3 — Persist invoice outcome",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3968,
+        0
+      ],
+      "parameters": {
+        "content": "## Persist invoice outcome\nStores invalid jobs as dead letters or persists, emails, and confirms a newly created invoice.",
+        "width": 1536,
+        "height": 576,
+        "color": 7
+      }
+    },
+    {
+      "id": "ed28db30-40a2-4417-a269-837332917e4c",
+      "name": "Section 4 — Receive payment event",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        640
+      ],
+      "parameters": {
+        "content": "## Receive payment event\nAuthenticates and validates payment callbacks before claiming a valid event for processing.",
+        "width": 2304,
+        "height": 320,
+        "color": 7
+      }
+    },
+    {
+      "id": "2cd7fbdc-c54f-4ba7-addf-c4ba38c24425",
+      "name": "Section 5 — Match payment safely",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2368,
+        640
+      ],
+      "parameters": {
+        "content": "## Match payment safely\nSeparates duplicate, unmatched, already-paid, and newly payable invoices without guessing.",
+        "width": 1536,
+        "height": 576,
+        "color": 7
+      }
+    },
+    {
+      "id": "b2f63e38-1308-410c-acee-19cc794a96ff",
+      "name": "Section 6 — Persist payment outcome",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3968,
+        640
+      ],
+      "parameters": {
+        "content": "## Persist payment outcome\nQueues unmatched payments once or atomically marks the matched invoice paid and returns its result.",
+        "width": 1792,
+        "height": 320,
+        "color": 7
+      }
+    },
+    {
+      "id": "eefc767e-200a-4f53-acd3-92a176bc8fae",
+      "name": "Section 7 — Claim due reminders",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1280
+      ],
+      "parameters": {
+        "content": "## Claim due reminders\nSelects due invoices, claims each reminder, and rechecks current status before any email.",
+        "width": 1792,
+        "height": 320,
+        "color": 7
+      }
+    },
+    {
+      "id": "0a6a4883-d2ba-484d-a7fd-4d93da2b1712",
+      "name": "Section 8 — Send controlled reminder",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1856,
+        1280
+      ],
+      "parameters": {
+        "content": "## Send controlled reminder\nPersists the pending claim, sends to the controlled inbox, and records confirmed delivery state.",
+        "width": 1792,
+        "height": 320,
+        "color": 7
+      }
+    },
+    {
+      "id": "5b43037a-5c7d-4c17-a694-addc1e46df65",
+      "name": "Section 9 — Claim due escalations",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3712,
+        1280
+      ],
+      "parameters": {
+        "content": "## Claim due escalations\nSelects stuck invoices, claims each escalation, and rechecks eligibility before alerting a human.",
+        "width": 1792,
+        "height": 320,
+        "color": 7
+      }
+    },
+    {
+      "id": "be93d4b3-9190-4f24-ace2-800348b69d01",
+      "name": "Section 10 — Escalate to operator",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5568,
+        1280
+      ],
+      "parameters": {
+        "content": "## Escalate to operator\nPersists the escalation claim, alerts the controlled inbox, and records the final escalated state.",
+        "width": 1792,
+        "height": 320,
+        "color": 7
+      }
+    },
+    {
+      "id": "be2a73e2-636c-49f1-9bba-1f80ddffdb5d",
+      "name": "Job Completion Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        64,
+        144
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dunning-job-complete-test",
+        "responseMode": "responseNode"
+      },
+      "webhookId": "8dc1b3a0-ab58-4ef3-8f27-09a2c7bba1d0"
+    },
+    {
+      "id": "98e24aee-b6cc-4b60-9702-8eb0c20221c8",
+      "name": "Validate Completion Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        144
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const root = $input.item.json || {};\nconst headers = root.headers || {};\nconst header = (name) => headers[name] || headers[name.toLowerCase()] || headers[name.toUpperCase()] || '';\nconst rawAuth = String(header('authorization') || '');\nconst bearer = rawAuth.toLowerCase().startsWith('bearer ') ? rawAuth.slice(7).trim() : '';\nconst provided = String(header('x-dunning-token') || bearer || '').trim();\nconst expected = String($vars.DUNNING_WEBHOOK_TOKEN || '').trim();\nreturn { json: {\n  ...root,\n  auth_ok: Boolean(expected && provided && provided === expected),\n  auth_reason: !expected ? 'missing_server_token_var' : !provided ? 'missing_token_header' : provided === expected ? '' : 'bad_token',\n  checked_at: new Date().toISOString(),\n} };"
+      }
+    },
+    {
+      "id": "800dadab-76cb-4858-a04a-2f99d2f7c1f4",
+      "name": "Completion Authorized?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        576,
+        144
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.auth_ok }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "f077edb2-303c-4c55-a926-7d93ac255f34",
+      "name": "Normalize Completion Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        144
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const crypto = require('crypto');\nconst PRICE_BOOK_VERSION = 'INVOICE_PRICE_BOOK_V1_2026-06-30';\nconst VAT_RATE = 0.23;\nconst FIRST_NUDGE_DAYS = 3;\nconst PRICE_BOOK = {\n  automation_audit: { label: 'Automation audit and quick-win map', unit_net_pln: 2500, min_qty: 1, max_qty: 1 },\n  workflow_build: { label: 'n8n workflow build', unit_net_pln: 3200, min_qty: 1, max_qty: 3 },\n  ai_workshop: { label: 'AI operations workshop', unit_net_pln: 4500, min_qty: 1, max_qty: 2 },\n  support_retainer: { label: 'Automation support retainer', unit_net_pln: 1800, min_qty: 1, max_qty: 6 },\n};\nconst root = $input.item.json || {};\nconst body = root.body && typeof root.body === 'object' ? root.body : root;\nconst collapse = (value) => String(value ?? '').replace(/\\s+/g, ' ').trim();\nconst pick = (...keys) => {\n  for (const key of keys) {\n    const value = body[key];\n    if (value !== undefined && value !== null && collapse(value) !== '') return collapse(value);\n  }\n  return '';\n};\nconst htmlEscape = (value) => String(value ?? '').replace(/[&<>\"']/g, ch => ({\n  '&': '&amp;',\n  '<': '&lt;',\n  '>': '&gt;',\n  '\"': '&quot;',\n  \"'\": '&#39;',\n}[ch]));\nconst money = (value) => Number(value || 0).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });\nconst now = new Date();\nconst event_type = collapse(pick('event_type', 'type')).toLowerCase();\nconst statusText = collapse(pick('job_status', 'status')).toLowerCase();\nconst completionLike = ['job.completed', 'job_complete', 'job.complete', 'complete', 'completed'].includes(event_type) || statusText === 'complete' || statusText === 'completed';\nconst job_id = collapse(pick('job_id', 'jobId', 'work_order_id'));\nconst completion_event_id = collapse(pick('event_id', 'id', 'completion_event_id')) || crypto.createHash('sha256').update(JSON.stringify(body)).digest('hex').slice(0, 16);\nconst completed_at_raw = collapse(pick('completed_at', 'completedAt', 'completion_time')) || now.toISOString();\nconst completedDate = new Date(completed_at_raw);\nconst completed_at = Number.isNaN(completedDate.getTime()) ? now.toISOString() : completedDate.toISOString();\nconst client_name = collapse(pick('client_name', 'name', 'full_name')) || 'Unknown';\nconst company = collapse(pick('company', 'Company')) || 'Unknown';\nconst verified_email = collapse(pick('verified_email', 'email', 'client_email')).toLowerCase();\nconst service_code = collapse(pick('service_code', 'service')).toLowerCase();\nconst quantity = Number(pick('quantity', 'qty', 'units') || '1');\nconst rules = PRICE_BOOK[service_code];\nconst errors = [];\nif (!completionLike) errors.push('event is not a job completion');\nif (!job_id) errors.push('job_id missing');\nif (!verified_email || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(verified_email)) errors.push('verified_email invalid');\nif (!service_code) errors.push('service_code missing');\nif (!rules) errors.push('service_code not in price book');\nif (!Number.isInteger(quantity)) errors.push('quantity must be an integer');\nif (rules && Number.isInteger(quantity) && (quantity < rules.min_qty || quantity > rules.max_qty)) errors.push('quantity outside price-book bounds');\nconst invoice_key = job_id ? crypto.createHash('sha256').update('invoice.v1\\n' + job_id, 'utf8').digest('hex') : '';\nconst dead_key = crypto.createHash('sha256').update('invoice.dead.v1\\n' + JSON.stringify(body), 'utf8').digest('hex');\nconst dedupe_key = completionLike && job_id ? invoice_key : dead_key;\nconst amount_net_pln = rules && Number.isInteger(quantity) ? rules.unit_net_pln * quantity : 0;\nconst vat_pln = Math.round(amount_net_pln * VAT_RATE * 100) / 100;\nconst amount_gross_pln = amount_net_pln + vat_pln;\nconst yyyymmdd = completed_at.slice(0, 10).replace(/-/g, '');\nconst invoice_number = 'INV-' + yyyymmdd + '-' + (invoice_key || dead_key).slice(0, 8).toUpperCase();\nconst next_nudge_due_at = new Date(now.getTime() + FIRST_NUDGE_DAYS * 24 * 60 * 60 * 1000).toISOString();\nconst valid_input = completionLike && errors.length === 0;\nconst ignored_non_completion = !completionLike;\nconst status = valid_input ? 'Invoice Pending Email' : 'Dead Letter';\nconst review_reason = valid_input ? '' : errors.join('; ');\nconst invoice_html = valid_input ? [\n  '<section style=\"font-family:Inter,Arial,sans-serif;color:#111827;line-height:1.45;max-width:760px\">',\n  '<p style=\"font-size:12px;color:#6b7280;margin:0 0 16px\">CONTROLLED INVOICE TEST - invoice sent to controlled inbox only</p>',\n  '<h1 style=\"font-size:24px;margin:0 0 8px\">Acme Automation invoice ' + htmlEscape(invoice_number) + '</h1>',\n  '<p style=\"margin:0 0 18px\">Completed job <strong>' + htmlEscape(job_id) + '</strong> for <strong>' + htmlEscape(company) + '</strong> (' + htmlEscape(verified_email) + ')</p>',\n  '<table style=\"width:100%;border-collapse:collapse;margin:16px 0\"><thead><tr><th align=\"left\" style=\"border-bottom:1px solid #d1d5db;padding:8px\">Completed service</th><th align=\"right\" style=\"border-bottom:1px solid #d1d5db;padding:8px\">Qty</th><th align=\"right\" style=\"border-bottom:1px solid #d1d5db;padding:8px\">Unit net</th><th align=\"right\" style=\"border-bottom:1px solid #d1d5db;padding:8px\">Subtotal</th></tr></thead><tbody>',\n  '<tr><td style=\"padding:8px;border-bottom:1px solid #e5e7eb\">' + htmlEscape(rules.label) + '</td><td align=\"right\" style=\"padding:8px;border-bottom:1px solid #e5e7eb\">' + quantity + '</td><td align=\"right\" style=\"padding:8px;border-bottom:1px solid #e5e7eb\">' + money(rules.unit_net_pln) + ' PLN</td><td align=\"right\" style=\"padding:8px;border-bottom:1px solid #e5e7eb\">' + money(amount_net_pln) + ' PLN</td></tr>',\n  '</tbody></table>',\n  '<p><strong>Total net:</strong> ' + money(amount_net_pln) + ' PLN<br><strong>VAT 23%:</strong> ' + money(vat_pln) + ' PLN<br><strong>Total gross:</strong> ' + money(amount_gross_pln) + ' PLN</p>',\n  '<p><strong>Completed at:</strong> ' + htmlEscape(completed_at) + '<br><strong>Price-book version:</strong> ' + htmlEscape(PRICE_BOOK_VERSION) + '</p>',\n  '<p style=\"font-size:12px;color:#6b7280\">Idempotency key: ' + htmlEscape(invoice_key) + '. Amounts are workflow price-book derived only.</p>',\n  '</section>',\n].join('') : '';\nreturn { json: {\n  invoice_key: dedupe_key,\n  real_invoice_key: invoice_key,\n  dedupe_key,\n  invoice_number,\n  job_id,\n  completion_event_id,\n  client_name,\n  company,\n  verified_email,\n  service_code,\n  price_book_version: PRICE_BOOK_VERSION,\n  currency: 'PLN',\n  amount_net_pln,\n  vat_pln,\n  amount_gross_pln,\n  status,\n  created_at: now.toISOString(),\n  updated_at: now.toISOString(),\n  completed_at,\n  invoice_email_sent: false,\n  invoice_email_id: '',\n  invoice_html,\n  nudge_count: 0,\n  last_nudge_number_sent: 0,\n  last_nudge_at: '',\n  next_nudge_due_at,\n  last_nudge_claim_key: '',\n  paid_at: '',\n  payment_event_id: '',\n  escalated_at: '',\n  review_reason,\n  last_execution_id: $execution.id,\n  raw_event_json: JSON.stringify(body),\n  last_error_class: valid_input ? '' : (ignored_non_completion ? 'business' : 'permanent'),\n  last_error_message: valid_input ? '' : review_reason,\n  valid_input,\n  ignored_non_completion,\n} };"
+      }
+    },
+    {
+      "id": "a232ce25-ff68-4fc5-a801-7a3dd793e75c",
+      "name": "Completion Event Ignored?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1344,
+        144
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.ignored_non_completion }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "b417a1f8-6c52-4a36-9512-5c102a55f2f2",
+      "name": "Respond Completion Ignored",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1600,
+        144
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, status: \"ignored_non_completion\", reason: $json.review_reason, invoice_created: false } }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "17053433-adfe-4bde-8635-55326a567d2f",
+      "name": "Claim Completion Side Effect",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1856,
+        144
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $input.item.json;\nconst store = $getWorkflowStaticData('global');\nstore.invoice_claims = store.invoice_claims || {};\npruneStore(store.invoice_claims);\nconst claims = store.invoice_claims;\nconst now = Date.now();\nconst staleInProgressMs = 15 * 60 * 1000;\nconst claim = claims[n.invoice_key];\nconst claimAge = claim?.claimed_at ? now - Date.parse(claim.claimed_at) : 0;\nconst activeClaim = claim && (claim.status !== 'in_progress' || claimAge < staleInProgressMs);\nif (activeClaim) {\n  return { json: { ...n, duplicate_claim: true, duplicate_status: claim.status || 'seen', existing_record_id: claim.record_id || '' } };\n}\nclaims[n.invoice_key] = {\n  status: 'in_progress',\n  claimed_at: new Date(now).toISOString(),\n  first_execution_id: n.last_execution_id,\n  invoice_number: n.invoice_number,\n};\nreturn { json: { ...n, duplicate_claim: false, duplicate_status: '', existing_record_id: '' } };"
+      }
+    },
+    {
+      "id": "3e3e3f58-293d-4825-acda-6b8026c5e807",
+      "name": "Completion Claim Duplicate?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2432,
+        144
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.duplicate_claim }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "9fbe739e-dd80-402f-9918-776af05e53be",
+      "name": "Find Claimed Completion Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2688,
+        144
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Dunning_Invoices"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "invoice_key",
+              "condition": "eq",
+              "keyValue": "={{ $(\"Normalize Completion Event\").item.json.invoice_key }}"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": 1
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "566310bf-5d66-40f4-b572-a66d61b86ced",
+      "name": "Respond Invoice Duplicate",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3456,
+        144
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, status: \"duplicate\", invoice_key: $(\"Normalize Completion Event\").item.json.invoice_key, invoice_number: $(\"Normalize Completion Event\").item.json.invoice_number, existing_record_id: $json.id || $(\"Claim Completion Side Effect\").item.json.existing_record_id || \"\", existing_status: $json.status || $(\"Claim Completion Side Effect\").item.json.duplicate_status || \"seen\" } }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "d66b38cc-086f-43c6-83d8-01d50e2f7963",
+      "name": "Find Existing Invoice Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2944,
+        144
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Dunning_Invoices"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "invoice_key",
+              "condition": "eq",
+              "keyValue": "={{ $(\"Normalize Completion Event\").item.json.invoice_key }}"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": 1
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "8b301e5f-9e40-43ed-b21d-d1974a13d3be",
+      "name": "Persistent Invoice Duplicate?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3200,
+        144
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ !!$json.id }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "b80354fc-f824-42ee-a317-77b884050e4e",
+      "name": "Completion Invalid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4032,
+        144
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $(\"Normalize Completion Event\").item.json.valid_input }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "false"
+              },
+              "rightValue": false
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "07501a0b-6b5b-4991-8a71-39ba937efed2",
+      "name": "Insert Completion Dead Letter",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        4288,
+        144
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Dunning_Invoices"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "invoice_key": "={{ $json.invoice_key }}",
+            "invoice_number": "={{ $json.invoice_number }}",
+            "job_id": "={{ $json.job_id }}",
+            "completion_event_id": "={{ $json.completion_event_id }}",
+            "client_name": "={{ $json.client_name }}",
+            "company": "={{ $json.company }}",
+            "verified_email": "={{ $json.verified_email }}",
+            "service_code": "={{ $json.service_code }}",
+            "price_book_version": "={{ $json.price_book_version }}",
+            "currency": "={{ $json.currency }}",
+            "amount_net_pln": "={{ $json.amount_net_pln }}",
+            "vat_pln": "={{ $json.vat_pln }}",
+            "amount_gross_pln": "={{ $json.amount_gross_pln }}",
+            "status": "={{ $json.status }}",
+            "created_at": "={{ $json.created_at }}",
+            "updated_at": "={{ $json.updated_at }}",
+            "completed_at": "={{ $json.completed_at }}",
+            "invoice_email_sent": "={{ $json.invoice_email_sent }}",
+            "invoice_email_id": "={{ $json.invoice_email_id }}",
+            "invoice_html": "={{ $json.invoice_html }}",
+            "nudge_count": "={{ $json.nudge_count }}",
+            "last_nudge_number_sent": "={{ $json.last_nudge_number_sent }}",
+            "last_nudge_at": "={{ $json.last_nudge_at }}",
+            "next_nudge_due_at": "={{ $json.next_nudge_due_at }}",
+            "last_nudge_claim_key": "={{ $json.last_nudge_claim_key }}",
+            "paid_at": "={{ $json.paid_at }}",
+            "payment_event_id": "={{ $json.payment_event_id }}",
+            "escalated_at": "={{ $json.escalated_at }}",
+            "review_reason": "={{ $json.review_reason }}",
+            "last_execution_id": "={{ $json.last_execution_id }}",
+            "raw_event_json": "={{ $json.raw_event_json }}",
+            "last_error_class": "={{ $json.last_error_class }}",
+            "last_error_message": "={{ $json.last_error_message }}"
+          },
+          "schema": [
+            {
+              "id": "invoice_key",
+              "displayName": "invoice_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "invoice_number",
+              "displayName": "invoice_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "job_id",
+              "displayName": "job_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "completion_event_id",
+              "displayName": "completion_event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "client_name",
+              "displayName": "client_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "company",
+              "displayName": "company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "verified_email",
+              "displayName": "verified_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "service_code",
+              "displayName": "service_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "price_book_version",
+              "displayName": "price_book_version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "currency",
+              "displayName": "currency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "amount_net_pln",
+              "displayName": "amount_net_pln",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "vat_pln",
+              "displayName": "vat_pln",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "amount_gross_pln",
+              "displayName": "amount_gross_pln",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "completed_at",
+              "displayName": "completed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "invoice_email_sent",
+              "displayName": "invoice_email_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "invoice_email_id",
+              "displayName": "invoice_email_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "invoice_html",
+              "displayName": "invoice_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "nudge_count",
+              "displayName": "nudge_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_nudge_number_sent",
+              "displayName": "last_nudge_number_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_nudge_at",
+              "displayName": "last_nudge_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "next_nudge_due_at",
+              "displayName": "next_nudge_due_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_nudge_claim_key",
+              "displayName": "last_nudge_claim_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "payment_event_id",
+              "displayName": "payment_event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "escalated_at",
+              "displayName": "escalated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_reason",
+              "displayName": "review_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "raw_event_json",
+              "displayName": "raw_event_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_error_class",
+              "displayName": "last_error_class",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_error_message",
+              "displayName": "last_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "b6c384a3-449c-4f85-9419-6247099431ae",
+      "name": "Mark Completion Claim Dead Letter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4544,
+        144
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $('Normalize Completion Event').item.json;\nconst record = $input.item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.invoice_claims = store.invoice_claims || {};\npruneStore(store.invoice_claims);\nstore.invoice_claims[n.invoice_key] = {\n  ...(store.invoice_claims[n.invoice_key] || {}),\n  status: 'Dead Letter',\n  record_id: record.id || '',\n  completed_at: new Date().toISOString(),\n  first_execution_id: n.last_execution_id,\n};\nreturn { json: record };"
+      }
+    },
+    {
+      "id": "39392f91-9daf-4af1-8408-9e56220e9248",
+      "name": "Respond Completion Dead Letter",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        4800,
+        144
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, status: \"dead_letter\", invoice_created: false, reason: $(\"Normalize Completion Event\").item.json.review_reason, record_id: $json.id || \"\" } }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "04e2eb2a-0729-4da4-af10-40e8b51e44ba",
+      "name": "Insert Invoice Pending Email",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        5056,
+        144
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Dunning_Invoices"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "invoice_key": "={{ $json.invoice_key }}",
+            "invoice_number": "={{ $json.invoice_number }}",
+            "job_id": "={{ $json.job_id }}",
+            "completion_event_id": "={{ $json.completion_event_id }}",
+            "client_name": "={{ $json.client_name }}",
+            "company": "={{ $json.company }}",
+            "verified_email": "={{ $json.verified_email }}",
+            "service_code": "={{ $json.service_code }}",
+            "price_book_version": "={{ $json.price_book_version }}",
+            "currency": "={{ $json.currency }}",
+            "amount_net_pln": "={{ $json.amount_net_pln }}",
+            "vat_pln": "={{ $json.vat_pln }}",
+            "amount_gross_pln": "={{ $json.amount_gross_pln }}",
+            "status": "={{ $json.status }}",
+            "created_at": "={{ $json.created_at }}",
+            "updated_at": "={{ $json.updated_at }}",
+            "completed_at": "={{ $json.completed_at }}",
+            "invoice_email_sent": "={{ $json.invoice_email_sent }}",
+            "invoice_email_id": "={{ $json.invoice_email_id }}",
+            "invoice_html": "={{ $json.invoice_html }}",
+            "nudge_count": "={{ $json.nudge_count }}",
+            "last_nudge_number_sent": "={{ $json.last_nudge_number_sent }}",
+            "last_nudge_at": "={{ $json.last_nudge_at }}",
+            "next_nudge_due_at": "={{ $json.next_nudge_due_at }}",
+            "last_nudge_claim_key": "={{ $json.last_nudge_claim_key }}",
+            "paid_at": "={{ $json.paid_at }}",
+            "payment_event_id": "={{ $json.payment_event_id }}",
+            "escalated_at": "={{ $json.escalated_at }}",
+            "review_reason": "={{ $json.review_reason }}",
+            "last_execution_id": "={{ $json.last_execution_id }}",
+            "raw_event_json": "={{ $json.raw_event_json }}",
+            "last_error_class": "={{ $json.last_error_class }}",
+            "last_error_message": "={{ $json.last_error_message }}"
+          },
+          "schema": [
+            {
+              "id": "invoice_key",
+              "displayName": "invoice_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "invoice_number",
+              "displayName": "invoice_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "job_id",
+              "displayName": "job_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "completion_event_id",
+              "displayName": "completion_event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "client_name",
+              "displayName": "client_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "company",
+              "displayName": "company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "verified_email",
+              "displayName": "verified_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "service_code",
+              "displayName": "service_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "price_book_version",
+              "displayName": "price_book_version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "currency",
+              "displayName": "currency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "amount_net_pln",
+              "displayName": "amount_net_pln",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "vat_pln",
+              "displayName": "vat_pln",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "amount_gross_pln",
+              "displayName": "amount_gross_pln",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "completed_at",
+              "displayName": "completed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "invoice_email_sent",
+              "displayName": "invoice_email_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "invoice_email_id",
+              "displayName": "invoice_email_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "invoice_html",
+              "displayName": "invoice_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "nudge_count",
+              "displayName": "nudge_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_nudge_number_sent",
+              "displayName": "last_nudge_number_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_nudge_at",
+              "displayName": "last_nudge_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "next_nudge_due_at",
+              "displayName": "next_nudge_due_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_nudge_claim_key",
+              "displayName": "last_nudge_claim_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "payment_event_id",
+              "displayName": "payment_event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "escalated_at",
+              "displayName": "escalated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_reason",
+              "displayName": "review_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "raw_event_json",
+              "displayName": "raw_event_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_error_class",
+              "displayName": "last_error_class",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_error_message",
+              "displayName": "last_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "da6fab8c-3be8-41e3-b2de-413410d61c41",
+      "name": "Send Controlled Invoice Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        4032,
+        400
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "ops@example.com",
+        "subject": "=[TEST] Invoice {{ $(\"Normalize Completion Event\").item.json.invoice_number }} for completed job {{ $(\"Normalize Completion Event\").item.json.job_id }}",
+        "emailType": "html",
+        "message": "=<p><strong>Controlled invoice email</strong></p><p>This is sent to the controlled test inbox, not to the submitted client address.</p><p>Verified client email on record: {{ $(\"Normalize Completion Event\").item.json.verified_email }}</p><hr>{{ $(\"Normalize Completion Event\").item.json.invoice_html }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Acme Automation"
+        }
+      }
+    },
+    {
+      "id": "3f401daf-3c5c-49a8-897c-fc2bc74afb6d",
+      "name": "Build Invoice Email Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4288,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const inserted = $('Insert Invoice Pending Email').item.json || {};\nconst email = $('Send Controlled Invoice Email').item.json || {};\nreturn { json: {\n  id: inserted.id,\n  status: 'Invoice Sent',\n  updated_at: new Date().toISOString(),\n  invoice_email_sent: true,\n  invoice_email_id: email.id || '',\n  last_execution_id: $('Normalize Completion Event').item.json.last_execution_id,\n} };"
+      }
+    },
+    {
+      "id": "a1514517-bfaa-4fa8-97ea-a84355fc7d63",
+      "name": "Update Invoice Email Sent",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        4544,
+        400
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Dunning_Invoices"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.status }}",
+            "updated_at": "={{ $json.updated_at }}",
+            "invoice_email_sent": "={{ $json.invoice_email_sent }}",
+            "invoice_email_id": "={{ $json.invoice_email_id }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "invoice_email_sent",
+              "displayName": "invoice_email_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "invoice_email_id",
+              "displayName": "invoice_email_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "f7fa5f45-d27e-4647-a4ab-757df028674b",
+      "name": "Mark Invoice Claim Sent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4800,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $('Normalize Completion Event').item.json;\nconst record = $input.item.json || {};\nconst inserted = $('Insert Invoice Pending Email').item.json || {};\nconst email = $('Send Controlled Invoice Email').item.json || {};\nconst store = $getWorkflowStaticData('global');\nstore.invoice_claims = store.invoice_claims || {};\npruneStore(store.invoice_claims);\nstore.invoice_claims[n.invoice_key] = {\n  ...(store.invoice_claims[n.invoice_key] || {}),\n  status: 'Invoice Sent',\n  record_id: record.id || inserted.id || '',\n  completed_at: new Date().toISOString(),\n  first_execution_id: n.last_execution_id,\n  invoice_number: n.invoice_number,\n  invoice_email_id: email.id || '',\n};\nreturn { json: { ...record, id: record.id || inserted.id || '', invoice_email_id: email.id || '' } };"
+      }
+    },
+    {
+      "id": "e1a75405-8de5-4f6e-961b-5ff961de3070",
+      "name": "Respond Invoice Sent",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        5056,
+        400
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, status: \"invoice_sent\", invoice_key: $(\"Normalize Completion Event\").item.json.invoice_key, invoice_number: $(\"Normalize Completion Event\").item.json.invoice_number, record_id: $json.id || \"\", test_email_id: $json.invoice_email_id || \"\" } }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "41a974e5-7e68-4940-88ae-98ad2fc3c2c8",
+      "name": "Respond Completion Unauthorized",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        832,
+        144
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, status: \"unauthorized\", reason: $json.auth_reason } }}",
+        "options": {
+          "responseCode": 401
+        }
+      }
+    },
+    {
+      "id": "5d494023-4775-4862-abf0-f68644820edb",
+      "name": "Payment Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        64,
+        784
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dunning-payment-test",
+        "responseMode": "responseNode"
+      },
+      "webhookId": "dc1e5b05-3d4f-4aa7-ac47-61784ea5f0c3"
+    },
+    {
+      "id": "b13cba74-b2ff-40e1-8ecd-80f691bf7395",
+      "name": "Validate Payment Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        784
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const root = $input.item.json || {};\nconst headers = root.headers || {};\nconst header = (name) => headers[name] || headers[name.toLowerCase()] || headers[name.toUpperCase()] || '';\nconst rawAuth = String(header('authorization') || '');\nconst bearer = rawAuth.toLowerCase().startsWith('bearer ') ? rawAuth.slice(7).trim() : '';\nconst provided = String(header('x-dunning-token') || bearer || '').trim();\nconst expected = String($vars.DUNNING_WEBHOOK_TOKEN || '').trim();\nreturn { json: {\n  ...root,\n  auth_ok: Boolean(expected && provided && provided === expected),\n  auth_reason: !expected ? 'missing_server_token_var' : !provided ? 'missing_token_header' : provided === expected ? '' : 'bad_token',\n  checked_at: new Date().toISOString(),\n} };"
+      }
+    },
+    {
+      "id": "5507c91a-d96a-4716-8c60-b180c2b0c4fe",
+      "name": "Payment Authorized?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        576,
+        784
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.auth_ok }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "761daae2-7700-411d-aa35-08ab17dfb8ed",
+      "name": "Normalize Payment Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        784
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const crypto = require('crypto');\nconst root = $input.item.json || {};\nconst body = root.body && typeof root.body === 'object' ? root.body : root;\nconst collapse = (value) => String(value ?? '').replace(/\\s+/g, ' ').trim();\nconst pick = (...keys) => {\n  for (const key of keys) {\n    const value = body[key];\n    if (value !== undefined && value !== null && collapse(value) !== '') return collapse(value);\n  }\n  return '';\n};\nconst event_type = collapse(pick('event_type', 'type')).toLowerCase();\nconst payment_event_id = collapse(pick('event_id', 'id', 'payment_event_id')) || crypto.createHash('sha256').update(JSON.stringify(body)).digest('hex').slice(0, 16);\nconst job_id = collapse(pick('job_id', 'jobId', 'work_order_id'));\nconst invoice_key = job_id ? crypto.createHash('sha256').update('invoice.v1\\n' + job_id, 'utf8').digest('hex') : collapse(pick('invoice_key'));\nconst paidAtRaw = collapse(pick('paid_at', 'paidAt', 'payment_time')) || new Date().toISOString();\nconst paidDate = new Date(paidAtRaw);\nconst paid_at = Number.isNaN(paidDate.getTime()) ? new Date().toISOString() : paidDate.toISOString();\nconst valid_input = ['invoice.paid', 'payment.succeeded', 'paid'].includes(event_type) && !!invoice_key;\nreturn { json: {\n  event_type,\n  payment_event_id,\n  job_id,\n  invoice_key,\n  paid_at,\n  valid_input,\n  review_reason: valid_input ? '' : 'invalid payment payload: event_type must be invoice.paid/payment.succeeded/paid and job_id or invoice_key is required',\n  last_execution_id: $execution.id,\n  raw_event_json: JSON.stringify(body),\n} };"
+      }
+    },
+    {
+      "id": "025f9d2f-11b6-451c-a0a1-3b8da1414b1f",
+      "name": "Payment Invalid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1344,
+        784
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.valid_input }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "false"
+              },
+              "rightValue": false
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "2b9b9a78-01c4-4de6-80ef-79c416737994",
+      "name": "Respond Payment Dead Letter",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1600,
+        784
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, status: \"dead_letter\", reason: $json.review_reason } }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "e8634a28-4655-4382-b0ce-af29b7b1e763",
+      "name": "Claim Payment Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1856,
+        784
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst n = $input.item.json;\nconst store = $getWorkflowStaticData('global');\nstore.payment_claims = store.payment_claims || {};\npruneStore(store.payment_claims);\nconst key = n.invoice_key + ':paid:' + n.payment_event_id;\nconst claims = store.payment_claims;\nconst now = Date.now();\nconst claim = claims[key];\nconst claimAge = claim?.claimed_at ? now - Date.parse(claim.claimed_at) : 0;\nconst activeClaim = claim && (claim.status !== 'in_progress' || claimAge < 15 * 60 * 1000);\nif (activeClaim) return { json: { ...n, payment_duplicate_claim: true, payment_claim_key: key, duplicate_status: claim.status || 'seen' } };\nclaims[key] = { status: 'in_progress', claimed_at: new Date(now).toISOString(), first_execution_id: n.last_execution_id };\nreturn { json: { ...n, payment_duplicate_claim: false, payment_claim_key: key, duplicate_status: '' } };"
+      }
+    },
+    {
+      "id": "90ab5479-8000-4ad2-9a3f-4444346cbc99",
+      "name": "Payment Claim Duplicate?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2432,
+        784
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.payment_duplicate_claim }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "00a1acaf-7b0a-47b0-9c8f-7aed6ba6b1ac",
+      "name": "Respond Payment Unmatched",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2944,
+        1040
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, status: \"payment_unmatched_human_queue\", invoice_key: $(\"Normalize Payment Event\").item.json.invoice_key, payment_event_id: $(\"Normalize Payment Event\").item.json.payment_event_id } }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "bd3f3ca8-7d41-4e1e-b488-4d0a480c0dca",
+      "name": "Respond Payment Duplicate",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3200,
+        1040
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, status: \"already_paid_or_duplicate\", invoice_key: $(\"Normalize Payment Event\").item.json.invoice_key, payment_event_id: $(\"Normalize Payment Event\").item.json.payment_event_id, existing_status: $json.status || $(\"Claim Payment Event\").item.json.duplicate_status || \"seen\" } }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "281cfd1e-f4ee-446e-bded-f1c1d82b28b2",
+      "name": "Payment Already Paid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3456,
+        1040
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.status === \"Paid\" }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "10d8422b-b966-465c-85f5-1982f95d8888",
+      "name": "Build Paid Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4544,
+        784
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const row = $input.item.json || {};\nconst p = $('Normalize Payment Event').item.json;\nreturn { json: {\n  id: row.id,\n  status: 'Paid',\n  updated_at: new Date().toISOString(),\n  paid_at: p.paid_at,\n  payment_event_id: p.payment_event_id,\n  review_reason: 'Paid event received; dunning stops immediately',\n  last_execution_id: p.last_execution_id,\n} };"
+      }
+    },
+    {
+      "id": "e08d262e-c529-4033-9b30-12d50947c723",
+      "name": "Update Invoice Paid",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        4800,
+        784
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Dunning_Invoices"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.status }}",
+            "updated_at": "={{ $json.updated_at }}",
+            "paid_at": "={{ $json.paid_at }}",
+            "payment_event_id": "={{ $json.payment_event_id }}",
+            "review_reason": "={{ $json.review_reason }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "payment_event_id",
+              "displayName": "payment_event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "review_reason",
+              "displayName": "review_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "d7154482-17e1-4a28-b776-9774d830bf78",
+      "name": "Mark Payment Claim Paid",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5056,
+        784
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst p = $('Claim Payment Event').item.json;\nconst store = $getWorkflowStaticData('global');\nstore.payment_claims = store.payment_claims || {};\npruneStore(store.payment_claims);\nstore.payment_claims[p.payment_claim_key] = {\n  ...(store.payment_claims[p.payment_claim_key] || {}),\n  status: 'Paid',\n  completed_at: new Date().toISOString(),\n  first_execution_id: p.last_execution_id,\n};\nreturn { json: $input.item.json };"
+      }
+    },
+    {
+      "id": "fca796a1-465b-4bb3-9559-1f8334f03b6e",
+      "name": "Respond Payment Marked Paid",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        5312,
+        784
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, status: \"paid\", invoice_key: $(\"Normalize Payment Event\").item.json.invoice_key, payment_event_id: $(\"Normalize Payment Event\").item.json.payment_event_id, record_id: $json.id || \"\" } }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "c83ebd38-06a2-411b-a4dc-166dd8cdec07",
+      "name": "Respond Payment Unauthorized",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        832,
+        784
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, status: \"unauthorized\", reason: $json.auth_reason } }}",
+        "options": {
+          "responseCode": 401
+        }
+      }
+    },
+    {
+      "id": "9414b8a6-9bdd-4d5c-84a8-14abb9f850dd",
+      "name": "Daily Dunning Sweep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        64,
+        1424
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 9,
+              "triggerAtMinute": 15
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "da7a739e-0224-4e94-a42b-4f82887d44bd",
+      "name": "Find Invoice Sent Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        320,
+        1424
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Dunning_Invoices"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "Invoice Sent"
+            }
+          ]
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "ca2634c3-d198-4ca1-a835-84075d262ab1",
+      "name": "Build Due Dunning Actions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        1424
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const now = Date.now();\nconst MS_DAY = 24 * 60 * 60 * 1000;\nconst MAX_NUDGES = 3;\nconst ESCALATE_AFTER_DAYS = 21;\nconst HIGH_VALUE_GROSS_PLN = 15000;\nconst HIGH_VALUE_ESCALATE_AFTER_DAYS = 14;\nconst rows = $input.all().map(item => item.json || {});\nreturn rows.flatMap(row => {\n  if (!row.id || row.status !== 'Invoice Sent' || row.paid_at) return [];\n  const dueAt = Date.parse(row.next_nudge_due_at || row.created_at || row.createdAt || '');\n  if (!Number.isFinite(dueAt) || dueAt > now) return [];\n  const basis = Date.parse(row.completed_at || row.created_at || row.createdAt || row.updatedAt || '') || now;\n  const ageDays = Math.floor((now - basis) / MS_DAY);\n  const nudgeCount = Number(row.nudge_count || 0);\n  const gross = Number(row.amount_gross_pln || 0);\n  const highValueStuck = gross >= HIGH_VALUE_GROSS_PLN && ageDays >= HIGH_VALUE_ESCALATE_AFTER_DAYS;\n  const maxNudgesStuck = nudgeCount >= MAX_NUDGES && ageDays >= ESCALATE_AFTER_DAYS;\n  if (highValueStuck || maxNudgesStuck || nudgeCount >= MAX_NUDGES) return [];\n  const action = 'nudge';\n  const nextNudgeNumber = nudgeCount + 1;\n  const actionKey = [\n    row.invoice_key,\n    action,\n    action === 'nudge' ? nextNudgeNumber : 'human',\n  ].join(':');\n  return [{ json: {\n    ...row,\n    action,\n    action_key: actionKey,\n    next_nudge_number: nextNudgeNumber,\n    age_days: ageDays,\n    high_value_stuck: highValueStuck,\n    max_nudges_stuck: maxNudgesStuck,\n    last_execution_id: $execution.id,\n  } }];\n});"
+      }
+    },
+    {
+      "id": "d419ac2e-021f-4f16-bbeb-dd3b584e4b12",
+      "name": "Claim Dunning Action",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        1424
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst store = $getWorkflowStaticData('global');\nstore.dunning_claims = store.dunning_claims || {};\npruneStore(store.dunning_claims);\nconst claims = store.dunning_claims;\nconst now = Date.now();\nreturn $input.all().flatMap(item => {\nconst row = item.json || {};\nconst store = $getWorkflowStaticData('global');\nconst claim = claims[row.action_key];\nconst claimAge = claim?.claimed_at ? now - Date.parse(claim.claimed_at) : 0;\nconst activeClaim = claim && (claim.status !== 'in_progress' || claimAge < 15 * 60 * 1000);\nif (activeClaim) return [];\nclaims[row.action_key] = { status: 'in_progress', claimed_at: new Date(now).toISOString(), first_execution_id: row.last_execution_id };\nreturn [{ json: { ...row, dunning_duplicate_claim: false, duplicate_status: '' } }];\n});"
+      }
+    },
+    {
+      "id": "60a01267-f54c-4bff-88ce-d016781f78f3",
+      "name": "Find Dunning Recheck Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1088,
+        1424
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Dunning_Invoices"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "invoice_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.invoice_key }}"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": 1
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "b017b03c-ffa3-4014-97f8-25c397377dac",
+      "name": "Build Dunning Recheck Decision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        1424
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const plannedItems = $('Claim Dunning Action').all();\nconst esc = (value) => String(value ?? '').replace(/[&<>\"']/g, ch => ({\n  '&': '&amp;',\n  '<': '&lt;',\n  '>': '&gt;',\n  '\"': '&quot;',\n  \"'\": '&#39;',\n}[ch]));\n\n// Stop logic is implicit: returning no item means no claim update, Gmail send, or sent-state update.\nreturn $input.all().flatMap((item, index) => {\n  const planned = (plannedItems[index] || {}).json || {};\n  const row = item.json || {};\n  if (!row.id) return [];\n  if (row.status === 'Paid' || row.paid_at) return [];\n  if (row.status === 'Escalated') return [];\n  if (planned.action === 'nudge' && Number(row.nudge_count || 0) >= Number(planned.next_nudge_number || 0)) {\n    return [];\n  }\n  return [{ json: {\n    ...planned,\n    ...row,\n    expected_status: row.status,\n    expected_claim_key: String(row.last_nudge_claim_key || ''),\n    invoice_number_html: esc(row.invoice_number || planned.invoice_number),\n    company_html: esc(row.company || planned.company),\n    verified_email_html: esc(row.verified_email || planned.verified_email),\n    stop_chase: false,\n    stop_reason: '',\n  } }];\n});"
+      }
+    },
+    {
+      "id": "abe2f648-439f-4929-b01b-5eafa0776042",
+      "name": "Build Dunning Pending Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        1424
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const row = $input.item.json;\nreturn { json: {\n  ...row,\n  status: row.expected_status,\n  updated_at: new Date().toISOString(),\n  last_nudge_claim_key: row.action_key,\n  review_reason: 'Nudge ' + row.next_nudge_number + ' claimed by action key before controlled send',\n  last_execution_id: row.last_execution_id || $execution.id,\n} };"
+      }
+    },
+    {
+      "id": "3837aae7-c60f-402b-ad64-ab217c282af9",
+      "name": "Update Dunning Pending Claim",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2176,
+        1424
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Dunning_Invoices"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            },
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "={{ $json.expected_status }}"
+            },
+            {
+              "keyName": "last_nudge_claim_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.expected_claim_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "updated_at": "={{ $json.updated_at }}",
+            "last_nudge_claim_key": "={{ $json.last_nudge_claim_key }}",
+            "review_reason": "={{ $json.review_reason }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_nudge_claim_key",
+              "displayName": "last_nudge_claim_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_reason",
+              "displayName": "review_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ddba5301-41c5-4474-a7e8-358ab9320718",
+      "name": "Send Controlled Dunning Nudge",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2432,
+        1424
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "ops@example.com",
+        "subject": "=[TEST] Reminder {{ $(\"Build Dunning Recheck Decision\").item.json.next_nudge_number }} for invoice {{ $(\"Build Dunning Recheck Decision\").item.json.invoice_number }}",
+        "emailType": "html",
+        "message": "=<p><strong>Controlled Invoice payment reminder</strong></p><p>This is sent to the controlled test inbox, not to the submitted client address.</p><p>Invoice: {{ $(\"Build Dunning Recheck Decision\").item.json.invoice_number_html }}</p><p>Verified client email on record: {{ $(\"Build Dunning Recheck Decision\").item.json.verified_email_html }}</p><p>Reminder number: {{ $(\"Build Dunning Recheck Decision\").item.json.next_nudge_number }}</p><p>Gross amount: {{ $(\"Build Dunning Recheck Decision\").item.json.amount_gross_pln }} PLN</p>",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Acme Automation"
+        }
+      }
+    },
+    {
+      "id": "9bab4991-a9c0-4270-9620-b3b83c7b617b",
+      "name": "Build Dunning Sent Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2688,
+        1424
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const row = $('Build Dunning Recheck Decision').item.json;\nconst now = new Date();\nconst n = Number(row.next_nudge_number || 1);\nconst delayDays = n === 1 ? 4 : n === 2 ? 7 : 7;\nreturn { json: {\n  id: row.id,\n  expected_status: row.expected_status,\n  status: 'Invoice Sent',\n  updated_at: now.toISOString(),\n  nudge_count: n,\n  last_nudge_number_sent: n,\n  last_nudge_at: now.toISOString(),\n  next_nudge_due_at: new Date(now.getTime() + delayDays * 24 * 60 * 60 * 1000).toISOString(),\n  last_nudge_claim_key: row.action_key,\n  review_reason: 'Controlled dunning nudge ' + n + ' sent; replay key ' + row.action_key,\n  last_execution_id: row.last_execution_id || $execution.id,\n} };"
+      }
+    },
+    {
+      "id": "8d162bd5-0b93-470d-89ed-d578843896b1",
+      "name": "Update Dunning Sent",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2944,
+        1424
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Dunning_Invoices"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            },
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "={{ $json.expected_status }}"
+            },
+            {
+              "keyName": "last_nudge_claim_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.last_nudge_claim_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.status }}",
+            "updated_at": "={{ $json.updated_at }}",
+            "nudge_count": "={{ $json.nudge_count }}",
+            "last_nudge_number_sent": "={{ $json.last_nudge_number_sent }}",
+            "last_nudge_at": "={{ $json.last_nudge_at }}",
+            "next_nudge_due_at": "={{ $json.next_nudge_due_at }}",
+            "last_nudge_claim_key": "={{ $json.last_nudge_claim_key }}",
+            "review_reason": "={{ $json.review_reason }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "nudge_count",
+              "displayName": "nudge_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_nudge_number_sent",
+              "displayName": "last_nudge_number_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_nudge_at",
+              "displayName": "last_nudge_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "next_nudge_due_at",
+              "displayName": "next_nudge_due_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_nudge_claim_key",
+              "displayName": "last_nudge_claim_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_reason",
+              "displayName": "review_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "f1c0de55-040f-43e6-9451-ea9e7b6d27b0",
+      "name": "Mark Dunning Claim Sent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3200,
+        1424
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst row = $('Build Dunning Recheck Decision').item.json;\nconst store = $getWorkflowStaticData('global');\nstore.dunning_claims = store.dunning_claims || {};\npruneStore(store.dunning_claims);\nstore.dunning_claims[row.action_key] = {\n  ...(store.dunning_claims[row.action_key] || {}),\n  status: 'sent',\n  completed_at: new Date().toISOString(),\n  first_execution_id: row.last_execution_id || $execution.id,\n};\nreturn { json: $input.item.json };"
+      }
+    },
+    {
+      "id": "cc3de997-ac4b-4959-9d03-ce597ec33ecf",
+      "name": "Daily Dunning Escalation Sweep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        3776,
+        1424
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 9,
+              "triggerAtMinute": 35
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "b5a97105-06d5-4eb2-86fe-319265d1b4d3",
+      "name": "Find Escalation Invoice Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        4032,
+        1424
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Dunning_Invoices"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "Invoice Sent"
+            }
+          ]
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "93c1b902-8c18-4476-be54-8431b02e4edf",
+      "name": "Build Due Escalation Actions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4288,
+        1424
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const now = Date.now();\nconst MS_DAY = 24 * 60 * 60 * 1000;\nconst MAX_NUDGES = 3;\nconst ESCALATE_AFTER_DAYS = 21;\nconst HIGH_VALUE_GROSS_PLN = 15000;\nconst HIGH_VALUE_ESCALATE_AFTER_DAYS = 14;\nreturn $input.all().flatMap(item => {\n  const row = item.json || {};\n  if (!row.id || row.status !== 'Invoice Sent' || row.paid_at) return [];\n  const basis = Date.parse(row.completed_at || row.created_at || row.createdAt || row.updatedAt || '') || now;\n  const ageDays = Math.floor((now - basis) / MS_DAY);\n  const nudgeCount = Number(row.nudge_count || 0);\n  const gross = Number(row.amount_gross_pln || 0);\n  const highValueStuck = gross >= HIGH_VALUE_GROSS_PLN && ageDays >= HIGH_VALUE_ESCALATE_AFTER_DAYS;\n  const maxNudgesStuck = nudgeCount >= MAX_NUDGES && ageDays >= ESCALATE_AFTER_DAYS;\n  if (!highValueStuck && !maxNudgesStuck) return [];\n  return [{ json: {\n    ...row,\n    action: 'escalate',\n    action_key: [row.invoice_key, 'escalate', 'human'].join(':'),\n    age_days: ageDays,\n    high_value_stuck: highValueStuck,\n    max_nudges_stuck: maxNudgesStuck,\n    last_execution_id: $execution.id,\n  } }];\n});"
+      }
+    },
+    {
+      "id": "b521ee27-d972-4d0c-9f52-f01d981064ef",
+      "name": "Claim Escalation Action",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4544,
+        1424
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst store = $getWorkflowStaticData('global');\nstore.dunning_claims = store.dunning_claims || {};\npruneStore(store.dunning_claims);\nconst claims = store.dunning_claims;\nconst now = Date.now();\nreturn $input.all().flatMap(item => {\n  const row = item.json || {};\n  const claim = claims[row.action_key];\n  const claimAge = claim?.claimed_at ? now - Date.parse(claim.claimed_at) : 0;\n  const activeClaim = claim && (claim.status !== 'in_progress' || claimAge < 15 * 60 * 1000);\n  if (activeClaim) return [];\n  claims[row.action_key] = { status: 'in_progress', claimed_at: new Date(now).toISOString(), first_execution_id: row.last_execution_id };\n  return [{ json: row }];\n});"
+      }
+    },
+    {
+      "id": "49f586c0-4710-4708-b5bb-2e1b229ba602",
+      "name": "Find Escalation Recheck Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        4800,
+        1424
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Dunning_Invoices"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "invoice_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.invoice_key }}"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": 1
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "844b75b4-b918-4d5d-9130-651368be8dae",
+      "name": "Build Escalation Recheck Decision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5056,
+        1424
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const plannedItems = $('Claim Escalation Action').all();\nconst esc = (value) => String(value ?? '').replace(/[&<>\"']/g, ch => ({\n  '&': '&amp;',\n  '<': '&lt;',\n  '>': '&gt;',\n  '\"': '&quot;',\n  \"'\": '&#39;',\n}[ch]));\n\n// Stop logic is implicit: returning no item means no claim update, Gmail alert, or escalated-state update.\nreturn $input.all().flatMap((item, index) => {\n  const planned = (plannedItems[index] || {}).json || {};\n  const row = item.json || {};\n  if (!row.id) return [];\n  if (row.status === 'Paid' || row.paid_at) return [];\n  if (row.status === 'Escalated') return [];\n  return [{ json: {\n    ...planned,\n    ...row,\n    expected_status: row.status,\n    expected_claim_key: String(row.last_nudge_claim_key || ''),\n    action: 'escalate',\n    invoice_number_html: esc(row.invoice_number || planned.invoice_number),\n    company_html: esc(row.company || planned.company),\n    verified_email_html: esc(row.verified_email || planned.verified_email),\n  } }];\n});"
+      }
+    },
+    {
+      "id": "410adf0d-d541-481d-9239-0c1d34f9ce31",
+      "name": "Build Escalation Pending Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5632,
+        1424
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const row = $input.item.json;\nconst esc = (value) => String(value ?? '').replace(/[&<>\"']/g, ch => ({\n  '&': '&amp;',\n  '<': '&lt;',\n  '>': '&gt;',\n  '\"': '&quot;',\n  \"'\": '&#39;',\n}[ch]));\nconst reason = row.high_value_stuck\n  ? 'High-value invoice stuck: gross >= 15000 PLN and age >= 14 days'\n  : 'Dunning exhausted: 3 reminders and age >= 21 days';\nreturn { json: {\n  ...row,\n  status: row.expected_status,\n  updated_at: new Date().toISOString(),\n  last_nudge_claim_key: row.action_key,\n  review_reason: reason,\n  review_reason_html: esc(reason),\n  last_execution_id: row.last_execution_id || $execution.id,\n} };"
+      }
+    },
+    {
+      "id": "3a52ae66-6849-425f-946f-d120ca9bf028",
+      "name": "Update Escalation Pending",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        5888,
+        1424
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Dunning_Invoices"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            },
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "={{ $json.expected_status }}"
+            },
+            {
+              "keyName": "last_nudge_claim_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.expected_claim_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "updated_at": "={{ $json.updated_at }}",
+            "review_reason": "={{ $json.review_reason }}",
+            "last_nudge_claim_key": "={{ $json.last_nudge_claim_key }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_reason",
+              "displayName": "review_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_nudge_claim_key",
+              "displayName": "last_nudge_claim_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "5e727298-023f-49d9-8520-2b574df1619f",
+      "name": "Send Controlled Escalation Alert",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        6144,
+        1424
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "ops@example.com",
+        "subject": "=[TEST] Human AR review: {{ $(\"Build Escalation Recheck Decision\").item.json.invoice_number }} stuck {{ $(\"Build Escalation Recheck Decision\").item.json.age_days }}d",
+        "emailType": "html",
+        "message": "=<p><strong>Controlled Invoice human escalation</strong></p><p>Invoice: {{ $(\"Build Escalation Recheck Decision\").item.json.invoice_number_html }}</p><p>Company: {{ $(\"Build Escalation Recheck Decision\").item.json.company_html }}</p><p>Verified email on record: {{ $(\"Build Escalation Recheck Decision\").item.json.verified_email_html }}</p><p>Age: {{ $(\"Build Escalation Recheck Decision\").item.json.age_days }} days</p><p>Nudges sent: {{ $(\"Build Escalation Recheck Decision\").item.json.nudge_count }}</p><p>Gross amount: {{ $(\"Build Escalation Recheck Decision\").item.json.amount_gross_pln }} PLN</p><p>Reason: {{ $(\"Build Escalation Pending Update\").item.json.review_reason_html }}</p>",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Acme Automation"
+        }
+      }
+    },
+    {
+      "id": "1d2d4f9e-a174-4e1f-bd65-7f1dd0679fb8",
+      "name": "Build Escalation Sent Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6400,
+        1424
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const row = $('Build Escalation Pending Update').item.json;\nconst now = new Date().toISOString();\nreturn { json: {\n  id: row.id,\n  expected_status: row.expected_status,\n  status: 'Escalated',\n  updated_at: now,\n  escalated_at: now,\n  last_nudge_claim_key: row.action_key,\n  review_reason: row.review_reason,\n  last_execution_id: row.last_execution_id || $execution.id,\n} };"
+      }
+    },
+    {
+      "id": "a8a00e57-d43b-4bfd-bd67-d14cf5b7827b",
+      "name": "Update Escalation Sent",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        6656,
+        1424
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Dunning_Invoices"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            },
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "={{ $json.expected_status }}"
+            },
+            {
+              "keyName": "last_nudge_claim_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.last_nudge_claim_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.status }}",
+            "updated_at": "={{ $json.updated_at }}",
+            "escalated_at": "={{ $json.escalated_at }}",
+            "review_reason": "={{ $json.review_reason }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "escalated_at",
+              "displayName": "escalated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_reason",
+              "displayName": "review_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "c1b1079b-34a7-4459-b7c2-2d90ab5a2837",
+      "name": "Mark Dunning Claim Escalated",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6912,
+        1424
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const pruneStore = (obj, max = 5000) => {\n  const keys = Object.keys(obj);\n  for (let i = 0; i < keys.length - max; i++) delete obj[keys[i]];\n};\nconst row = $('Build Escalation Recheck Decision').item.json;\nconst store = $getWorkflowStaticData('global');\nstore.dunning_claims = store.dunning_claims || {};\npruneStore(store.dunning_claims);\nstore.dunning_claims[row.action_key] = {\n  ...(store.dunning_claims[row.action_key] || {}),\n  status: 'escalated',\n  completed_at: new Date().toISOString(),\n  first_execution_id: row.last_execution_id || $execution.id,\n};\nreturn { json: $input.item.json };"
+      }
+    },
+    {
+      "id": "8c59d2f6-4219-47da-8487-16a5bf21950c",
+      "name": "Find Duplicate Payment Invoice Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2688,
+        784
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Dunning_Invoices"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "invoice_key",
+              "condition": "eq",
+              "keyValue": "={{ $(\"Normalize Payment Event\").item.json.invoice_key }}"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": 1
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "90a674ad-d8a8-46b1-a17d-a5f11e2f94ce",
+      "name": "Duplicate Payment Invoice Missing?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2944,
+        784
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ !$json.id }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "53f3314e-daf9-49e4-81c2-507afceb926a",
+      "name": "Find New Payment Invoice Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        3200,
+        784
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_TABLE_ID",
+          "cachedResultName": "Dunning_Invoices"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "invoice_key",
+              "condition": "eq",
+              "keyValue": "={{ $(\"Normalize Payment Event\").item.json.invoice_key }}"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": 1
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "799282fa-057f-4f8a-b1c9-683365057e41",
+      "name": "New Payment Invoice Missing?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3456,
+        784
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ !$json.id }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "c302aa82-14ef-42bc-bdb2-b0a0fc22fa35",
+      "name": "Find Unmatched Payment Queue Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2432,
+        1040
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_UNMATCHED_PAYMENT_TABLE_ID",
+          "cachedResultName": "Dunning_Unmatched_Payments"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "queue_key",
+              "condition": "eq",
+              "keyValue": "={{ $(\"Normalize Payment Event\").item.json.invoice_key + \":\" + $(\"Normalize Payment Event\").item.json.payment_event_id }}"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": 1
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "dfa85447-cb9e-4f7a-bd60-90d39d50da93",
+      "name": "Unmatched Payment Already Queued?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2688,
+        1040
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.id || \"\" }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "196bf6a4-0a53-4f58-aa1b-456e2fe987ae",
+      "name": "Build Unmatched Payment Queue Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4032,
+        784
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const payment = $('Normalize Payment Event').item.json;\nconst now = new Date().toISOString();\nreturn { json: {\n  queue_key: payment.invoice_key + ':' + payment.payment_event_id,\n  invoice_key: payment.invoice_key,\n  payment_event_id: payment.payment_event_id,\n  paid_at: payment.paid_at,\n  status: 'Needs Review',\n  review_reason: 'Payment references an invoice that is not present in Dunning_Invoices',\n  raw_event_json: payment.raw_event_json,\n  created_at: now,\n  last_execution_id: payment.last_execution_id || $execution.id,\n} };"
+      }
+    },
+    {
+      "id": "a0a42561-84c4-4455-90e7-6881d72f2b81",
+      "name": "Insert Unmatched Payment Queue Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        4288,
+        784
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_UNMATCHED_PAYMENT_TABLE_ID",
+          "cachedResultName": "Dunning_Unmatched_Payments"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "queue_key": "={{ $json.queue_key }}",
+            "invoice_key": "={{ $json.invoice_key }}",
+            "payment_event_id": "={{ $json.payment_event_id }}",
+            "paid_at": "={{ $json.paid_at }}",
+            "status": "={{ $json.status }}",
+            "review_reason": "={{ $json.review_reason }}",
+            "raw_event_json": "={{ $json.raw_event_json }}",
+            "created_at": "={{ $json.created_at }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "queue_key",
+              "displayName": "queue_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "invoice_key",
+              "displayName": "invoice_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "payment_event_id",
+              "displayName": "payment_event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "review_reason",
+              "displayName": "review_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "raw_event_json",
+              "displayName": "raw_event_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "nodeGroups": [],
+  "activeVersion": null,
+  "parentFolderId": null,
+  "description": "Invoice invoice+dunning draft. Invoice-on-completion with idempotent dunning and stop-on-paid.",
+  "scopes": [
+    "execution:reveal",
+    "workflow:create",
+    "workflow:delete",
+    "workflow:disableRedaction",
+    "workflow:enableRedaction",
+    "workflow:execute",
+    "workflow:execute-chat",
+    "workflow:export",
+    "workflow:import",
+    "workflow:list",
+    "workflow:move",
+    "workflow:publish",
+    "workflow:read",
+    "workflow:share",
+    "workflow:unpublish",
+    "workflow:unshare",
+    "workflow:update"
+  ],
+  "canExecute": true
+}
