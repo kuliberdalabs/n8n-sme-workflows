@@ -790,7 +790,7 @@
       "parameters": {
         "content": "## Receive completion event\nValidates the completion webhook, normalizes the job, handles ignored events, and claims the side effect.",
         "width": 2304,
-        "height": 384,
+        "height": 640,
         "color": 7
       }
     },
@@ -806,7 +806,7 @@
       "parameters": {
         "content": "## Deduplicate completion\nReuses an existing invoice result and prevents replayed completion events from creating another invoice.",
         "width": 1536,
-        "height": 384,
+        "height": 640,
         "color": 7
       }
     },
@@ -821,7 +821,7 @@
       ],
       "parameters": {
         "content": "## Persist invoice outcome\nStores invalid jobs as dead letters or persists, emails, and confirms a newly created invoice.",
-        "width": 1536,
+        "width": 2048,
         "height": 640,
         "color": 7
       }
@@ -838,7 +838,7 @@
       "parameters": {
         "content": "## Receive payment event\nAuthenticates and validates payment callbacks before claiming a valid event for processing.",
         "width": 2304,
-        "height": 384,
+        "height": 640,
         "color": 7
       }
     },
@@ -852,9 +852,9 @@
         640
       ],
       "parameters": {
-        "content": "## Match payment safely\nSeparates duplicate, unmatched, already-paid, and newly payable invoices without guessing.",
-        "width": 1536,
-        "height": 896,
+        "content": "## Match payment safely\nResolves duplicate and new-event invoice scope deterministically, then hands matched or unmatched outcomes forward without guessing.",
+        "width": 2304,
+        "height": 2944,
         "color": 7
       }
     },
@@ -864,13 +864,13 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        3968,
+        4672,
         640
       ],
       "parameters": {
-        "content": "## Persist payment outcome\nQueues unmatched payments once or atomically marks the matched invoice paid and returns its result.",
-        "width": 1792,
-        "height": 384,
+        "content": "## Persist payment outcome\nDeduplicates unmatched review rows, handles already-paid events, or atomically marks the matched invoice paid before responding.",
+        "width": 4096,
+        "height": 2432,
         "color": 7
       }
     },
@@ -881,7 +881,7 @@
       "typeVersion": 1,
       "position": [
         0,
-        1600
+        3712
       ],
       "parameters": {
         "content": "## Claim due reminders\nSelects due invoices, claims each reminder, and rechecks current status before any email.",
@@ -897,7 +897,7 @@
       "typeVersion": 1,
       "position": [
         1856,
-        1600
+        3712
       ],
       "parameters": {
         "content": "## Send controlled reminder\nPersists the pending claim, sends to the controlled inbox, and records confirmed delivery state.",
@@ -913,7 +913,7 @@
       "typeVersion": 1,
       "position": [
         3712,
-        1600
+        3712
       ],
       "parameters": {
         "content": "## Claim due escalations\nSelects stuck invoices, claims each escalation, and rechecks eligibility before alerting a human.",
@@ -929,7 +929,7 @@
       "typeVersion": 1,
       "position": [
         5568,
-        1600
+        3712
       ],
       "parameters": {
         "content": "## Escalate to operator\nPersists the escalation claim, alerts the controlled inbox, and records the final escalated state.",
@@ -1005,7 +1005,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1088,
+        832,
         144
       ],
       "parameters": {
@@ -1051,7 +1051,7 @@
       "typeVersion": 1.5,
       "position": [
         1600,
-        144
+        400
       ],
       "parameters": {
         "respondWith": "json",
@@ -1067,7 +1067,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1856,
+        1600,
         144
       ],
       "parameters": {
@@ -1155,7 +1155,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        3456,
+        3200,
         144
       ],
       "parameters": {
@@ -1172,8 +1172,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2944,
-        144
+        2688,
+        400
       ],
       "parameters": {
         "resource": "row",
@@ -1215,8 +1215,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        3200,
-        144
+        2944,
+        400
       ],
       "parameters": {
         "conditions": {
@@ -1684,8 +1684,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        5056,
-        144
+        4288,
+        400
       ],
       "parameters": {
         "resource": "row",
@@ -2061,7 +2061,7 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.2,
       "position": [
-        4032,
+        4544,
         400
       ],
       "parameters": {
@@ -2083,7 +2083,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4288,
+        4800,
         400
       ],
       "parameters": {
@@ -2098,7 +2098,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        4544,
+        5056,
         400
       ],
       "parameters": {
@@ -2185,7 +2185,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4800,
+        5312,
         400
       ],
       "parameters": {
@@ -2200,7 +2200,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        5056,
+        5568,
         400
       ],
       "parameters": {
@@ -2218,7 +2218,7 @@
       "typeVersion": 1.5,
       "position": [
         832,
-        144
+        400
       ],
       "parameters": {
         "respondWith": "json",
@@ -2295,7 +2295,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1088,
+        832,
         784
       ],
       "parameters": {
@@ -2341,7 +2341,7 @@
       "typeVersion": 1.5,
       "position": [
         1600,
-        784
+        1040
       ],
       "parameters": {
         "respondWith": "json",
@@ -2357,7 +2357,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1856,
+        1600,
         784
       ],
       "parameters": {
@@ -2373,7 +2373,7 @@
       "typeVersion": 2.3,
       "position": [
         2432,
-        784
+        2064
       ],
       "parameters": {
         "conditions": {
@@ -2402,8 +2402,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        3456,
-        1040
+        5504,
+        1552
       ],
       "parameters": {
         "respondWith": "json",
@@ -2419,7 +2419,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        2432,
+        7552,
         1296
       ],
       "parameters": {
@@ -2436,8 +2436,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2688,
-        1296
+        7552,
+        2064
       ],
       "parameters": {
         "conditions": {
@@ -2466,8 +2466,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4544,
-        784
+        7552,
+        2832
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -2481,8 +2481,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        4800,
-        784
+        7808,
+        2832
       ],
       "parameters": {
         "resource": "row",
@@ -2578,8 +2578,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5056,
-        784
+        8064,
+        2832
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -2593,8 +2593,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        5312,
-        784
+        8320,
+        2832
       ],
       "parameters": {
         "respondWith": "json",
@@ -2611,7 +2611,7 @@
       "typeVersion": 1.5,
       "position": [
         832,
-        784
+        1040
       ],
       "parameters": {
         "respondWith": "json",
@@ -2628,7 +2628,7 @@
       "typeVersion": 1.3,
       "position": [
         64,
-        1744
+        3856
       ],
       "parameters": {
         "rule": {
@@ -2650,7 +2650,7 @@
       "typeVersion": 1.1,
       "position": [
         320,
-        1744
+        3856
       ],
       "parameters": {
         "resource": "row",
@@ -2681,7 +2681,7 @@
       "typeVersion": 2,
       "position": [
         576,
-        1744
+        3856
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -2696,7 +2696,7 @@
       "typeVersion": 2,
       "position": [
         832,
-        1744
+        3856
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -2711,7 +2711,7 @@
       "typeVersion": 1.1,
       "position": [
         1088,
-        1744
+        3856
       ],
       "parameters": {
         "resource": "row",
@@ -2754,7 +2754,7 @@
       "typeVersion": 2,
       "position": [
         1344,
-        1744
+        3856
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -2769,7 +2769,7 @@
       "typeVersion": 2,
       "position": [
         1920,
-        1744
+        3856
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -2784,7 +2784,7 @@
       "typeVersion": 1.1,
       "position": [
         2176,
-        1744
+        3856
       ],
       "parameters": {
         "resource": "row",
@@ -2880,7 +2880,7 @@
       "typeVersion": 2.2,
       "position": [
         2432,
-        1744
+        3856
       ],
       "parameters": {
         "resource": "message",
@@ -2902,7 +2902,7 @@
       "typeVersion": 2,
       "position": [
         2688,
-        1744
+        3856
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -2917,7 +2917,7 @@
       "typeVersion": 1.1,
       "position": [
         2944,
-        1744
+        3856
       ],
       "parameters": {
         "resource": "row",
@@ -3054,7 +3054,7 @@
       "typeVersion": 2,
       "position": [
         3200,
-        1744
+        3856
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -3069,7 +3069,7 @@
       "typeVersion": 1.3,
       "position": [
         3776,
-        1744
+        3856
       ],
       "parameters": {
         "rule": {
@@ -3091,7 +3091,7 @@
       "typeVersion": 1.1,
       "position": [
         4032,
-        1744
+        3856
       ],
       "parameters": {
         "resource": "row",
@@ -3122,7 +3122,7 @@
       "typeVersion": 2,
       "position": [
         4288,
-        1744
+        3856
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -3137,7 +3137,7 @@
       "typeVersion": 2,
       "position": [
         4544,
-        1744
+        3856
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -3152,7 +3152,7 @@
       "typeVersion": 1.1,
       "position": [
         4800,
-        1744
+        3856
       ],
       "parameters": {
         "resource": "row",
@@ -3195,7 +3195,7 @@
       "typeVersion": 2,
       "position": [
         5056,
-        1744
+        3856
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -3210,7 +3210,7 @@
       "typeVersion": 2,
       "position": [
         5632,
-        1744
+        3856
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -3225,7 +3225,7 @@
       "typeVersion": 1.1,
       "position": [
         5888,
-        1744
+        3856
       ],
       "parameters": {
         "resource": "row",
@@ -3321,7 +3321,7 @@
       "typeVersion": 2.2,
       "position": [
         6144,
-        1744
+        3856
       ],
       "parameters": {
         "resource": "message",
@@ -3343,7 +3343,7 @@
       "typeVersion": 2,
       "position": [
         6400,
-        1744
+        3856
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -3358,7 +3358,7 @@
       "typeVersion": 1.1,
       "position": [
         6656,
-        1744
+        3856
       ],
       "parameters": {
         "resource": "row",
@@ -3455,7 +3455,7 @@
       "typeVersion": 2,
       "position": [
         6912,
-        1744
+        3856
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -3501,7 +3501,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        3200,
+        3712,
         784
       ],
       "parameters": {
@@ -3531,8 +3531,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        3456,
-        784
+        2688,
+        3344
       ],
       "parameters": {
         "resource": "row",
@@ -3563,8 +3563,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2688,
-        1040
+        3712,
+        3344
       ],
       "parameters": {
         "conditions": {
@@ -3593,8 +3593,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2944,
-        1040
+        4224,
+        2064
       ],
       "parameters": {
         "resource": "row",
@@ -3626,8 +3626,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        3200,
-        1040
+        4736,
+        2064
       ],
       "parameters": {
         "conditions": {
@@ -3658,8 +3658,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4032,
-        784
+        5504,
+        2576
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -3673,8 +3673,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        4288,
-        784
+        6272,
+        2064
       ],
       "parameters": {
         "resource": "row",
@@ -3815,7 +3815,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2944,
+        3200,
         784
       ]
     },
@@ -3830,8 +3830,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2432,
-        1040
+        3200,
+        3344
       ]
     }
   ],
