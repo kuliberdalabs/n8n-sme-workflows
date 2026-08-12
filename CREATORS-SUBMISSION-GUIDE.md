@@ -11,7 +11,8 @@ This is the repository-wide annotation contract for n8n Creators submissions. It
 - Every functional node must sit fully inside exactly one white section.
 - Use a red sticky only for a genuinely crucial setup warning. Do not add decorative colors.
 - Snap node and sticky positions and sticky dimensions to the 16 px grid.
-- Leave at least 64 px side padding, 144 px title padding above nodes, and 80 px below nodes.
+- Leave at least 64 px side padding, 144 px title padding above nodes, and 128 px below nodes for new submissions. Older accepted artifacts may use the previous 80 px bottom clearance.
+- For a 180–200 word overview, use at least an `896 × 896` sticky. Treat this as a starting floor, not proof that the text fits.
 - Section stickies must not overlap one another. Functional nodes must not share positions.
 
 ## Authoring rule
@@ -34,10 +35,14 @@ For each new template:
    node scripts/creators-annotations.mjs check <workflow-slug>
    ```
 
-5. Import `workflow-annotated-v2.json` as a fresh, inactive workflow in n8n.
-6. Inspect the full canvas and every section at readable zoom. Confirm that text, nodes, and connections are not obscured.
+5. Import `workflow-annotated-v2.json` as a fresh, inactive workflow in the latest released n8n version.
+6. Inspect the full canvas and every sticky at readable zoom. Confirm that every final line is visible, there is no scrollbar or clipped text, and text, nodes, and connections are not obscured. A pass on an older n8n version is not sufficient after an editor update.
 7. Export the freshly imported workflow and repeat the semantic comparison if n8n rewrites the JSON.
 8. Submit only after operator approval. Never publish, email, commit, or push as an implicit part of annotation work.
+
+## Reviewer-requested resubmissions
+
+For a template returned with requested changes, resubmit from the Creator dashboard via `Pending` → `Implement changes` → `Submit for human review`. Do not use the detail page's `Template actions` → `Upload new version` path for this state; it can fail with a generic upload error and does not complete the reviewer-feedback flow.
 
 ## Static gate
 

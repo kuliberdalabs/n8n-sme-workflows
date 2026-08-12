@@ -747,13 +747,13 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -928,
+        -1024,
         0
       ],
       "parameters": {
         "content": "## Send invoices and chase overdue payments\n\n### How it works\n1. Receives job-completion events, validates the token, and stores malformed inputs as dead letters.\n2. Prices completed work from a fixed price book, creates a deterministic invoice key, and persists the invoice before sending email.\n3. Receives payment events, deduplicates them, and marks matched invoices paid before later reminder updates can overwrite them.\n4. Runs daily reminder and escalation sweeps with a fresh status recheck immediately before each controlled email.\n5. Queues unmatched payments for human review and stops after the configured reminder or escalation threshold.\n\n### Setup steps\n- [ ] Create the required n8n Data Tables and re-select them in every Data Table node.\n- [ ] Connect Gmail OAuth and replace `ops@example.com` in every Gmail node.\n- [ ] Set `DUNNING_WEBHOOK_TOKEN` and send it in the documented request header.\n- [ ] Configure the price book, VAT, currency, reminder timing, and escalation thresholds.\n- [ ] Test completion, duplicate, invalid, payment, and sweep paths while the workflow is inactive.\n\n### Customization\nAdjust service prices, payment matching, reminder cadence, escalation rules, and the controlled operator inbox to match your invoicing process.",
-        "width": 800,
-        "height": 640
+        "width": 896,
+        "height": 896
       }
     },
     {
@@ -768,7 +768,7 @@
       "parameters": {
         "content": "## Receive completion event\nValidates the completion webhook, normalizes the job, handles ignored events, and claims the side effect.",
         "width": 2304,
-        "height": 320,
+        "height": 384,
         "color": 7
       }
     },
@@ -784,7 +784,7 @@
       "parameters": {
         "content": "## Deduplicate completion\nReuses an existing invoice result and prevents replayed completion events from creating another invoice.",
         "width": 1536,
-        "height": 320,
+        "height": 384,
         "color": 7
       }
     },
@@ -800,7 +800,7 @@
       "parameters": {
         "content": "## Persist invoice outcome\nStores invalid jobs as dead letters or persists, emails, and confirms a newly created invoice.",
         "width": 1536,
-        "height": 576,
+        "height": 640,
         "color": 7
       }
     },
@@ -816,7 +816,7 @@
       "parameters": {
         "content": "## Receive payment event\nAuthenticates and validates payment callbacks before claiming a valid event for processing.",
         "width": 2304,
-        "height": 320,
+        "height": 384,
         "color": 7
       }
     },
@@ -832,7 +832,7 @@
       "parameters": {
         "content": "## Match payment safely\nSeparates duplicate, unmatched, already-paid, and newly payable invoices without guessing.",
         "width": 1536,
-        "height": 576,
+        "height": 640,
         "color": 7
       }
     },
@@ -848,7 +848,7 @@
       "parameters": {
         "content": "## Persist payment outcome\nQueues unmatched payments once or atomically marks the matched invoice paid and returns its result.",
         "width": 1792,
-        "height": 320,
+        "height": 384,
         "color": 7
       }
     },
@@ -864,7 +864,7 @@
       "parameters": {
         "content": "## Claim due reminders\nSelects due invoices, claims each reminder, and rechecks current status before any email.",
         "width": 1792,
-        "height": 320,
+        "height": 384,
         "color": 7
       }
     },
@@ -880,7 +880,7 @@
       "parameters": {
         "content": "## Send controlled reminder\nPersists the pending claim, sends to the controlled inbox, and records confirmed delivery state.",
         "width": 1792,
-        "height": 320,
+        "height": 384,
         "color": 7
       }
     },
@@ -896,7 +896,7 @@
       "parameters": {
         "content": "## Claim due escalations\nSelects stuck invoices, claims each escalation, and rechecks eligibility before alerting a human.",
         "width": 1792,
-        "height": 320,
+        "height": 384,
         "color": 7
       }
     },
@@ -912,7 +912,7 @@
       "parameters": {
         "content": "## Escalate to operator\nPersists the escalation claim, alerts the controlled inbox, and records the final escalated state.",
         "width": 1792,
-        "height": 320,
+        "height": 384,
         "color": 7
       }
     },

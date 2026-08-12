@@ -8,9 +8,13 @@ import { fileURLToPath } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const STICKY_TYPE = 'n8n-nodes-base.stickyNote';
 const NODE_SIZE = 96;
+const DEFAULT_OVERVIEW_SIZE = { width: 896, height: 896 };
+const DEFAULT_SECTION_BOTTOM_PADDING = 128;
 
 const WORKFLOWS = {
   '02-invoice-dunning': {
+    overviewSize: DEFAULT_OVERVIEW_SIZE,
+    sectionBottomPadding: DEFAULT_SECTION_BOTTOM_PADDING,
     overviewTitle: 'Send invoices and chase overdue payments',
     overview: `## Send invoices and chase overdue payments
 
@@ -75,6 +79,9 @@ Adjust service prices, payment matching, reminder cadence, escalation rules, and
     ],
   },
   '04-support-triage': {
+    // Preserve the already-published artifact. New templates use the safer defaults above.
+    overviewSize: { width: 800, height: 640 },
+    sectionBottomPadding: 64,
     overviewTitle: 'Triage support requests and draft grounded replies',
     overview: `## Triage support requests and draft grounded replies
 
@@ -157,6 +164,8 @@ function outputPath(slug) {
 
 function build(slug) {
   const spec = requireSpec(slug);
+  const overviewSize = spec.overviewSize ?? DEFAULT_OVERVIEW_SIZE;
+  const sectionBottomPadding = spec.sectionBottomPadding ?? DEFAULT_SECTION_BOTTOM_PADDING;
   const source = JSON.parse(readFileSync(sourcePath(slug), 'utf8'));
   const functional = source.nodes.filter((node) => node.type !== STICKY_TYPE);
   const byName = new Map(functional.map((node) => [node.name, node]));
@@ -176,8 +185,8 @@ function build(slug) {
     name: `Overview — ${spec.overviewTitle}`,
     type: STICKY_TYPE,
     typeVersion: 1,
-    position: [-928, 0],
-    parameters: { content: spec.overview, width: 800, height: 640 },
+    position: [-overviewSize.width - 128, 0],
+    parameters: { content: spec.overview, ...overviewSize },
   };
 
   const stickies = spec.sections.map((group, index) => {
@@ -191,7 +200,7 @@ function build(slug) {
       parameters: {
         content: `## ${group.title}\n${group.description}`,
         width: group.columns * 256 + 256,
-        height: rows * 256 + 64,
+        height: rows * 256 + sectionBottomPadding,
         color: 7,
       },
     };
@@ -205,6 +214,8 @@ function build(slug) {
 
 function validate(slug, source, artifact) {
   const spec = requireSpec(slug);
+  const overviewSize = spec.overviewSize ?? DEFAULT_OVERVIEW_SIZE;
+  const sectionBottomPadding = spec.sectionBottomPadding ?? DEFAULT_SECTION_BOTTOM_PADDING;
   const sourceFunctional = source.nodes.filter((node) => node.type !== STICKY_TYPE);
   const artifactFunctional = artifact.nodes.filter((node) => node.type !== STICKY_TYPE);
   const stickies = artifact.nodes.filter((node) => node.type === STICKY_TYPE);
@@ -222,6 +233,9 @@ function validate(slug, source, artifact) {
   if (JSON.stringify(sourceTop) !== JSON.stringify(artifactTop)) errors.push('top-level workflow state changed');
   if (overview.length !== 1) errors.push(`expected one yellow overview, found ${overview.length}`);
   if (sections.length !== spec.sections.length) errors.push(`expected ${spec.sections.length} white sections, found ${sections.length}`);
+  if (overview[0]?.parameters.width !== overviewSize.width || overview[0]?.parameters.height !== overviewSize.height) {
+    errors.push(`overview must be ${overviewSize.width}x${overviewSize.height} for the current renderer`);
+  }
 
   const words = overview[0]?.parameters.content.trim().split(/\s+/).length ?? 0;
   if (words < 100 || words > 300) errors.push(`overview word count ${words} is outside 100-300`);
@@ -263,6 +277,12 @@ function validate(slug, source, artifact) {
   if (new Set(positions).size !== positions.length) errors.push('functional nodes share duplicate positions');
   for (const sticky of sections) {
     if (sticky.parameters.content.split('\n').length > 2) errors.push(`${sticky.name}: section copy exceeds title plus one sentence`);
+    const coveredNodes = artifactFunctional.filter((node) => contains(rect(sticky), rect(node)));
+    const deepestNodeBottom = Math.max(...coveredNodes.map((node) => rect(node).y2), sticky.position[1]);
+    const actualBottomPadding = sticky.position[1] + sticky.parameters.height - deepestNodeBottom;
+    if (actualBottomPadding < sectionBottomPadding) {
+      errors.push(`${sticky.name}: bottom text safety padding is ${actualBottomPadding}, expected at least ${sectionBottomPadding}`);
+    }
   }
 
   if (errors.length) throw new Error(`${slug} validation failed:\n- ${errors.join('\n- ')}`);
