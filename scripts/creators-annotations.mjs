@@ -52,27 +52,28 @@ Adjust service prices, payment matching, reminder cadence, escalation rules, and
         'Normalize Payment Event', 'Payment Invalid?', 'Respond Payment Dead Letter', 'Claim Payment Event',
       ]),
       section('Match payment safely', 'Separates duplicate, unmatched, already-paid, and newly payable invoices without guessing.', 2368, 640, 5, [
-        'Payment Claim Duplicate?', 'Find Duplicate Payment Invoice Row', 'Duplicate Payment Invoice Missing?',
-        'Find New Payment Invoice Row', 'New Payment Invoice Missing?', 'Find Unmatched Payment Queue Row',
+        'Payment Claim Duplicate?', 'Find Duplicate Payment Invoice Row', 'Resolve Duplicate Payment Invoice Scope',
+        'Duplicate Payment Invoice Missing?', 'Find New Payment Invoice Row', 'Resolve New Payment Invoice Scope',
+        'New Payment Invoice Missing?', 'Find Unmatched Payment Queue Row',
         'Unmatched Payment Already Queued?', 'Respond Payment Unmatched', 'Respond Payment Duplicate', 'Payment Already Paid?',
       ]),
       section('Persist payment outcome', 'Queues unmatched payments once or atomically marks the matched invoice paid and returns its result.', 3968, 640, 6, [
         'Build Unmatched Payment Queue Row', 'Insert Unmatched Payment Queue Row', 'Build Paid Update',
         'Update Invoice Paid', 'Mark Payment Claim Paid', 'Respond Payment Marked Paid',
       ]),
-      section('Claim due reminders', 'Selects due invoices, claims each reminder, and rechecks current status before any email.', 0, 1280, 6, [
+      section('Claim due reminders', 'Selects due invoices, claims each reminder, and rechecks current status before any email.', 0, 1600, 6, [
         'Daily Dunning Sweep', 'Find Invoice Sent Rows', 'Build Due Dunning Actions', 'Claim Dunning Action',
         'Find Dunning Recheck Row', 'Build Dunning Recheck Decision',
       ]),
-      section('Send controlled reminder', 'Persists the pending claim, sends to the controlled inbox, and records confirmed delivery state.', 1856, 1280, 6, [
+      section('Send controlled reminder', 'Persists the pending claim, sends to the controlled inbox, and records confirmed delivery state.', 1856, 1600, 6, [
         'Build Dunning Pending Update', 'Update Dunning Pending Claim', 'Send Controlled Dunning Nudge',
         'Build Dunning Sent Update', 'Update Dunning Sent', 'Mark Dunning Claim Sent',
       ]),
-      section('Claim due escalations', 'Selects stuck invoices, claims each escalation, and rechecks eligibility before alerting a human.', 3712, 1280, 6, [
+      section('Claim due escalations', 'Selects stuck invoices, claims each escalation, and rechecks eligibility before alerting a human.', 3712, 1600, 6, [
         'Daily Dunning Escalation Sweep', 'Find Escalation Invoice Rows', 'Build Due Escalation Actions',
         'Claim Escalation Action', 'Find Escalation Recheck Row', 'Build Escalation Recheck Decision',
       ]),
-      section('Escalate to operator', 'Persists the escalation claim, alerts the controlled inbox, and records the final escalated state.', 5568, 1280, 6, [
+      section('Escalate to operator', 'Persists the escalation claim, alerts the controlled inbox, and records the final escalated state.', 5568, 1600, 6, [
         'Build Escalation Pending Update', 'Update Escalation Pending', 'Send Controlled Escalation Alert',
         'Build Escalation Sent Update', 'Update Escalation Sent', 'Mark Dunning Claim Escalated',
       ]),
