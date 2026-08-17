@@ -10,10 +10,16 @@ const STICKY_TYPE = 'n8n-nodes-base.stickyNote';
 const NODE_SIZE = 96;
 const DEFAULT_OVERVIEW_SIZE = { width: 896, height: 896 };
 const DEFAULT_SECTION_BOTTOM_PADDING = 128;
+const DEFAULT_SECTION_TOP_PADDING = 192;
+// Existing artifact compatibility only. Never copy this override into a new
+// or reviewer-corrected submission.
+const LEGACY_SECTION_TOP_PADDING = 144;
+const MIN_SECTION_WIDTH = 512;
 
 const WORKFLOWS = {
   '02-invoice-dunning': {
     enforceEdgeCorridors: true,
+    sectionTopPadding: LEGACY_SECTION_TOP_PADDING,
     overviewSize: DEFAULT_OVERVIEW_SIZE,
     sectionBottomPadding: DEFAULT_SECTION_BOTTOM_PADDING,
     overviewTitle: 'Send invoices and chase overdue payments',
@@ -97,6 +103,7 @@ Adjust service prices, payment matching, reminder cadence, escalation rules, and
   },
   '03-document-intake': {
     enforceEdgeCorridors: true,
+    sectionTopPadding: LEGACY_SECTION_TOP_PADDING,
     overviewTitle: 'Classify inbound documents and route uncertain cases',
     overview: `## Classify inbound documents and route uncertain cases
 
@@ -151,6 +158,9 @@ Adapt the intake adapter, classification taxonomy, confidence policy, logical st
   },
   '05-ops-digest-alert': {
     enforceEdgeCorridors: true,
+    // n8n 2.34.5 rendered a rejected 256 px note through y=144.39. Keep a
+    // full 48 px grid step below that boundary for this corrected artifact.
+    sectionTopPadding: 192,
     overviewTitle: 'Send a daily operations digest and signal real anomalies',
     overview: `## Send a daily operations digest and signal real anomalies
 
@@ -190,6 +200,7 @@ Adapt the source contracts, daily schedule, SLA thresholds, summary tone, and co
   },
   '06-bank-reconciliation': {
     enforceEdgeCorridors: true,
+    sectionTopPadding: LEGACY_SECTION_TOP_PADDING,
     overviewTitle: 'Reconcile bank payments without guessing',
     overview: `## Reconcile bank payments without guessing
 
@@ -256,6 +267,7 @@ Adapt the bank parser, invoice input, amount tolerance, review policy, paid-sign
   },
   '08-client-onboarding-saga': {
     enforceEdgeCorridors: true,
+    sectionTopPadding: LEGACY_SECTION_TOP_PADDING,
     overviewTitle: 'Coordinate client onboarding as a durable saga',
     overview: `## Coordinate client onboarding as a durable saga
 
@@ -316,6 +328,7 @@ Adapt child adapters, service mappings, wait thresholds, reconciliation cadence,
   },
   '07-ksef-exception-desk': {
     enforceEdgeCorridors: true,
+    sectionTopPadding: LEGACY_SECTION_TOP_PADDING,
     overviewTitle: 'Handle KSeF exceptions without blind resubmission',
     overview: `## Handle KSeF exceptions without blind resubmission
 
@@ -379,6 +392,7 @@ Replace the mock submit and status adapters with your KSeF integration, preservi
   },
   '04-support-triage': {
     // Preserve the already-published artifact. New templates use the safer defaults above.
+    sectionTopPadding: LEGACY_SECTION_TOP_PADDING,
     overviewSize: { width: 800, height: 640 },
     sectionBottomPadding: 64,
     overviewTitle: 'Triage support requests and draft grounded replies',
@@ -473,6 +487,7 @@ function build(slug) {
   const spec = requireSpec(slug);
   const overviewSize = spec.overviewSize ?? DEFAULT_OVERVIEW_SIZE;
   const sectionBottomPadding = spec.sectionBottomPadding ?? DEFAULT_SECTION_BOTTOM_PADDING;
+  const sectionTopPadding = spec.sectionTopPadding ?? DEFAULT_SECTION_TOP_PADDING;
   const source = JSON.parse(readFileSync(sourcePath(slug), 'utf8'));
   const functional = structuredClone(source.nodes.filter((node) => node.type !== STICKY_TYPE));
   const byName = new Map(functional.map((node) => [node.name, node]));
@@ -482,7 +497,7 @@ function build(slug) {
       const node = byName.get(name);
       if (!node) throw new Error(`${slug}: section ${sectionIndex + 1} names missing node: ${name}`);
       const [column, row] = sectionPlacement(group, name, nodeIndex);
-      node.position = [group.x + 64 + column * 256, group.y + 144 + row * 256];
+      node.position = [group.x + 64 + column * 256, group.y + sectionTopPadding + row * 256];
     });
   }
 
@@ -506,7 +521,7 @@ function build(slug) {
       parameters: {
         content: `## ${group.title}\n${group.description}`,
         width: group.columns * 256 + 256,
-        height: rows * 256 + sectionBottomPadding,
+        height: rows * 256 + sectionBottomPadding + sectionTopPadding - LEGACY_SECTION_TOP_PADDING,
         color: 7,
       },
     };
@@ -522,6 +537,7 @@ function validate(slug, source, artifact) {
   const spec = requireSpec(slug);
   const overviewSize = spec.overviewSize ?? DEFAULT_OVERVIEW_SIZE;
   const sectionBottomPadding = spec.sectionBottomPadding ?? DEFAULT_SECTION_BOTTOM_PADDING;
+  const sectionTopPadding = spec.sectionTopPadding ?? DEFAULT_SECTION_TOP_PADDING;
   const sourceFunctional = source.nodes.filter((node) => node.type !== STICKY_TYPE);
   const sourceStickies = source.nodes.filter((node) => node.type === STICKY_TYPE);
   const artifactFunctional = artifact.nodes.filter((node) => node.type !== STICKY_TYPE);
@@ -615,8 +631,12 @@ function validate(slug, source, artifact) {
     if (sticky?.name !== `Section ${i + 1} — ${group.title}`) errors.push(`section ${i + 1}: name differs from spec`);
     if (sticky?.parameters.content !== expectedContent) errors.push(`section ${i + 1}: content differs from spec`);
     if (JSON.stringify(sticky?.position) !== JSON.stringify([group.x, group.y])) errors.push(`section ${i + 1}: position differs from spec`);
-    if (sticky?.parameters.width !== group.columns * 256 + 256 || sticky?.parameters.height !== expectedRows * 256 + sectionBottomPadding) {
+    const expectedHeight = expectedRows * 256 + sectionBottomPadding + sectionTopPadding - LEGACY_SECTION_TOP_PADDING;
+    if (sticky?.parameters.width !== group.columns * 256 + 256 || sticky?.parameters.height !== expectedHeight) {
       errors.push(`section ${i + 1}: dimensions differ from spec`);
+    }
+    if (sticky?.parameters.width < MIN_SECTION_WIDTH) {
+      errors.push(`section ${i + 1}: width is ${sticky.parameters.width}, expected at least ${MIN_SECTION_WIDTH}`);
     }
     const assignedNames = new Set(group.nodes);
     const coveredNames = artifactFunctional.filter((node) => contains(rect(sticky), rect(node))).map((node) => node.name);
@@ -629,7 +649,7 @@ function validate(slug, source, artifact) {
         return;
       }
       const node = artifactFunctional.find((candidate) => candidate.name === name);
-      const expectedPosition = [group.x + 64 + column * 256, group.y + 144 + row * 256];
+      const expectedPosition = [group.x + 64 + column * 256, group.y + sectionTopPadding + row * 256];
       if (node && JSON.stringify(node.position) !== JSON.stringify(expectedPosition)) {
         errors.push(`${name}: position differs from declared section placement`);
       }
@@ -702,6 +722,11 @@ function validate(slug, source, artifact) {
   for (const sticky of sections) {
     if (sticky.parameters.content.split('\n').length > 2) errors.push(`${sticky.name}: section copy exceeds title plus one sentence`);
     const coveredNodes = artifactFunctional.filter((node) => contains(rect(sticky), rect(node)));
+    const shallowestNodeTop = Math.min(...coveredNodes.map((node) => rect(node).y1), sticky.position[1] + sticky.parameters.height);
+    const actualTopPadding = shallowestNodeTop - sticky.position[1];
+    if (actualTopPadding < sectionTopPadding) {
+      errors.push(`${sticky.name}: top text safety padding is ${actualTopPadding}, expected at least ${sectionTopPadding}`);
+    }
     const deepestNodeBottom = Math.max(...coveredNodes.map((node) => rect(node).y2), sticky.position[1]);
     const actualBottomPadding = sticky.position[1] + sticky.parameters.height - deepestNodeBottom;
     if (actualBottomPadding < sectionBottomPadding) {

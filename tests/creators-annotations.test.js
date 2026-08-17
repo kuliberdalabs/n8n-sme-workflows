@@ -25,6 +25,34 @@ test('Creator annotation validation rejects grid-aligned drift from the declared
   );
 });
 
+test('Creator annotation validation rejects loss of the corrected top text clearance', () => {
+  const slug = '05-ops-digest-alert';
+  const source = load(slug, 'workflow.json');
+  const artifact = load(slug, 'workflow-annotated-v2.json');
+  const compressed = structuredClone(artifact);
+  const node = compressed.nodes.find((candidate) => candidate.name === 'Morning Digest Schedule');
+  node.position[1] = 144;
+
+  assert.throws(
+    () => validate(slug, source, compressed),
+    /top text safety padding is 144, expected at least 192/,
+  );
+});
+
+test('Creator annotation validation rejects an unsafe narrow section', () => {
+  const slug = '05-ops-digest-alert';
+  const source = load(slug, 'workflow.json');
+  const artifact = load(slug, 'workflow-annotated-v2.json');
+  const narrowed = structuredClone(artifact);
+  const section = narrowed.nodes.find((candidate) => candidate.name === 'Section 4 — Send the anomaly signal');
+  section.parameters.width = 256;
+
+  assert.throws(
+    () => validate(slug, source, narrowed),
+    /section 4: width is 256, expected at least 512/,
+  );
+});
+
 test('Creator annotation validation rejects a connection corridor through an unrelated node', () => {
   const slug = '05-ops-digest-alert';
   const source = load(slug, 'workflow.json');
