@@ -103,7 +103,6 @@ Adjust service prices, payment matching, reminder cadence, escalation rules, and
   },
   '03-document-intake': {
     enforceEdgeCorridors: true,
-    sectionTopPadding: LEGACY_SECTION_TOP_PADDING,
     overviewTitle: 'Classify inbound documents and route uncertain cases',
     overview: `## Classify inbound documents and route uncertain cases
 
@@ -149,7 +148,7 @@ Adapt the intake adapter, classification taxonomy, confidence policy, logical st
         'Insert OCR Needs Review', 'Send Controlled OCR Review Alert', 'Build OCR Review Alert Update',
         'Update OCR Review Alert Sent', 'Mark Document Claim OCR Review', 'Respond OCR Needs Review',
       ]),
-      section('Retry unsent review alerts', 'Finds review rows still marked unsent, retries Gmail, and persists the resulting alert evidence.', 0, 640, 6, [
+      section('Retry unsent review alerts', 'Finds review rows still marked unsent, retries Gmail, and persists the resulting alert evidence.', 0, 688, 6, [
         'Document Review Alert Reconciliation Sweep', 'Find Unsent Document Review Alerts',
         'Build Unsent Document Review Alert', 'Send Reconciled Document Review Alert',
         'Build Reconciled Document Alert Update', 'Update Reconciled Document Alert Sent',
