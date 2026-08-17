@@ -240,7 +240,7 @@
       "parameters": {
         "content": "## Collect operational sources\nFetches and normalizes sales, support, calendar, and finance data with explicit degraded-state handling.",
         "width": 2560,
-        "height": 384,
+        "height": 432,
         "color": 7
       }
     },
@@ -256,7 +256,7 @@
       "parameters": {
         "content": "## Build the ambient digest\nAggregates deterministic facts, validates model-written prose, and sends the controlled daily digest.",
         "width": 1536,
-        "height": 384,
+        "height": 432,
         "color": 7
       }
     },
@@ -272,7 +272,7 @@
       "parameters": {
         "content": "## Decide whether to alert\nFilters daily throttle keys and cleanly separates actionable anomalies from a no-alert run.",
         "width": 1024,
-        "height": 640,
+        "height": 688,
         "color": 7
       }
     },
@@ -288,7 +288,7 @@
       "parameters": {
         "content": "## Send the anomaly signal\nBuilds and sends the controlled alert before recording its throttle key as consumed.",
         "width": 1024,
-        "height": 384,
+        "height": 432,
         "color": 7
       }
     },
@@ -299,7 +299,7 @@
       "typeVersion": 1.3,
       "position": [
         64,
-        144
+        192
       ],
       "parameters": {
         "rule": {
@@ -321,7 +321,7 @@
       "typeVersion": 4.2,
       "position": [
         320,
-        144
+        192
       ],
       "parameters": {
         "method": "GET",
@@ -343,7 +343,7 @@
       "typeVersion": 2,
       "position": [
         576,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -359,7 +359,7 @@
       "typeVersion": 4.2,
       "position": [
         832,
-        144
+        192
       ],
       "parameters": {
         "method": "GET",
@@ -381,7 +381,7 @@
       "typeVersion": 2,
       "position": [
         1088,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -397,7 +397,7 @@
       "typeVersion": 4.2,
       "position": [
         1344,
-        144
+        192
       ],
       "parameters": {
         "method": "GET",
@@ -419,7 +419,7 @@
       "typeVersion": 2,
       "position": [
         1600,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -435,7 +435,7 @@
       "typeVersion": 4.2,
       "position": [
         1856,
-        144
+        192
       ],
       "parameters": {
         "method": "GET",
@@ -457,7 +457,7 @@
       "typeVersion": 2,
       "position": [
         2112,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -473,7 +473,7 @@
       "typeVersion": 2,
       "position": [
         2688,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -488,7 +488,7 @@
       "typeVersion": 2.3,
       "position": [
         2944,
-        144
+        192
       ],
       "parameters": {
         "resource": "text",
@@ -529,7 +529,7 @@
       "typeVersion": 2,
       "position": [
         3200,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -544,7 +544,7 @@
       "typeVersion": 2,
       "position": [
         3456,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -559,7 +559,7 @@
       "typeVersion": 2.2,
       "position": [
         3712,
-        144
+        192
       ],
       "parameters": {
         "resource": "message",
@@ -583,7 +583,7 @@
       "typeVersion": 2,
       "position": [
         4288,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -598,7 +598,7 @@
       "typeVersion": 2.3,
       "position": [
         4544,
-        144
+        192
       ],
       "parameters": {
         "conditions": {
@@ -628,7 +628,7 @@
       "typeVersion": 2,
       "position": [
         5376,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -643,7 +643,7 @@
       "typeVersion": 2.2,
       "position": [
         5632,
-        144
+        192
       ],
       "parameters": {
         "resource": "message",
@@ -666,7 +666,7 @@
       "typeVersion": 2,
       "position": [
         4800,
-        400
+        448
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -681,7 +681,7 @@
       "typeVersion": 2,
       "position": [
         5888,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",

@@ -1,7 +1,6 @@
 # AGENTS.md — n8n SME Workflows
 
-This is the canonical, model-neutral operating contract for
-`/Users/beru/oss-prep/n8n-sme-workflows`.
+This is the canonical, model-neutral operating contract for this repository.
 
 The repository owns reusable n8n workflow behavior, documentation, and Creators
 submission artifacts. It does not own live credentials, accounts, customer data,
@@ -20,9 +19,10 @@ or permission to activate or submit anything.
 Every task has one primary owner. Scripts, tools, providers, models, templates,
 and derivative artifacts are capabilities or outputs, never owners.
 
-`/Users/beru/arise/AGENT_START.md` owns the current roster and task assignment.
-The current task brief controls its bounded file ownership. Models and providers
-are interchangeable and never own this repository, a workflow, or a decision.
+The current external task brief or orchestrator owns the active roster and task
+assignment. The current task brief controls its bounded file ownership. Models
+and providers are interchangeable and never own this repository, a workflow, or
+a decision.
 
 Do not copy mutable submission, review, runtime, or assignment status into this
 file. When current state matters, source it from the relevant HANDOFF, direct
@@ -109,8 +109,8 @@ PASS never prove current approval or submission state.
   real-data use, money movement, or a destructive action.
 - Durable home: stable guidance in the nearest repository docs; workflow-specific
   guidance beside that workflow; dated final-state evidence in the nearest
-  task-owned receipt, including `/Users/beru/oss-prep/_reports/` when designated.
-  Never duplicate durable learning in a global scratchpad.
+  task-owned receipt location designated by the task. Never duplicate durable
+  learning in a global scratchpad.
 - Missing/current-state handling: label unsupported current claims as unknown.
   Seek a relevant HANDOFF, direct operator evidence, or dated receipt only when
   the task needs that state. Park the unsupported claim or gated action and
