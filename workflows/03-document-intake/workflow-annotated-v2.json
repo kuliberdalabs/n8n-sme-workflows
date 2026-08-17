@@ -440,7 +440,7 @@
       "parameters": {
         "content": "## Authenticate and claim intake\nFails closed on authentication, normalizes the document contract, and places a best-effort claim before durable lookup.",
         "width": 1792,
-        "height": 640,
+        "height": 688,
         "color": 7
       }
     },
@@ -456,7 +456,7 @@
       "parameters": {
         "content": "## Resolve duplicate deliveries\nChecks active claims and durable history, then returns an existing result without reprocessing.",
         "width": 1536,
-        "height": 640,
+        "height": 688,
         "color": 7
       }
     },
@@ -472,7 +472,7 @@
       "parameters": {
         "content": "## Reject invalid input or OCR\nPersists permanent dead letters and keeps unusable OCR on a human-review path before model extraction.",
         "width": 1536,
-        "height": 640,
+        "height": 688,
         "color": 7
       }
     },
@@ -488,7 +488,7 @@
       "parameters": {
         "content": "## Extract and file confidently\nConstrains AI extraction with strict schema validation and records only high-confidence results as logically filed.",
         "width": 1792,
-        "height": 384,
+        "height": 432,
         "color": 7
       }
     },
@@ -504,7 +504,7 @@
       "parameters": {
         "content": "## Alert on AI review\nPersists non-auto-file outcomes before alerting the operator and records the provider evidence.",
         "width": 1792,
-        "height": 384,
+        "height": 432,
         "color": 7
       }
     },
@@ -520,7 +520,7 @@
       "parameters": {
         "content": "## Alert on OCR review\nStores unusable-OCR cases without a model call and records the controlled review-alert outcome.",
         "width": 1792,
-        "height": 384,
+        "height": 432,
         "color": 7
       }
     },
@@ -531,12 +531,12 @@
       "typeVersion": 1,
       "position": [
         0,
-        640
+        688
       ],
       "parameters": {
         "content": "## Retry unsent review alerts\nFinds review rows still marked unsent, retries Gmail, and persists the resulting alert evidence.",
         "width": 1792,
-        "height": 384,
+        "height": 432,
         "color": 7
       }
     },
@@ -547,7 +547,7 @@
       "typeVersion": 2.1,
       "position": [
         64,
-        144
+        192
       ],
       "parameters": {
         "httpMethod": "POST",
@@ -563,7 +563,7 @@
       "typeVersion": 2,
       "position": [
         320,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -578,7 +578,7 @@
       "typeVersion": 2.3,
       "position": [
         576,
-        144
+        192
       ],
       "parameters": {
         "conditions": {
@@ -608,7 +608,7 @@
       "typeVersion": 2,
       "position": [
         832,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -623,7 +623,7 @@
       "typeVersion": 2,
       "position": [
         1088,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -638,7 +638,7 @@
       "typeVersion": 2.3,
       "position": [
         1920,
-        144
+        192
       ],
       "parameters": {
         "conditions": {
@@ -668,7 +668,7 @@
       "typeVersion": 1.1,
       "position": [
         2176,
-        144
+        192
       ],
       "parameters": {
         "resource": "row",
@@ -711,7 +711,7 @@
       "typeVersion": 1.5,
       "position": [
         2688,
-        144
+        192
       ],
       "parameters": {
         "respondWith": "json",
@@ -728,7 +728,7 @@
       "typeVersion": 1.1,
       "position": [
         2176,
-        400
+        448
       ],
       "parameters": {
         "resource": "row",
@@ -771,7 +771,7 @@
       "typeVersion": 2.3,
       "position": [
         2432,
-        400
+        448
       ],
       "parameters": {
         "conditions": {
@@ -801,7 +801,7 @@
       "typeVersion": 2.3,
       "position": [
         3520,
-        144
+        192
       ],
       "parameters": {
         "conditions": {
@@ -831,7 +831,7 @@
       "typeVersion": 1.1,
       "position": [
         3776,
-        144
+        192
       ],
       "parameters": {
         "resource": "row",
@@ -1158,7 +1158,7 @@
       "typeVersion": 2,
       "position": [
         4032,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -1173,7 +1173,7 @@
       "typeVersion": 1.5,
       "position": [
         4288,
-        144
+        192
       ],
       "parameters": {
         "respondWith": "json",
@@ -1190,7 +1190,7 @@
       "typeVersion": 2.3,
       "position": [
         3776,
-        400
+        448
       ],
       "parameters": {
         "conditions": {
@@ -1228,7 +1228,7 @@
       "typeVersion": 2.3,
       "position": [
         5120,
-        144
+        192
       ],
       "parameters": {
         "resource": "text",
@@ -1267,7 +1267,7 @@
       "typeVersion": 2,
       "position": [
         5376,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -1283,7 +1283,7 @@
       "typeVersion": 2.3,
       "position": [
         5632,
-        144
+        192
       ],
       "parameters": {
         "conditions": {
@@ -1313,7 +1313,7 @@
       "typeVersion": 1.1,
       "position": [
         5888,
-        144
+        192
       ],
       "parameters": {
         "resource": "row",
@@ -1640,7 +1640,7 @@
       "typeVersion": 2,
       "position": [
         6144,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -1655,7 +1655,7 @@
       "typeVersion": 1.5,
       "position": [
         6400,
-        144
+        192
       ],
       "parameters": {
         "respondWith": "json",
@@ -1672,7 +1672,7 @@
       "typeVersion": 1.1,
       "position": [
         6976,
-        784
+        832
       ],
       "parameters": {
         "resource": "row",
@@ -1999,7 +1999,7 @@
       "typeVersion": 2.2,
       "position": [
         7232,
-        784
+        832
       ],
       "parameters": {
         "resource": "message",
@@ -2021,7 +2021,7 @@
       "typeVersion": 2,
       "position": [
         7488,
-        784
+        832
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -2036,7 +2036,7 @@
       "typeVersion": 1.1,
       "position": [
         7744,
-        784
+        832
       ],
       "parameters": {
         "resource": "row",
@@ -2113,7 +2113,7 @@
       "typeVersion": 2,
       "position": [
         8000,
-        784
+        832
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -2128,7 +2128,7 @@
       "typeVersion": 1.5,
       "position": [
         8256,
-        784
+        832
       ],
       "parameters": {
         "respondWith": "json",
@@ -2145,7 +2145,7 @@
       "typeVersion": 1.1,
       "position": [
         5120,
-        784
+        832
       ],
       "parameters": {
         "resource": "row",
@@ -2472,7 +2472,7 @@
       "typeVersion": 2.2,
       "position": [
         5376,
-        784
+        832
       ],
       "parameters": {
         "resource": "message",
@@ -2494,7 +2494,7 @@
       "typeVersion": 2,
       "position": [
         5632,
-        784
+        832
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -2509,7 +2509,7 @@
       "typeVersion": 1.1,
       "position": [
         5888,
-        784
+        832
       ],
       "parameters": {
         "resource": "row",
@@ -2586,7 +2586,7 @@
       "typeVersion": 2,
       "position": [
         6144,
-        784
+        832
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -2601,7 +2601,7 @@
       "typeVersion": 1.5,
       "position": [
         6400,
-        784
+        832
       ],
       "parameters": {
         "respondWith": "json",
@@ -2618,7 +2618,7 @@
       "typeVersion": 1.5,
       "position": [
         832,
-        400
+        448
       ],
       "parameters": {
         "respondWith": "json",
@@ -2635,7 +2635,7 @@
       "typeVersion": 1.3,
       "position": [
         64,
-        784
+        880
       ],
       "parameters": {
         "rule": {
@@ -2655,7 +2655,7 @@
       "typeVersion": 1.1,
       "position": [
         320,
-        784
+        880
       ],
       "parameters": {
         "resource": "row",
@@ -2691,7 +2691,7 @@
       "typeVersion": 2,
       "position": [
         576,
-        784
+        880
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -2706,7 +2706,7 @@
       "typeVersion": 2.2,
       "position": [
         832,
-        784
+        880
       ],
       "parameters": {
         "resource": "message",
@@ -2728,7 +2728,7 @@
       "typeVersion": 2,
       "position": [
         1088,
-        784
+        880
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -2743,7 +2743,7 @@
       "typeVersion": 1.1,
       "position": [
         1344,
-        784
+        880
       ],
       "parameters": {
         "resource": "row",
