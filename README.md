@@ -27,7 +27,7 @@ These are templates, not a hosted product. Each one demonstrates patterns that m
 - **Explicit failure paths** — dead-letter routes and fail-closed 401s instead of silent drops.
 - **Human-in-the-loop where it matters** — AI outputs are validated and gated; ambiguous cases go to review, not to customers.
 - **Outbound safety** — anything that emails a real person is draft-first or approval-gated in its default configuration.
-- **Honest limits** — each README states what the workflow does *not* do, and known hardening gaps (delivery-retry sweeps, atomic claims, stricter contracts) are tracked openly as GitHub Issues. Treat the templates as a strong starting point you adapt and harden for your environment, not a drop-in production system.
+- **Honest limits** — each workflow README states what the workflow does *not* do and records its current hardening needs; completed remediation remains traceable in closed GitHub Issues. Treat the templates as a strong starting point you adapt and harden for your environment, not a drop-in production system.
 
 ## Getting started
 

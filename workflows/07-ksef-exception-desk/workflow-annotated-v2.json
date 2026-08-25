@@ -17,7 +17,18 @@
         ]
       ]
     },
-    "Durable Submission Topology Sweep": {
+    "KSeF Manual Sweep": {
+      "main": [
+        [
+          {
+            "node": "Route Manual Sweep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Manual Sweep": {
       "main": [
         [
           {
@@ -25,14 +36,17 @@
             "type": "main",
             "index": 0
           }
-        ]
-      ]
-    },
-    "Durable Recovery Sweep": {
-      "main": [
+        ],
         [
           {
             "node": "Get Durable Recovery Lifecycle Rows",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Intake Persist Fixtures",
             "type": "main",
             "index": 0
           }
@@ -312,17 +326,6 @@
         ]
       ]
     },
-    "Intake Persist Fixture Sweep": {
-      "main": [
-        [
-          {
-            "node": "Build Intake Persist Fixtures",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Intake Response Required?": {
       "main": [
         [
@@ -465,14 +468,14 @@
         0
       ],
       "parameters": {
-        "content": "## Handle KSeF exceptions without blind resubmission\n\n### How it works\n1. Authenticates invoice intake and persists each valid or rejected request as an immutable JSON snapshot with its SHA-256 hash; intake never reaches submission directly.\n2. Runs a separate manual submission sweep that rereads lifecycle state, enforces legal and operational preconditions, writes durable intent first, and then calls the bundled mock adapter.\n3. Appends every transition to lifecycle and evidence, writes run summaries, and adds exception rows only for failures.\n4. Runs recovery manually or every 30 minutes and queries status by client submission id before considering any retry.\n5. Adopts accepted references and UPOs, permits one retry only after authoritative NOT_FOUND, and holds unknown or error responses with zero submit calls.\n6. Alerts the controlled inbox when unresolved recovery work ages past its configured window.\n\n### Setup steps\n- [ ] Create and re-select the four documented KSeF Data Tables.\n- [ ] Set KSEF_INTAKE_TOKEN for the webhook path.\n- [ ] Connect Gmail and replace ops@example.com in both summary and recovery alert nodes.\n- [ ] Review approval, whitelist, breaker, and auth-adapter policies.\n- [ ] Exercise the built-in synthetic submission and recovery scenarios while inactive.\n\n### Customization\nReplace the mock submit and status adapters with your KSeF integration, preserving immutable snapshots, query-before-retry, intent-before-side-effect, and single-run concurrency controls.",
+        "content": "## Handle KSeF exceptions without blind resubmission\n\n### How it works\n1. Authenticates invoice intake and persists each valid or rejected request as an immutable JSON snapshot with its SHA-256 hash; intake never reaches submission directly.\n2. Uses one manual trigger and a three-output selector to run exactly one submission, recovery, or intake-fixture branch per manual execution.\n3. Rereads lifecycle state for submission, enforces legal and operational preconditions, writes durable intent first, and then calls the bundled mock adapter.\n4. Appends every transition to lifecycle and evidence, writes run summaries, and adds exception rows only for failures.\n5. Runs recovery from the selector or every 30 minutes and queries status by client submission id before considering any retry.\n6. Adopts accepted references and UPOs, permits one retry only after authoritative NOT_FOUND, holds unknown or error responses, and alerts on aged unresolved work.\n\n### Setup steps\n- [ ] Create and re-select the four documented KSeF Data Tables.\n- [ ] Set KSEF_INTAKE_TOKEN for the webhook path.\n- [ ] Optionally set KSEF_MANUAL_SWEEP_MODE to submission, recovery, or intake_fixture; missing or unknown values default to submission.\n- [ ] Connect Gmail and replace ops@example.com in both summary and recovery alert nodes.\n- [ ] Review approval, whitelist, breaker, and auth-adapter policies.\n- [ ] Exercise the built-in synthetic submission and recovery scenarios while inactive.\n\n### Customization\nReplace the mock submit and status adapters with your KSeF integration, preserving immutable snapshots, query-before-retry, intent-before-side-effect, and single-run concurrency controls.",
         "width": 896,
         "height": 896
       }
     },
     {
       "id": "3b72755a-a4e4-4e4c-a1cf-ddebecd201ca",
-      "name": "Section 1 — Protect intake entrances",
+      "name": "Section 1 — Protect and select entrances",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
@@ -480,9 +483,9 @@
         0
       ],
       "parameters": {
-        "content": "## Protect intake entrances\nAuthenticates webhook intake, returns fail-closed unauthorized output, or seeds the same persistence path from fixtures.",
+        "content": "## Protect and select entrances\nAuthenticates webhook intake and routes each manual execution into exactly one controlled sweep branch.",
         "width": 1792,
-        "height": 896,
+        "height": 944,
         "color": 7
       }
     },
@@ -498,7 +501,7 @@
       "parameters": {
         "content": "## Plan guarded intake persistence\nReads lifecycle state and plans immutable, idempotent intake rows without submitting an invoice.",
         "width": 768,
-        "height": 384,
+        "height": 432,
         "color": 7
       }
     },
@@ -514,7 +517,7 @@
       "parameters": {
         "content": "## Persist the intake audit trail\nFans planned lifecycle, evidence, exception, and summary rows into four durable stores.",
         "width": 768,
-        "height": 1152,
+        "height": 1200,
         "color": 7
       }
     },
@@ -530,7 +533,7 @@
       "parameters": {
         "content": "## Acknowledge controlled intake\nOptionally sends the controlled summary and returns the webhook persistence receipt.",
         "width": 1280,
-        "height": 384,
+        "height": 432,
         "color": 7
       }
     },
@@ -546,7 +549,7 @@
       "parameters": {
         "content": "## Gate durable submission\nRereads persisted lifecycle rows, writes submit intent first, and only then calls the bundled mock adapter.",
         "width": 1536,
-        "height": 384,
+        "height": 688,
         "color": 7
       }
     },
@@ -562,7 +565,7 @@
       "parameters": {
         "content": "## Persist submission outcomes\nStores lifecycle, evidence, and summary rows for outcomes, adding exception rows only for failures.",
         "width": 768,
-        "height": 1152,
+        "height": 1200,
         "color": 7
       }
     },
@@ -578,7 +581,7 @@
       "parameters": {
         "content": "## Enter query-first recovery\nConverges manual and scheduled triggers on lifecycle state and a status-before-retry decision.",
         "width": 1280,
-        "height": 640,
+        "height": 688,
         "color": 7
       }
     },
@@ -594,7 +597,7 @@
       "parameters": {
         "content": "## Persist recovery decisions\nStores adopted UPOs, safe retries, unresolved holds, evidence, exceptions, and the sweep summary.",
         "width": 768,
-        "height": 1152,
+        "height": 1200,
         "color": 7
       }
     },
@@ -610,7 +613,7 @@
       "parameters": {
         "content": "## Alert on aged recovery\nGates aged unresolved work, sends Gmail, and records the throttle only after the send step succeeds.",
         "width": 1024,
-        "height": 384,
+        "height": 432,
         "color": 7
       }
     },
@@ -621,7 +624,7 @@
       "typeVersion": 2.1,
       "position": [
         64,
-        144
+        192
       ],
       "parameters": {
         "httpMethod": "POST",
@@ -632,25 +635,29 @@
     },
     {
       "id": "a681ce16-11de-40de-b08b-e51b952ec0c5",
-      "name": "Durable Submission Topology Sweep",
+      "name": "KSeF Manual Sweep",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
         64,
-        1744
+        704
       ],
       "parameters": {}
     },
     {
       "id": "9310d13e-ea49-48a7-8afc-37a6fd99ac11",
-      "name": "Durable Recovery Sweep",
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
+      "name": "Route Manual Sweep",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
       "position": [
-        64,
-        3088
+        320,
+        704
       ],
-      "parameters": {}
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 3,
+        "output": "={{ (($vars.KSEF_MANUAL_SWEEP_MODE ?? '').toString().trim().toLowerCase() === 'recovery') ? 1 : (($vars.KSEF_MANUAL_SWEEP_MODE ?? '').toString().trim().toLowerCase() === 'intake_fixture') ? 2 : 0 }}"
+      }
     },
     {
       "id": "5e2ed207-e182-45ee-911c-d89823b8f8bb",
@@ -659,7 +666,7 @@
       "typeVersion": 2,
       "position": [
         320,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -673,7 +680,7 @@
       "typeVersion": 2.3,
       "position": [
         576,
-        144
+        192
       ],
       "parameters": {
         "conditions": {
@@ -703,7 +710,7 @@
       "typeVersion": 2,
       "position": [
         832,
-        400
+        448
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -717,7 +724,7 @@
       "typeVersion": 1.1,
       "position": [
         1088,
-        400
+        448
       ],
       "parameters": {
         "respondWith": "json",
@@ -734,7 +741,7 @@
       "typeVersion": 2,
       "position": [
         832,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -747,8 +754,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        320,
-        1744
+        576,
+        1792
       ],
       "parameters": {
         "resource": "row",
@@ -771,8 +778,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        576,
-        1744
+        832,
+        1792
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -785,8 +792,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        832,
-        1744
+        1088,
+        1792
       ],
       "parameters": {
         "resource": "row",
@@ -1084,8 +1091,7 @@
             }
           ]
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
       "id": "c4035cf2-5a4e-462e-a7c5-992b4c539079",
@@ -1094,7 +1100,7 @@
       "typeVersion": 2,
       "position": [
         1088,
-        1744
+        2048
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1107,8 +1113,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        320,
-        3088
+        64,
+        3136
       ],
       "parameters": {
         "resource": "row",
@@ -1131,8 +1137,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        576,
-        3088
+        320,
+        3136
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1146,7 +1152,7 @@
       "typeVersion": 2,
       "position": [
         1664,
-        1744
+        1792
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1160,7 +1166,7 @@
       "typeVersion": 2,
       "position": [
         1664,
-        2000
+        2048
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1174,7 +1180,7 @@
       "typeVersion": 2,
       "position": [
         1664,
-        2256
+        2304
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1188,7 +1194,7 @@
       "typeVersion": 2,
       "position": [
         1664,
-        2512
+        2560
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -1202,7 +1208,7 @@
       "typeVersion": 2,
       "position": [
         1408,
-        3088
+        3136
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1216,7 +1222,7 @@
       "typeVersion": 2,
       "position": [
         1408,
-        3344
+        3392
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1230,7 +1236,7 @@
       "typeVersion": 2,
       "position": [
         1408,
-        3600
+        3648
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1244,7 +1250,7 @@
       "typeVersion": 2,
       "position": [
         1408,
-        3856
+        3904
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -1258,7 +1264,7 @@
       "typeVersion": 1.1,
       "position": [
         1920,
-        1744
+        1792
       ],
       "parameters": {
         "resource": "row",
@@ -1566,7 +1572,7 @@
       "typeVersion": 1.1,
       "position": [
         1920,
-        2000
+        2048
       ],
       "parameters": {
         "resource": "row",
@@ -1704,7 +1710,7 @@
       "typeVersion": 1.1,
       "position": [
         1920,
-        2256
+        2304
       ],
       "parameters": {
         "resource": "row",
@@ -1842,7 +1848,7 @@
       "typeVersion": 1.1,
       "position": [
         1920,
-        2512
+        2560
       ],
       "parameters": {
         "resource": "row",
@@ -2020,7 +2026,7 @@
       "typeVersion": 1.1,
       "position": [
         1664,
-        3088
+        3136
       ],
       "parameters": {
         "resource": "row",
@@ -2328,7 +2334,7 @@
       "typeVersion": 1.1,
       "position": [
         1664,
-        3344
+        3392
       ],
       "parameters": {
         "resource": "row",
@@ -2466,7 +2472,7 @@
       "typeVersion": 1.1,
       "position": [
         1664,
-        3600
+        3648
       ],
       "parameters": {
         "resource": "row",
@@ -2604,7 +2610,7 @@
       "typeVersion": 1.1,
       "position": [
         1664,
-        3856
+        3904
       ],
       "parameters": {
         "resource": "row",
@@ -2782,7 +2788,7 @@
       "typeVersion": 2,
       "position": [
         4096,
-        1424
+        1472
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -2796,7 +2802,7 @@
       "typeVersion": 1.1,
       "position": [
         4352,
-        1424
+        1472
       ],
       "parameters": {
         "respondWith": "json",
@@ -2813,7 +2819,7 @@
       "typeVersion": 2,
       "position": [
         1344,
-        656
+        704
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -2827,7 +2833,7 @@
       "typeVersion": 1.2,
       "position": [
         64,
-        3344
+        3392
       ],
       "parameters": {
         "rule": {
@@ -2841,24 +2847,13 @@
       }
     },
     {
-      "id": "65f70b5b-aa59-4ad1-8717-621bb1cfb23a",
-      "name": "Intake Persist Fixture Sweep",
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
-      "position": [
-        1088,
-        656
-      ],
-      "parameters": {}
-    },
-    {
       "id": "33385104-2ab0-42e9-8588-64b5e5ae8414",
       "name": "Intake Response Required?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
         3584,
-        1424
+        1472
       ],
       "parameters": {
         "conditions": {
@@ -2888,7 +2883,7 @@
       "typeVersion": 2.3,
       "position": [
         2240,
-        4432
+        4480
       ],
       "parameters": {
         "conditions": {
@@ -2918,7 +2913,7 @@
       "typeVersion": 2,
       "position": [
         2752,
-        400
+        448
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -2932,7 +2927,7 @@
       "typeVersion": 2,
       "position": [
         2752,
-        656
+        704
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -2946,7 +2941,7 @@
       "typeVersion": 2,
       "position": [
         2752,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -2960,7 +2955,7 @@
       "typeVersion": 2,
       "position": [
         2752,
-        912
+        960
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -2974,7 +2969,7 @@
       "typeVersion": 1.1,
       "position": [
         1920,
-        144
+        192
       ],
       "parameters": {
         "resource": "row",
@@ -2998,7 +2993,7 @@
       "typeVersion": 1.1,
       "position": [
         3008,
-        400
+        448
       ],
       "parameters": {
         "resource": "row",
@@ -3136,7 +3131,7 @@
       "typeVersion": 1.1,
       "position": [
         3008,
-        656
+        704
       ],
       "parameters": {
         "resource": "row",
@@ -3274,7 +3269,7 @@
       "typeVersion": 1.1,
       "position": [
         3008,
-        144
+        192
       ],
       "parameters": {
         "resource": "row",
@@ -3582,7 +3577,7 @@
       "typeVersion": 1.1,
       "position": [
         3008,
-        912
+        960
       ],
       "parameters": {
         "resource": "row",
@@ -3760,7 +3755,7 @@
       "typeVersion": 2,
       "position": [
         2752,
-        4432
+        4480
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -3774,7 +3769,7 @@
       "typeVersion": 2,
       "position": [
         2176,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -3788,7 +3783,7 @@
       "typeVersion": 2.1,
       "position": [
         3840,
-        1424
+        1472
       ],
       "parameters": {
         "resource": "message",
@@ -3813,7 +3808,7 @@
       "typeVersion": 2.1,
       "position": [
         2496,
-        4432
+        4480
       ],
       "parameters": {
         "resource": "message",
@@ -3826,7 +3821,6 @@
           "senderName": "Ops Notifications"
         }
       },
-      "onError": "continueRegularOutput",
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 1000

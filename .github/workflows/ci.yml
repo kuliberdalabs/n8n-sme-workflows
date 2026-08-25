@@ -17,5 +17,7 @@ jobs:
           node-version: 22
       - name: Run workflow Code-node tests
         run: node --test tests/*.test.js
+      - name: Validate Creator annotation artifacts
+        run: node scripts/creators-annotations.mjs check
       - name: Parse every workflow JSON file
         run: node tests/validate-workflows.js
