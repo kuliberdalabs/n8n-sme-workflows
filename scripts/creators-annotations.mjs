@@ -19,6 +19,8 @@ const MIN_SECTION_WIDTH = 512;
 const WORKFLOWS = {
   '02-invoice-dunning': {
     enforceEdgeCorridors: true,
+    acceptedLegacyLayout: true,
+    acceptedArtifactSha256: 'd3d2d6df1ae3eb28ad48d7a8b28013af7dc1e7800339a10ab9b75a566b40e754',
     sectionTopPadding: LEGACY_SECTION_TOP_PADDING,
     overviewSize: DEFAULT_OVERVIEW_SIZE,
     sectionBottomPadding: DEFAULT_SECTION_BOTTOM_PADDING,
@@ -199,74 +201,85 @@ Adapt the source contracts, daily schedule, SLA thresholds, summary tone, and co
   },
   '06-bank-reconciliation': {
     enforceEdgeCorridors: true,
-    sectionTopPadding: LEGACY_SECTION_TOP_PADDING,
-    overviewTitle: 'Reconcile bank payments without guessing',
-    overview: `## Reconcile bank payments without guessing
+    sectionTopPadding: DEFAULT_SECTION_TOP_PADDING,
+    overviewSize: { width: 704, height: 704 },
+    overviewTitle: 'Reconcile bank payments to invoices',
+    overview: `## Reconcile bank payments to invoices
 
 ### How it works
-1. Accepts an authenticated statement JSON or starts from a built-in manual fixture for an inactive demonstration.
-2. Loads existing transaction and review rows, then uses deterministic Code-node matching with integer amounts and stable keys; no AI is involved.
-3. Allocates exact invoice references, unique exact amounts, or exact multi-invoice totals, while ambiguous, malformed, partial, and overpayment cases follow explicit safe policies.
-4. Writes transactions, invoices, allocations, reviews, paid signals, and one run summary to six n8n Data Tables.
-5. Reads every execution-scoped row set back and verifies exact counts and key multisets before committing replay markers, attempting the operator summary, or releasing webhook success.
+1. Accepts parsed statement JSON through an authenticated webhook or runs a built-in manual fixture.
+2. Loads prior transaction and review rows, then matches payments by invoice reference, exact amount, or an exact multi-invoice total.
+3. Holds ambiguous, malformed, partial, and overpaid cases for review instead of guessing.
+4. Writes six Data Table record sets and verifies every execution-scoped write before committing replay markers, sending the operator summary, or returning success.
 
 ### Setup steps
 - [ ] Create and re-select all six documented Recon Data Tables.
-- [ ] Set BANK_IMPORT_TOKEN for the webhook path.
+- [ ] Set BANK_IMPORT_TOKEN for the webhook.
 - [ ] Connect Gmail and replace ops@example.com in both summary nodes.
-- [ ] Keep executionOrder v1 and the summary output last unless you add an explicit join.
-- [ ] Run the manual fixture first, then test a small tagged webhook import while inactive.
+- [ ] Keep executionOrder v1 and the summary branch last.
+- [ ] Test the manual fixture and a small tagged webhook import while inactive.
 
 ### Customization
-Adapt the bank parser, invoice input, amount tolerance, review policy, paid-signal consumer, and controlled summary inbox to your finance process.`,
+Adapt the parsed input, payer aliases, amount tolerance, review rules, paid-signal consumer, and operator inbox.`,
     sections: [
-      section('Authenticate webhook imports', 'Receives statement JSON, fails closed on invalid auth, and shapes authorized input for reconciliation.', 0, 0, 6, [
+      section('Receive and authorize webhook', 'Authenticates the import, shapes valid input, and returns unauthorized requests without side effects.', 0, 0, 4, [
         'Import Webhook', 'Validate Import Token', 'Import Authorized?', 'Build Webhook Statement Contract',
         'Build Unauthorized Response', 'Respond Unauthorized',
-      ], { 'Build Unauthorized Response': [3, 1], 'Respond Unauthorized': [4, 1] }),
-      section('Reconcile webhook data', 'Loads durable history and deterministically classifies payments into all required output sets.', 1856, 0, 5, [
+      ], { 'Build Unauthorized Response': [2, 1], 'Respond Unauthorized': [3, 1] }),
+      section('Load history and reconcile', 'Loads durable transaction and review history before classifying every webhook payment deterministically.', 1344, 0, 5, [
         'Get Webhook Existing Transactions', 'Merge Webhook Existing Transactions', 'Get Webhook Existing Reviews',
         'Merge Webhook Existing Reviews', 'Run Webhook Reconciliation Engine',
       ]),
-      section('Persist webhook outputs', 'Writes six execution-scoped row categories with the summary branch deliberately last.', 3456, 0, 2, [
+      section('Write core webhook records', 'Persists normalized transactions, invoices, and safe allocations in execution order.', 2944, 0, 2, [
         'Emit Webhook Transaction Rows', 'Insert Webhook Transaction Rows',
         'Emit Webhook Invoice Rows', 'Insert Webhook Invoice Rows',
         'Emit Webhook Allocation Rows', 'Insert Webhook Allocation Rows',
+      ]),
+      section('Write review and finish records', 'Persists review cases, paid signals, and the summary row that starts the final barrier.', 2944, 976, 2, [
         'Emit Webhook Review Rows', 'Insert Webhook Review Rows',
         'Emit Webhook Signal Rows', 'Insert Webhook Paid Signal Rows',
         'Emit Webhook Summary Row', 'Insert Webhook Summary Row',
       ]),
-      section('Verify and finish webhook import', 'Reads back every row set, proves persistence, commits seen markers, and returns the controlled result.', 4288, 0, 11, [
+      section('Read back webhook writes', 'Reads all six execution-scoped row sets back before any success or notification is released.', 3776, 1488, 6, [
         'Read Back Webhook Transaction Writes', 'Read Back Webhook Invoice Writes',
-        'Read Back Webhook Allocation Writes', 'Read Back Webhook Review Writes',
-        'Read Back Webhook Paid Signal Writes', 'Read Back Webhook Summary Writes',
+        'Read Back Webhook Allocation Writes',
+        'Read Back Webhook Review Writes', 'Read Back Webhook Paid Signal Writes',
+        'Read Back Webhook Summary Writes',
+      ]),
+      section('Verify and return webhook result', 'Proves durable output, commits replay markers, notifies the operator, and returns the controlled response.', 5632, 1488, 5, [
         'Verify Webhook Persistence Readback', 'Commit Webhook Seen Markers',
         'Send Controlled Webhook Summary', 'Build Webhook Response', 'Respond Import Complete',
       ]),
-      section('Run the manual fixture', 'Builds a safe fixture, loads durable history, and runs the same deterministic reconciliation engine.', 0, 1920, 7, [
-        'Runtime Simulator Sweep', 'Build Runtime Bank Fixture', 'Get Runtime Existing Transactions',
+      section('Run the manual reconciliation', 'Builds the fixture, loads durable history, and runs the same deterministic matcher.', 0, 2304, 7, [
+        'Runtime Simulator Sweep', 'Build Runtime Bank Fixture',
+        'Get Runtime Existing Transactions',
         'Merge Runtime Existing Transactions', 'Get Runtime Existing Reviews',
         'Merge Runtime Existing Reviews', 'Run Runtime Reconciliation Engine',
       ]),
-      section('Persist runtime outputs', 'Writes the fixture result into the same six row categories with summary last.', 2112, 1920, 2, [
+      section('Write core runtime records', 'Persists fixture transactions, invoices, and safe allocations in the same durable schema.', 2112, 2304, 2, [
         'Emit Runtime Transaction Rows', 'Insert Runtime Transaction Rows',
         'Emit Runtime Invoice Rows', 'Insert Runtime Invoice Rows',
         'Emit Runtime Allocation Rows', 'Insert Runtime Allocation Rows',
+      ]),
+      section('Write runtime review and finish', 'Persists fixture review cases, paid signals, and the summary row with the same ordering contract.', 2112, 3280, 2, [
         'Emit Runtime Review Rows', 'Insert Runtime Review Rows',
         'Emit Runtime Signal Rows', 'Insert Runtime Paid Signal Rows',
         'Emit Runtime Summary Row', 'Insert Runtime Summary Row',
       ]),
-      section('Verify and finish manual run', 'Reads back all runtime rows, proves persistence, commits replay markers, and attempts the operator summary.', 2944, 1920, 9, [
+      section('Read back runtime writes', 'Reads all six fixture row sets back before replay markers or the summary email are released.', 2944, 3792, 6, [
         'Read Back Runtime Transaction Writes', 'Read Back Runtime Invoice Writes',
-        'Read Back Runtime Allocation Writes', 'Read Back Runtime Review Writes',
-        'Read Back Runtime Paid Signal Writes', 'Read Back Runtime Summary Writes',
-        'Verify Runtime Persistence Readback', 'Commit Runtime Seen Markers', 'Send Controlled Runtime Summary',
+        'Read Back Runtime Allocation Writes',
+        'Read Back Runtime Review Writes', 'Read Back Runtime Paid Signal Writes',
+        'Read Back Runtime Summary Writes',
+      ]),
+      section('Verify and finish manual run', 'Proves durable fixture output, commits replay markers, and sends the controlled operator summary.', 4800, 3792, 3, [
+        'Verify Runtime Persistence Readback', 'Commit Runtime Seen Markers',
+        'Send Controlled Runtime Summary',
       ]),
     ],
   },
   '08-client-onboarding-saga': {
     enforceEdgeCorridors: true,
-    sectionTopPadding: LEGACY_SECTION_TOP_PADDING,
     overviewTitle: 'Coordinate client onboarding as a durable saga',
     overview: `## Coordinate client onboarding as a durable saga
 
@@ -327,21 +340,21 @@ Adapt child adapters, service mappings, wait thresholds, reconciliation cadence,
   },
   '07-ksef-exception-desk': {
     enforceEdgeCorridors: true,
-    sectionTopPadding: LEGACY_SECTION_TOP_PADDING,
     overviewTitle: 'Handle KSeF exceptions without blind resubmission',
     overview: `## Handle KSeF exceptions without blind resubmission
 
 ### How it works
 1. Authenticates invoice intake and persists each valid or rejected request as an immutable JSON snapshot with its SHA-256 hash; intake never reaches submission directly.
-2. Runs a separate manual submission sweep that rereads lifecycle state, enforces legal and operational preconditions, writes durable intent first, and then calls the bundled mock adapter.
-3. Appends every transition to lifecycle and evidence, writes run summaries, and adds exception rows only for failures.
-4. Runs recovery manually or every 30 minutes and queries status by client submission id before considering any retry.
-5. Adopts accepted references and UPOs, permits one retry only after authoritative NOT_FOUND, and holds unknown or error responses with zero submit calls.
-6. Alerts the controlled inbox when unresolved recovery work ages past its configured window.
+2. Uses one manual trigger and a three-output selector to run exactly one submission, recovery, or intake-fixture branch per manual execution.
+3. Rereads lifecycle state for submission, enforces legal and operational preconditions, writes durable intent first, and then calls the bundled mock adapter.
+4. Appends every transition to lifecycle and evidence, writes run summaries, and adds exception rows only for failures.
+5. Runs recovery from the selector or every 30 minutes and queries status by client submission id before considering any retry.
+6. Adopts accepted references and UPOs, permits one retry only after authoritative NOT_FOUND, holds unknown or error responses, and alerts on aged unresolved work.
 
 ### Setup steps
 - [ ] Create and re-select the four documented KSeF Data Tables.
 - [ ] Set KSEF_INTAKE_TOKEN for the webhook path.
+- [ ] Optionally set KSEF_MANUAL_SWEEP_MODE to submission, recovery, or intake_fixture; missing or unknown values default to submission.
 - [ ] Connect Gmail and replace ops@example.com in both summary and recovery alert nodes.
 - [ ] Review approval, whitelist, breaker, and auth-adapter policies.
 - [ ] Exercise the built-in synthetic submission and recovery scenarios while inactive.
@@ -349,10 +362,14 @@ Adapt child adapters, service mappings, wait thresholds, reconciliation cadence,
 ### Customization
 Replace the mock submit and status adapters with your KSeF integration, preserving immutable snapshots, query-before-retry, intent-before-side-effect, and single-run concurrency controls.`,
     sections: [
-      section('Protect intake entrances', 'Authenticates webhook intake, returns fail-closed unauthorized output, or seeds the same persistence path from fixtures.', 0, 0, 6, [
+      section('Protect and select entrances', 'Authenticates webhook intake and routes each manual execution into exactly one controlled sweep branch.', 0, 0, 6, [
         'KSeF Intake Webhook', 'Validate Intake Token', 'Intake Authorized?', 'Build Webhook KSeF Fixture',
-        'Build Unauthorized Response', 'Respond Unauthorized', 'Intake Persist Fixture Sweep', 'Build Intake Persist Fixtures',
-      ], { 'Build Unauthorized Response': [3, 1], 'Respond Unauthorized': [4, 1], 'Intake Persist Fixture Sweep': [4, 2], 'Build Intake Persist Fixtures': [5, 2] }),
+        'Build Unauthorized Response', 'Respond Unauthorized', 'KSeF Manual Sweep', 'Route Manual Sweep',
+        'Build Intake Persist Fixtures',
+      ], {
+        'Build Unauthorized Response': [3, 1], 'Respond Unauthorized': [4, 1],
+        'KSeF Manual Sweep': [0, 2], 'Route Manual Sweep': [1, 2], 'Build Intake Persist Fixtures': [5, 2],
+      }),
       section('Plan guarded intake persistence', 'Reads lifecycle state and plans immutable, idempotent intake rows without submitting an invoice.', 1856, 0, 2, [
         'Get Intake Lifecycle Guard', 'Run Intake Persist Planner',
       ]),
@@ -366,9 +383,12 @@ Replace the mock submit and status adapters with your KSeF integration, preservi
         'Intake Response Required?', 'Send Controlled Intake Summary', 'Build Webhook Response', 'Respond Accepted',
       ]),
       section('Gate durable submission', 'Rereads persisted lifecycle rows, writes submit intent first, and only then calls the bundled mock adapter.', 0, 1600, 5, [
-        'Durable Submission Topology Sweep', 'Get Durable Entry Lifecycle Guard', 'Plan Durable Entry Guard',
-        'Insert Durable Entry State Rows', 'Run Mock Submit After Durable Intent',
-      ]),
+        'Get Durable Entry Lifecycle Guard', 'Plan Durable Entry Guard', 'Insert Durable Entry State Rows',
+        'Run Mock Submit After Durable Intent',
+      ], {
+        'Get Durable Entry Lifecycle Guard': [2, 0], 'Plan Durable Entry Guard': [3, 0],
+        'Insert Durable Entry State Rows': [4, 0], 'Run Mock Submit After Durable Intent': [4, 1],
+      }),
       section('Persist submission outcomes', 'Stores lifecycle, evidence, and summary rows for outcomes, adding exception rows only for failures.', 1600, 1600, 2, [
         'Emit Durable Terminal Lifecycle Rows', 'Insert Durable Terminal Lifecycle Rows',
         'Emit Durable Evidence Rows', 'Insert Durable Evidence Rows',
@@ -376,8 +396,8 @@ Replace the mock submit and status adapters with your KSeF integration, preservi
         'Emit Durable Summary Row', 'Insert Durable Summary Row',
       ]),
       section('Enter query-first recovery', 'Converges manual and scheduled triggers on lifecycle state and a status-before-retry decision.', 0, 2944, 4, [
-        'Durable Recovery Sweep', 'Durable Recovery Schedule', 'Get Durable Recovery Lifecycle Rows', 'Run Durable Recovery Sweep',
-      ], { 'Durable Recovery Schedule': [0, 1], 'Get Durable Recovery Lifecycle Rows': [1, 0], 'Run Durable Recovery Sweep': [2, 0] }),
+        'Get Durable Recovery Lifecycle Rows', 'Run Durable Recovery Sweep', 'Durable Recovery Schedule',
+      ], { 'Get Durable Recovery Lifecycle Rows': [0, 0], 'Run Durable Recovery Sweep': [1, 0], 'Durable Recovery Schedule': [0, 1] }),
       section('Persist recovery decisions', 'Stores adopted UPOs, safe retries, unresolved holds, evidence, exceptions, and the sweep summary.', 1344, 2944, 2, [
         'Emit Recovery Lifecycle Rows', 'Insert Recovery Lifecycle Rows',
         'Emit Recovery Evidence Rows', 'Insert Recovery Evidence Rows',
@@ -391,6 +411,8 @@ Replace the mock submit and status adapters with your KSeF integration, preservi
   },
   '04-support-triage': {
     // Preserve the already-published artifact. New templates use the safer defaults above.
+    acceptedLegacyLayout: true,
+    acceptedArtifactSha256: '74ca9414dc93468bc128eb156312c22551b5ff5c0d98f415935fd730a1866225',
     sectionTopPadding: LEGACY_SECTION_TOP_PADDING,
     overviewSize: { width: 800, height: 640 },
     sectionBottomPadding: 64,
@@ -579,6 +601,26 @@ function validate(slug, source, artifact) {
   for (const name of expectedNames) {
     if (!functionalNames.includes(name)) errors.push(`manual section map names unknown node: ${name}`);
   }
+  const minimumSections = Math.ceil(sourceFunctional.length / 8);
+  const maximumSections = Math.floor(sourceFunctional.length / 5);
+  if (spec.sections.length < minimumSections || spec.sections.length > maximumSections) {
+    errors.push(`balanced grouping has ${spec.sections.length} sections, expected ${minimumSections}-${maximumSections}`);
+  }
+  const microSections = spec.sections.filter((group) => group.nodes.length <= 2);
+  if (microSections.length > 1) {
+    errors.push(`balanced grouping has ${microSections.length} one/two-node sections, expected at most one exceptional small stage`);
+  }
+  for (const [index, group] of spec.sections.entries()) {
+    if (group.nodes.length > 11) {
+      errors.push(`section ${index + 1}: balanced group has ${group.nodes.length} nodes, expected at most 11`);
+    }
+  }
+  if (sectionTopPadding === LEGACY_SECTION_TOP_PADDING && !spec.acceptedLegacyLayout) {
+    errors.push(`legacy ${LEGACY_SECTION_TOP_PADDING}px section top padding is allowed only for an unchanged accepted artifact`);
+  }
+  if (spec.acceptedLegacyLayout && !spec.acceptedArtifactSha256) {
+    errors.push('accepted legacy layout requires an acceptedArtifactSha256 pin');
+  }
 
   const rect = (node) => ({
     x1: node.position[0], y1: node.position[1],
@@ -737,9 +779,22 @@ function validate(slug, source, artifact) {
   console.log(`PASS ${slug}: ${artifactFunctional.length} functional nodes, ${sections.length} white sections, overview ${words} words`);
 }
 
+function verifyAcceptedArtifactPin(slug, rawArtifact, spec = requireSpec(slug)) {
+  if (!spec.acceptedLegacyLayout) return;
+  if (!spec.acceptedArtifactSha256) {
+    throw new Error(`${slug}: accepted legacy layout requires an acceptedArtifactSha256 pin`);
+  }
+  const actualSha256 = createHash('sha256').update(rawArtifact).digest('hex');
+  if (actualSha256 !== spec.acceptedArtifactSha256) {
+    throw new Error(`${slug}: accepted legacy artifact SHA-256 ${actualSha256} does not match pinned ${spec.acceptedArtifactSha256}`);
+  }
+}
+
 function check(slug) {
   const source = JSON.parse(readFileSync(sourcePath(slug), 'utf8'));
-  const artifact = JSON.parse(readFileSync(outputPath(slug), 'utf8'));
+  const rawArtifact = readFileSync(outputPath(slug));
+  verifyAcceptedArtifactPin(slug, rawArtifact);
+  const artifact = JSON.parse(rawArtifact.toString('utf8'));
   validate(slug, source, artifact);
 }
 
@@ -760,4 +815,4 @@ if (isDirectRun) {
   for (const slug of slugs) command === 'build' ? build(slug) : check(slug);
 }
 
-export { WORKFLOWS, build, check, validate };
+export { WORKFLOWS, build, check, validate, verifyAcceptedArtifactPin };

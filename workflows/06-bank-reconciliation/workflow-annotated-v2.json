@@ -606,22 +606,22 @@
   "nodes": [
     {
       "id": "1e6a4416-dcb2-4158-a300-1d4492c28562",
-      "name": "Overview — Reconcile bank payments without guessing",
+      "name": "Overview — Reconcile bank payments to invoices",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -1024,
+        -832,
         0
       ],
       "parameters": {
-        "content": "## Reconcile bank payments without guessing\n\n### How it works\n1. Accepts an authenticated statement JSON or starts from a built-in manual fixture for an inactive demonstration.\n2. Loads existing transaction and review rows, then uses deterministic Code-node matching with integer amounts and stable keys; no AI is involved.\n3. Allocates exact invoice references, unique exact amounts, or exact multi-invoice totals, while ambiguous, malformed, partial, and overpayment cases follow explicit safe policies.\n4. Writes transactions, invoices, allocations, reviews, paid signals, and one run summary to six n8n Data Tables.\n5. Reads every execution-scoped row set back and verifies exact counts and key multisets before committing replay markers, attempting the operator summary, or releasing webhook success.\n\n### Setup steps\n- [ ] Create and re-select all six documented Recon Data Tables.\n- [ ] Set BANK_IMPORT_TOKEN for the webhook path.\n- [ ] Connect Gmail and replace ops@example.com in both summary nodes.\n- [ ] Keep executionOrder v1 and the summary output last unless you add an explicit join.\n- [ ] Run the manual fixture first, then test a small tagged webhook import while inactive.\n\n### Customization\nAdapt the bank parser, invoice input, amount tolerance, review policy, paid-signal consumer, and controlled summary inbox to your finance process.",
-        "width": 896,
-        "height": 896
+        "content": "## Reconcile bank payments to invoices\n\n### How it works\n1. Accepts parsed statement JSON through an authenticated webhook or runs a built-in manual fixture.\n2. Loads prior transaction and review rows, then matches payments by invoice reference, exact amount, or an exact multi-invoice total.\n3. Holds ambiguous, malformed, partial, and overpaid cases for review instead of guessing.\n4. Writes six Data Table record sets and verifies every execution-scoped write before committing replay markers, sending the operator summary, or returning success.\n\n### Setup steps\n- [ ] Create and re-select all six documented Recon Data Tables.\n- [ ] Set BANK_IMPORT_TOKEN for the webhook.\n- [ ] Connect Gmail and replace ops@example.com in both summary nodes.\n- [ ] Keep executionOrder v1 and the summary branch last.\n- [ ] Test the manual fixture and a small tagged webhook import while inactive.\n\n### Customization\nAdapt the parsed input, payer aliases, amount tolerance, review rules, paid-signal consumer, and operator inbox.",
+        "width": 704,
+        "height": 704
       }
     },
     {
       "id": "c28c61d0-0719-4d38-ab81-d1cd34283389",
-      "name": "Section 1 — Authenticate webhook imports",
+      "name": "Section 1 — Receive and authorize webhook",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
@@ -629,105 +629,169 @@
         0
       ],
       "parameters": {
-        "content": "## Authenticate webhook imports\nReceives statement JSON, fails closed on invalid auth, and shapes authorized input for reconciliation.",
-        "width": 1792,
-        "height": 640,
+        "content": "## Receive and authorize webhook\nAuthenticates the import, shapes valid input, and returns unauthorized requests without side effects.",
+        "width": 1280,
+        "height": 688,
         "color": 7
       }
     },
     {
       "id": "b9b82cb7-4dda-4053-a074-19586b0484fd",
-      "name": "Section 2 — Reconcile webhook data",
+      "name": "Section 2 — Load history and reconcile",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        1856,
+        1344,
         0
       ],
       "parameters": {
-        "content": "## Reconcile webhook data\nLoads durable history and deterministically classifies payments into all required output sets.",
+        "content": "## Load history and reconcile\nLoads durable transaction and review history before classifying every webhook payment deterministically.",
         "width": 1536,
-        "height": 384,
+        "height": 432,
         "color": 7
       }
     },
     {
       "id": "3364fab0-53bb-4f53-abb6-206c12106a56",
-      "name": "Section 3 — Persist webhook outputs",
+      "name": "Section 3 — Write core webhook records",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        3456,
+        2944,
         0
       ],
       "parameters": {
-        "content": "## Persist webhook outputs\nWrites six execution-scoped row categories with the summary branch deliberately last.",
+        "content": "## Write core webhook records\nPersists normalized transactions, invoices, and safe allocations in execution order.",
         "width": 768,
-        "height": 1664,
+        "height": 944,
         "color": 7
       }
     },
     {
       "id": "ca4470e6-565a-4ac3-a606-fdb6fa9b8313",
-      "name": "Section 4 — Verify and finish webhook import",
+      "name": "Section 4 — Write review and finish records",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        4288,
-        0
+        2944,
+        976
       ],
       "parameters": {
-        "content": "## Verify and finish webhook import\nReads back every row set, proves persistence, commits seen markers, and returns the controlled result.",
-        "width": 3072,
-        "height": 384,
+        "content": "## Write review and finish records\nPersists review cases, paid signals, and the summary row that starts the final barrier.",
+        "width": 768,
+        "height": 944,
         "color": 7
       }
     },
     {
       "id": "a346322c-a705-4def-a94f-2b067496ad83",
-      "name": "Section 5 — Run the manual fixture",
+      "name": "Section 5 — Read back webhook writes",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        0,
-        1920
+        3776,
+        1488
       ],
       "parameters": {
-        "content": "## Run the manual fixture\nBuilds a safe fixture, loads durable history, and runs the same deterministic reconciliation engine.",
-        "width": 2048,
-        "height": 384,
+        "content": "## Read back webhook writes\nReads all six execution-scoped row sets back before any success or notification is released.",
+        "width": 1792,
+        "height": 432,
         "color": 7
       }
     },
     {
       "id": "72cdec21-6102-46db-a5ce-f47f6eedfae8",
-      "name": "Section 6 — Persist runtime outputs",
+      "name": "Section 6 — Verify and return webhook result",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        2112,
-        1920
+        5632,
+        1488
       ],
       "parameters": {
-        "content": "## Persist runtime outputs\nWrites the fixture result into the same six row categories with summary last.",
-        "width": 768,
-        "height": 1664,
+        "content": "## Verify and return webhook result\nProves durable output, commits replay markers, notifies the operator, and returns the controlled response.",
+        "width": 1536,
+        "height": 432,
         "color": 7
       }
     },
     {
       "id": "752b7bf4-eb76-43f7-a120-9e66559ee3fa",
-      "name": "Section 7 — Verify and finish manual run",
+      "name": "Section 7 — Run the manual reconciliation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        2304
+      ],
+      "parameters": {
+        "content": "## Run the manual reconciliation\nBuilds the fixture, loads durable history, and runs the same deterministic matcher.",
+        "width": 2048,
+        "height": 432,
+        "color": 7
+      }
+    },
+    {
+      "id": "c3fe04ac-ea72-40a6-a745-1ed747bf91d1",
+      "name": "Section 8 — Write core runtime records",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2112,
+        2304
+      ],
+      "parameters": {
+        "content": "## Write core runtime records\nPersists fixture transactions, invoices, and safe allocations in the same durable schema.",
+        "width": 768,
+        "height": 944,
+        "color": 7
+      }
+    },
+    {
+      "id": "38d330a7-fe6c-41d6-a5b9-afe51749a9c4",
+      "name": "Section 9 — Write runtime review and finish",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2112,
+        3280
+      ],
+      "parameters": {
+        "content": "## Write runtime review and finish\nPersists fixture review cases, paid signals, and the summary row with the same ordering contract.",
+        "width": 768,
+        "height": 944,
+        "color": 7
+      }
+    },
+    {
+      "id": "920c2919-dd17-42a7-ac14-1243bd0c010a",
+      "name": "Section 10 — Read back runtime writes",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
         2944,
-        1920
+        3792
       ],
       "parameters": {
-        "content": "## Verify and finish manual run\nReads back all runtime rows, proves persistence, commits replay markers, and attempts the operator summary.",
-        "width": 2560,
-        "height": 384,
+        "content": "## Read back runtime writes\nReads all six fixture row sets back before replay markers or the summary email are released.",
+        "width": 1792,
+        "height": 432,
+        "color": 7
+      }
+    },
+    {
+      "id": "6a1d6e73-9a76-4c40-a102-ef4490af03da",
+      "name": "Section 11 — Verify and finish manual run",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4800,
+        3792
+      ],
+      "parameters": {
+        "content": "## Verify and finish manual run\nProves durable fixture output, commits replay markers, and sends the controlled operator summary.",
+        "width": 1024,
+        "height": 432,
         "color": 7
       }
     },
@@ -738,7 +802,7 @@
       "typeVersion": 2.1,
       "position": [
         64,
-        144
+        192
       ],
       "parameters": {
         "httpMethod": "POST",
@@ -754,7 +818,7 @@
       "typeVersion": 1,
       "position": [
         64,
-        2064
+        2496
       ],
       "parameters": {}
     },
@@ -765,7 +829,7 @@
       "typeVersion": 2,
       "position": [
         320,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -779,7 +843,7 @@
       "typeVersion": 2.3,
       "position": [
         576,
-        144
+        192
       ],
       "parameters": {
         "conditions": {
@@ -808,8 +872,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        832,
-        400
+        576,
+        448
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -822,8 +886,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        1088,
-        400
+        832,
+        448
       ],
       "parameters": {
         "respondWith": "json",
@@ -840,7 +904,7 @@
       "typeVersion": 2,
       "position": [
         832,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -854,7 +918,7 @@
       "typeVersion": 2,
       "position": [
         320,
-        2064
+        2496
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -867,8 +931,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2944,
-        144
+        2432,
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -882,7 +946,7 @@
       "typeVersion": 2,
       "position": [
         1600,
-        2064
+        2496
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -895,8 +959,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3520,
-        144
+        3008,
+        192
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -909,8 +973,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3520,
-        400
+        3008,
+        448
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -923,8 +987,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3520,
-        656
+        3008,
+        704
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -937,8 +1001,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3520,
-        912
+        3008,
+        1168
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -951,8 +1015,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3520,
-        1168
+        3008,
+        1424
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -965,8 +1029,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3520,
-        1424
+        3008,
+        1680
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -980,7 +1044,7 @@
       "typeVersion": 2,
       "position": [
         2176,
-        2064
+        2496
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -994,7 +1058,7 @@
       "typeVersion": 2,
       "position": [
         2176,
-        2320
+        2752
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1008,7 +1072,7 @@
       "typeVersion": 2,
       "position": [
         2176,
-        2576
+        3008
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1022,7 +1086,7 @@
       "typeVersion": 2,
       "position": [
         2176,
-        2832
+        3472
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1036,7 +1100,7 @@
       "typeVersion": 2,
       "position": [
         2176,
-        3088
+        3728
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1050,7 +1114,7 @@
       "typeVersion": 2,
       "position": [
         2176,
-        3344
+        3984
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -1063,8 +1127,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        3776,
-        144
+        3264,
+        192
       ],
       "parameters": {
         "resource": "row",
@@ -1280,8 +1344,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        3776,
-        400
+        3264,
+        448
       ],
       "parameters": {
         "resource": "row",
@@ -1456,8 +1520,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        3776,
-        656
+        3264,
+        704
       ],
       "parameters": {
         "resource": "row",
@@ -1592,8 +1656,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        3776,
-        912
+        3264,
+        1168
       ],
       "parameters": {
         "resource": "row",
@@ -1749,8 +1813,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        3776,
-        1168
+        3264,
+        1424
       ],
       "parameters": {
         "resource": "row",
@@ -1895,8 +1959,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        3776,
-        1424
+        3264,
+        1680
       ],
       "parameters": {
         "resource": "row",
@@ -2133,7 +2197,7 @@
       "typeVersion": 1.1,
       "position": [
         2432,
-        2064
+        2496
       ],
       "parameters": {
         "resource": "row",
@@ -2350,7 +2414,7 @@
       "typeVersion": 1.1,
       "position": [
         2432,
-        2320
+        2752
       ],
       "parameters": {
         "resource": "row",
@@ -2526,7 +2590,7 @@
       "typeVersion": 1.1,
       "position": [
         2432,
-        2576
+        3008
       ],
       "parameters": {
         "resource": "row",
@@ -2662,7 +2726,7 @@
       "typeVersion": 1.1,
       "position": [
         2432,
-        2832
+        3472
       ],
       "parameters": {
         "resource": "row",
@@ -2819,7 +2883,7 @@
       "typeVersion": 1.1,
       "position": [
         2432,
-        3088
+        3728
       ],
       "parameters": {
         "resource": "row",
@@ -2965,7 +3029,7 @@
       "typeVersion": 1.1,
       "position": [
         2432,
-        3344
+        3984
       ],
       "parameters": {
         "resource": "row",
@@ -3201,8 +3265,8 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        6400,
-        144
+        6208,
+        1680
       ],
       "parameters": {
         "resource": "message",
@@ -3226,8 +3290,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        6656,
-        144
+        6464,
+        1680
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -3240,8 +3304,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        6912,
-        144
+        6720,
+        1680
       ],
       "parameters": {
         "respondWith": "json",
@@ -3257,8 +3321,8 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        5056,
-        2064
+        5376,
+        3984
       ],
       "parameters": {
         "resource": "message",
@@ -3282,8 +3346,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1920,
-        144
+        1408,
+        192
       ],
       "parameters": {
         "resource": "row",
@@ -3305,8 +3369,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2176,
-        144
+        1664,
+        192
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -3319,8 +3383,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2432,
-        144
+        1920,
+        192
       ],
       "parameters": {
         "resource": "row",
@@ -3342,8 +3406,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2688,
-        144
+        2176,
+        192
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -3357,7 +3421,7 @@
       "typeVersion": 1.1,
       "position": [
         576,
-        2064
+        2496
       ],
       "parameters": {
         "resource": "row",
@@ -3380,7 +3444,7 @@
       "typeVersion": 2,
       "position": [
         832,
-        2064
+        2496
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -3394,7 +3458,7 @@
       "typeVersion": 1.1,
       "position": [
         1088,
-        2064
+        2496
       ],
       "parameters": {
         "resource": "row",
@@ -3417,7 +3481,7 @@
       "typeVersion": 2,
       "position": [
         1344,
-        2064
+        2496
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -3430,8 +3494,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        4352,
-        144
+        3840,
+        1680
       ],
       "parameters": {
         "resource": "row",
@@ -3463,8 +3527,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        4608,
-        144
+        4096,
+        1680
       ],
       "parameters": {
         "resource": "row",
@@ -3496,8 +3560,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        4864,
-        144
+        4352,
+        1680
       ],
       "parameters": {
         "resource": "row",
@@ -3529,8 +3593,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        5120,
-        144
+        4608,
+        1680
       ],
       "parameters": {
         "resource": "row",
@@ -3562,8 +3626,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        5376,
-        144
+        4864,
+        1680
       ],
       "parameters": {
         "resource": "row",
@@ -3595,8 +3659,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        5632,
-        144
+        5120,
+        1680
       ],
       "parameters": {
         "resource": "row",
@@ -3628,8 +3692,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5888,
-        144
+        5696,
+        1680
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -3643,8 +3707,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        6144,
-        144
+        5952,
+        1680
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -3659,7 +3723,7 @@
       "typeVersion": 1.1,
       "position": [
         3008,
-        2064
+        3984
       ],
       "parameters": {
         "resource": "row",
@@ -3692,7 +3756,7 @@
       "typeVersion": 1.1,
       "position": [
         3264,
-        2064
+        3984
       ],
       "parameters": {
         "resource": "row",
@@ -3725,7 +3789,7 @@
       "typeVersion": 1.1,
       "position": [
         3520,
-        2064
+        3984
       ],
       "parameters": {
         "resource": "row",
@@ -3758,7 +3822,7 @@
       "typeVersion": 1.1,
       "position": [
         3776,
-        2064
+        3984
       ],
       "parameters": {
         "resource": "row",
@@ -3791,7 +3855,7 @@
       "typeVersion": 1.1,
       "position": [
         4032,
-        2064
+        3984
       ],
       "parameters": {
         "resource": "row",
@@ -3824,7 +3888,7 @@
       "typeVersion": 1.1,
       "position": [
         4288,
-        2064
+        3984
       ],
       "parameters": {
         "resource": "row",
@@ -3856,8 +3920,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4544,
-        2064
+        4864,
+        3984
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -3871,8 +3935,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4800,
-        2064
+        5120,
+        3984
       ],
       "parameters": {
         "mode": "runOnceForEachItem",

@@ -621,7 +621,7 @@
       "parameters": {
         "content": "## Protect and validate intake\nAuthenticates the webhook, normalizes the contract, and returns explicit unauthorized or invalid responses.",
         "width": 1792,
-        "height": 640,
+        "height": 688,
         "color": 7
       }
     },
@@ -637,7 +637,7 @@
       "parameters": {
         "content": "## Claim or join the saga\nReads the scoped parent state and inserts a claim only when no matching saga exists.",
         "width": 1536,
-        "height": 640,
+        "height": 688,
         "color": 7
       }
     },
@@ -653,7 +653,7 @@
       "parameters": {
         "content": "## Write missing step intents\nCollapses replays and persists only the onboarding step intents that do not already exist.",
         "width": 1536,
-        "height": 640,
+        "height": 688,
         "color": 7
       }
     },
@@ -669,7 +669,7 @@
       "parameters": {
         "content": "## Collect child evidence\nReads the exact-scope Offer, Invoice, Booking, and Document result tables in sequence.",
         "width": 1280,
-        "height": 384,
+        "height": 432,
         "color": 7
       }
     },
@@ -685,7 +685,7 @@
       "parameters": {
         "content": "## Resolve and persist step state\nAggregates child evidence and writes only safe terminal, review, blocked, or unresolved step decisions.",
         "width": 1280,
-        "height": 640,
+        "height": 688,
         "color": 7
       }
     },
@@ -701,7 +701,7 @@
       "parameters": {
         "content": "## Repair parent and respond\nRecomputes the parent projection, writes only material divergence, and returns the saga receipt.",
         "width": 1792,
-        "height": 640,
+        "height": 688,
         "color": 7
       }
     },
@@ -717,7 +717,7 @@
       "parameters": {
         "content": "## Read the reconcile snapshot\nFail-stop reads parents, alert receipts, steps, and all four child tables before making decisions.",
         "width": 2560,
-        "height": 384,
+        "height": 432,
         "color": 7
       }
     },
@@ -733,7 +733,7 @@
       "parameters": {
         "content": "## Adopt evidence and repair parents\nPersists late or corrective step evidence, then rolls up and updates only affected parent scopes.",
         "width": 2048,
-        "height": 384,
+        "height": 432,
         "color": 7
       }
     },
@@ -749,7 +749,7 @@
       "parameters": {
         "content": "## Persist and send reconcile alerts\nWrites alert intent before Gmail and records a validated provider acknowledgement afterward.",
         "width": 1792,
-        "height": 384,
+        "height": 432,
         "color": 7
       }
     },
@@ -760,7 +760,7 @@
       "typeVersion": 2.1,
       "position": [
         64,
-        144
+        192
       ],
       "parameters": {
         "httpMethod": "POST",
@@ -776,7 +776,7 @@
       "typeVersion": 1.2,
       "position": [
         64,
-        976
+        1024
       ],
       "parameters": {
         "rule": {
@@ -796,7 +796,7 @@
       "typeVersion": 2,
       "position": [
         320,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -810,7 +810,7 @@
       "typeVersion": 2.3,
       "position": [
         576,
-        144
+        192
       ],
       "parameters": {
         "conditions": {
@@ -840,7 +840,7 @@
       "typeVersion": 2,
       "position": [
         832,
-        400
+        448
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -854,7 +854,7 @@
       "typeVersion": 1.1,
       "position": [
         1088,
-        400
+        448
       ],
       "parameters": {
         "respondWith": "json",
@@ -871,7 +871,7 @@
       "typeVersion": 2,
       "position": [
         832,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -885,7 +885,7 @@
       "typeVersion": 1.1,
       "position": [
         1920,
-        144
+        192
       ],
       "parameters": {
         "resource": "row",
@@ -909,7 +909,7 @@
       "typeVersion": 2,
       "position": [
         2176,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -923,7 +923,7 @@
       "typeVersion": 2.3,
       "position": [
         2432,
-        144
+        192
       ],
       "parameters": {
         "conditions": {
@@ -953,7 +953,7 @@
       "typeVersion": 2,
       "position": [
         2688,
-        400
+        448
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -967,7 +967,7 @@
       "typeVersion": 1.1,
       "position": [
         2944,
-        400
+        448
       ],
       "parameters": {
         "resource": "row",
@@ -1155,7 +1155,7 @@
       "typeVersion": 1.1,
       "position": [
         3520,
-        144
+        192
       ],
       "parameters": {
         "resource": "row",
@@ -1179,7 +1179,7 @@
       "typeVersion": 2,
       "position": [
         3776,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1193,7 +1193,7 @@
       "typeVersion": 2.3,
       "position": [
         4032,
-        144
+        192
       ],
       "parameters": {
         "conditions": {
@@ -1223,7 +1223,7 @@
       "typeVersion": 2,
       "position": [
         4288,
-        400
+        448
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1237,7 +1237,7 @@
       "typeVersion": 1.1,
       "position": [
         4544,
-        400
+        448
       ],
       "parameters": {
         "resource": "row",
@@ -1475,7 +1475,7 @@
       "typeVersion": 2,
       "position": [
         6464,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1489,7 +1489,7 @@
       "typeVersion": 2.3,
       "position": [
         6720,
-        144
+        192
       ],
       "parameters": {
         "conditions": {
@@ -1519,7 +1519,7 @@
       "typeVersion": 2,
       "position": [
         6976,
-        400
+        448
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1533,7 +1533,7 @@
       "typeVersion": 1.1,
       "position": [
         7232,
-        400
+        448
       ],
       "parameters": {
         "resource": "row",
@@ -1791,7 +1791,7 @@
       "typeVersion": 2.3,
       "position": [
         8064,
-        144
+        192
       ],
       "parameters": {
         "conditions": {
@@ -1821,7 +1821,7 @@
       "typeVersion": 2,
       "position": [
         8320,
-        400
+        448
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -1835,7 +1835,7 @@
       "typeVersion": 1.1,
       "position": [
         8576,
-        400
+        448
       ],
       "parameters": {
         "resource": "row",
@@ -2043,7 +2043,7 @@
       "typeVersion": 2,
       "position": [
         8832,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -2057,7 +2057,7 @@
       "typeVersion": 1.1,
       "position": [
         9088,
-        144
+        192
       ],
       "parameters": {
         "respondWith": "json",
@@ -2074,7 +2074,7 @@
       "typeVersion": 1.1,
       "position": [
         320,
-        976
+        1024
       ],
       "parameters": {
         "resource": "row",
@@ -2098,7 +2098,7 @@
       "typeVersion": 2,
       "position": [
         2112,
-        976
+        1024
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -2112,7 +2112,7 @@
       "typeVersion": 2.3,
       "position": [
         2688,
-        1616
+        1664
       ],
       "parameters": {
         "conditions": {
@@ -2142,7 +2142,7 @@
       "typeVersion": 2,
       "position": [
         2944,
-        1616
+        1664
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -2156,7 +2156,7 @@
       "typeVersion": 1.1,
       "position": [
         3200,
-        1616
+        1664
       ],
       "parameters": {
         "resource": "row",
@@ -2314,7 +2314,7 @@
       "typeVersion": 2.1,
       "position": [
         3456,
-        1616
+        1664
       ],
       "parameters": {
         "resource": "message",
@@ -2339,7 +2339,7 @@
       "typeVersion": 1.1,
       "position": [
         5120,
-        144
+        192
       ],
       "parameters": {
         "resource": "row",
@@ -2373,7 +2373,7 @@
       "typeVersion": 1.1,
       "position": [
         5376,
-        144
+        192
       ],
       "parameters": {
         "resource": "row",
@@ -2407,7 +2407,7 @@
       "typeVersion": 1.1,
       "position": [
         5632,
-        144
+        192
       ],
       "parameters": {
         "resource": "row",
@@ -2441,7 +2441,7 @@
       "typeVersion": 1.1,
       "position": [
         5888,
-        144
+        192
       ],
       "parameters": {
         "resource": "row",
@@ -2475,7 +2475,7 @@
       "typeVersion": 1.1,
       "position": [
         576,
-        976
+        1024
       ],
       "parameters": {
         "resource": "row",
@@ -2499,7 +2499,7 @@
       "typeVersion": 2,
       "position": [
         3712,
-        1616
+        1664
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -2513,7 +2513,7 @@
       "typeVersion": 1.1,
       "position": [
         3968,
-        1616
+        1664
       ],
       "parameters": {
         "resource": "row",
@@ -2673,7 +2673,7 @@
       "typeVersion": 2,
       "position": [
         7808,
-        144
+        192
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -2687,7 +2687,7 @@
       "typeVersion": 1.1,
       "position": [
         832,
-        976
+        1024
       ],
       "parameters": {
         "resource": "row",
@@ -2711,7 +2711,7 @@
       "typeVersion": 1.1,
       "position": [
         1088,
-        976
+        1024
       ],
       "parameters": {
         "resource": "row",
@@ -2735,7 +2735,7 @@
       "typeVersion": 1.1,
       "position": [
         1344,
-        976
+        1024
       ],
       "parameters": {
         "resource": "row",
@@ -2759,7 +2759,7 @@
       "typeVersion": 1.1,
       "position": [
         1600,
-        976
+        1024
       ],
       "parameters": {
         "resource": "row",
@@ -2783,7 +2783,7 @@
       "typeVersion": 1.1,
       "position": [
         1856,
-        976
+        1024
       ],
       "parameters": {
         "resource": "row",
@@ -2807,7 +2807,7 @@
       "typeVersion": 2.3,
       "position": [
         2688,
-        976
+        1024
       ],
       "parameters": {
         "conditions": {
@@ -2837,7 +2837,7 @@
       "typeVersion": 2,
       "position": [
         2944,
-        976
+        1024
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -2851,7 +2851,7 @@
       "typeVersion": 1.1,
       "position": [
         3200,
-        976
+        1024
       ],
       "parameters": {
         "resource": "row",
@@ -3109,7 +3109,7 @@
       "typeVersion": 2,
       "position": [
         3456,
-        976
+        1024
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -3123,7 +3123,7 @@
       "typeVersion": 2.3,
       "position": [
         3712,
-        976
+        1024
       ],
       "parameters": {
         "conditions": {
@@ -3153,7 +3153,7 @@
       "typeVersion": 2,
       "position": [
         3968,
-        976
+        1024
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -3167,7 +3167,7 @@
       "typeVersion": 1.1,
       "position": [
         4224,
-        976
+        1024
       ],
       "parameters": {
         "resource": "row",
@@ -3375,7 +3375,7 @@
       "typeVersion": 2.3,
       "position": [
         1088,
-        144
+        192
       ],
       "parameters": {
         "conditions": {
@@ -3405,7 +3405,7 @@
       "typeVersion": 1.1,
       "position": [
         1344,
-        400
+        448
       ],
       "parameters": {
         "respondWith": "json",

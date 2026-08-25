@@ -17,7 +17,18 @@
         ]
       ]
     },
-    "Durable Submission Topology Sweep": {
+    "KSeF Manual Sweep": {
+      "main": [
+        [
+          {
+            "node": "Route Manual Sweep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Manual Sweep": {
       "main": [
         [
           {
@@ -25,14 +36,17 @@
             "type": "main",
             "index": 0
           }
-        ]
-      ]
-    },
-    "Durable Recovery Sweep": {
-      "main": [
+        ],
         [
           {
             "node": "Get Durable Recovery Lifecycle Rows",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Intake Persist Fixtures",
             "type": "main",
             "index": 0
           }
@@ -312,17 +326,6 @@
         ]
       ]
     },
-    "Intake Persist Fixture Sweep": {
-      "main": [
-        [
-          {
-            "node": "Build Intake Persist Fixtures",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Intake Response Required?": {
       "main": [
         [
@@ -473,25 +476,29 @@
     },
     {
       "id": "a681ce16-11de-40de-b08b-e51b952ec0c5",
-      "name": "Durable Submission Topology Sweep",
+      "name": "KSeF Manual Sweep",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        -500,
+        -780,
         980
       ],
       "parameters": {}
     },
     {
       "id": "9310d13e-ea49-48a7-8afc-37a6fd99ac11",
-      "name": "Durable Recovery Sweep",
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
+      "name": "Route Manual Sweep",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
       "position": [
         -500,
-        1440
+        980
       ],
-      "parameters": {}
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 3,
+        "output": "={{ (($vars.KSEF_MANUAL_SWEEP_MODE ?? '').toString().trim().toLowerCase() === 'recovery') ? 1 : (($vars.KSEF_MANUAL_SWEEP_MODE ?? '').toString().trim().toLowerCase() === 'intake_fixture') ? 2 : 0 }}"
+      }
     },
     {
       "id": "5e2ed207-e182-45ee-911c-d89823b8f8bb",
@@ -925,8 +932,7 @@
             }
           ]
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
       "id": "c4035cf2-5a4e-462e-a7c5-992b4c539079",
@@ -2682,17 +2688,6 @@
       }
     },
     {
-      "id": "65f70b5b-aa59-4ad1-8717-621bb1cfb23a",
-      "name": "Intake Persist Fixture Sweep",
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
-      "position": [
-        -500,
-        360
-      ],
-      "parameters": {}
-    },
-    {
       "id": "33385104-2ab0-42e9-8588-64b5e5ae8414",
       "name": "Intake Response Required?",
       "type": "n8n-nodes-base.if",
@@ -3667,7 +3662,6 @@
           "senderName": "Ops Notifications"
         }
       },
-      "onError": "continueRegularOutput",
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 1000
