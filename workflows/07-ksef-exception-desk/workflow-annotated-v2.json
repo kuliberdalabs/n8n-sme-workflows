@@ -459,13 +459,172 @@
   },
   "nodes": [
     {
+      "id": "3a42341b-3ca5-48da-a650-cf357b80fa51",
+      "name": "Overview — Handle KSeF exceptions without blind resubmission",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1024,
+        0
+      ],
+      "parameters": {
+        "content": "## Handle KSeF exceptions without blind resubmission\n\n### How it works\n1. Authenticates invoice intake and persists each valid or rejected request as an immutable JSON snapshot with its SHA-256 hash; intake never reaches submission directly.\n2. Uses one manual trigger and a three-output selector to run exactly one submission, recovery, or intake-fixture branch per manual execution.\n3. Rereads lifecycle state for submission, enforces legal and operational preconditions, writes durable intent first, and then calls the bundled mock adapter.\n4. Appends every transition to lifecycle and evidence, writes run summaries, and adds exception rows only for failures.\n5. Runs recovery from the selector or every 30 minutes and queries status by client submission id before considering any retry.\n6. Adopts accepted references and UPOs, permits one retry only after authoritative NOT_FOUND, holds unknown or error responses, and alerts on aged unresolved work.\n\n### Setup steps\n- [ ] Create and re-select the four documented KSeF Data Tables.\n- [ ] Set KSEF_INTAKE_TOKEN for the webhook path.\n- [ ] Optionally set KSEF_MANUAL_SWEEP_MODE to submission, recovery, or intake_fixture; missing or unknown values default to submission.\n- [ ] Connect Gmail and replace ops@example.com in both summary and recovery alert nodes.\n- [ ] Review approval, whitelist, breaker, and auth-adapter policies.\n- [ ] Exercise the built-in synthetic submission and recovery scenarios while inactive.\n\n### Customization\nReplace the mock submit and status adapters with your KSeF integration, preserving immutable snapshots, query-before-retry, intent-before-side-effect, and single-run concurrency controls.",
+        "width": 896,
+        "height": 896
+      }
+    },
+    {
+      "id": "3b72755a-a4e4-4e4c-a1cf-ddebecd201ca",
+      "name": "Section 1 — Protect and select entrances",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "content": "## Protect and select entrances\nAuthenticates webhook intake and routes each manual execution into exactly one controlled sweep branch.",
+        "width": 1792,
+        "height": 944,
+        "color": 7
+      }
+    },
+    {
+      "id": "afb7c785-057c-4993-aba4-1ce4877b0b59",
+      "name": "Section 2 — Plan guarded intake persistence",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1856,
+        0
+      ],
+      "parameters": {
+        "content": "## Plan guarded intake persistence\nReads lifecycle state and plans immutable, idempotent intake rows without submitting an invoice.",
+        "width": 768,
+        "height": 432,
+        "color": 7
+      }
+    },
+    {
+      "id": "f8fdffd4-29e5-40bc-abdc-5d1a52c57fc2",
+      "name": "Section 3 — Persist the intake audit trail",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2688,
+        0
+      ],
+      "parameters": {
+        "content": "## Persist the intake audit trail\nFans planned lifecycle, evidence, exception, and summary rows into four durable stores.",
+        "width": 768,
+        "height": 1200,
+        "color": 7
+      }
+    },
+    {
+      "id": "77329c4e-6336-4a78-a376-bb73b3c3b1fe",
+      "name": "Section 4 — Acknowledge controlled intake",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3520,
+        1280
+      ],
+      "parameters": {
+        "content": "## Acknowledge controlled intake\nOptionally sends the controlled summary and returns the webhook persistence receipt.",
+        "width": 1280,
+        "height": 432,
+        "color": 7
+      }
+    },
+    {
+      "id": "da40098d-f94e-4cf5-aa71-db5c94f72493",
+      "name": "Section 5 — Gate durable submission",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1600
+      ],
+      "parameters": {
+        "content": "## Gate durable submission\nRereads persisted lifecycle rows, writes submit intent first, and only then calls the bundled mock adapter.",
+        "width": 1536,
+        "height": 688,
+        "color": 7
+      }
+    },
+    {
+      "id": "04fc932c-8283-4f44-a545-d9233347b72b",
+      "name": "Section 6 — Persist submission outcomes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        1600
+      ],
+      "parameters": {
+        "content": "## Persist submission outcomes\nStores lifecycle, evidence, and summary rows for outcomes, adding exception rows only for failures.",
+        "width": 768,
+        "height": 1200,
+        "color": 7
+      }
+    },
+    {
+      "id": "05a5d43d-c529-4ec5-a6d6-5080688cdf47",
+      "name": "Section 7 — Enter query-first recovery",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        2944
+      ],
+      "parameters": {
+        "content": "## Enter query-first recovery\nConverges manual and scheduled triggers on lifecycle state and a status-before-retry decision.",
+        "width": 1280,
+        "height": 688,
+        "color": 7
+      }
+    },
+    {
+      "id": "1368cda2-4ad4-4131-a3a4-584b931c9624",
+      "name": "Section 8 — Persist recovery decisions",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        2944
+      ],
+      "parameters": {
+        "content": "## Persist recovery decisions\nStores adopted UPOs, safe retries, unresolved holds, evidence, exceptions, and the sweep summary.",
+        "width": 768,
+        "height": 1200,
+        "color": 7
+      }
+    },
+    {
+      "id": "84c759d3-207a-4f4e-a033-8b10b1f21251",
+      "name": "Section 9 — Alert on aged recovery",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2176,
+        4288
+      ],
+      "parameters": {
+        "content": "## Alert on aged recovery\nGates aged unresolved work, sends Gmail, and records the throttle only after the send step succeeds.",
+        "width": 1024,
+        "height": 432,
+        "color": 7
+      }
+    },
+    {
       "id": "81d7a8f6-68d4-4a30-a5a3-a98e6945a6fb",
       "name": "KSeF Intake Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -500,
-        -80
+        64,
+        192
       ],
       "parameters": {
         "httpMethod": "POST",
@@ -480,8 +639,8 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        -780,
-        980
+        64,
+        704
       ],
       "parameters": {}
     },
@@ -491,8 +650,8 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        -500,
-        980
+        320,
+        704
       ],
       "parameters": {
         "mode": "expression",
@@ -506,8 +665,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -240,
-        -80
+        320,
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -520,8 +679,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        0,
-        -80
+        576,
+        192
       ],
       "parameters": {
         "conditions": {
@@ -550,8 +709,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        240,
-        120
+        832,
+        448
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -564,8 +723,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        500,
-        120
+        1088,
+        448
       ],
       "parameters": {
         "respondWith": "json",
@@ -581,8 +740,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        240,
-        -180
+        832,
+        192
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -595,8 +754,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        -220,
-        980
+        576,
+        1792
       ],
       "parameters": {
         "resource": "row",
@@ -619,8 +778,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        80,
-        980
+        832,
+        1792
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -633,8 +792,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        380,
-        980
+        1088,
+        1792
       ],
       "parameters": {
         "resource": "row",
@@ -940,8 +1099,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        680,
-        980
+        1088,
+        2048
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -954,8 +1113,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        -220,
-        1440
+        64,
+        3136
       ],
       "parameters": {
         "resource": "row",
@@ -978,8 +1137,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        80,
-        1440
+        320,
+        3136
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -992,8 +1151,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        980,
-        800
+        1664,
+        1792
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1006,8 +1165,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        980,
-        920
+        1664,
+        2048
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1020,8 +1179,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        980,
-        1040
+        1664,
+        2304
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1034,8 +1193,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        980,
-        1160
+        1664,
+        2560
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -1048,8 +1207,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        380,
-        1260
+        1408,
+        3136
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1062,8 +1221,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        380,
-        1380
+        1408,
+        3392
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1076,8 +1235,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        380,
-        1500
+        1408,
+        3648
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -1090,8 +1249,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        380,
-        1620
+        1408,
+        3904
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -1104,8 +1263,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1260,
-        800
+        1920,
+        1792
       ],
       "parameters": {
         "resource": "row",
@@ -1412,8 +1571,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1260,
-        920
+        1920,
+        2048
       ],
       "parameters": {
         "resource": "row",
@@ -1550,8 +1709,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1260,
-        1040
+        1920,
+        2304
       ],
       "parameters": {
         "resource": "row",
@@ -1688,8 +1847,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1260,
-        1160
+        1920,
+        2560
       ],
       "parameters": {
         "resource": "row",
@@ -1866,8 +2025,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        660,
-        1260
+        1664,
+        3136
       ],
       "parameters": {
         "resource": "row",
@@ -2174,8 +2333,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        660,
-        1380
+        1664,
+        3392
       ],
       "parameters": {
         "resource": "row",
@@ -2312,8 +2471,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        660,
-        1500
+        1664,
+        3648
       ],
       "parameters": {
         "resource": "row",
@@ -2450,8 +2609,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        660,
-        1620
+        1664,
+        3904
       ],
       "parameters": {
         "resource": "row",
@@ -2628,8 +2787,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1640,
-        0
+        4096,
+        1472
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -2642,8 +2801,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        1880,
-        0
+        4352,
+        1472
       ],
       "parameters": {
         "respondWith": "json",
@@ -2659,8 +2818,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -220,
-        360
+        1344,
+        704
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -2673,8 +2832,8 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
-        -500,
-        1640
+        64,
+        3392
       ],
       "parameters": {
         "rule": {
@@ -2693,8 +2852,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1640,
-        260
+        3584,
+        1472
       ],
       "parameters": {
         "conditions": {
@@ -2723,8 +2882,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        660,
-        1760
+        2240,
+        4480
       ],
       "parameters": {
         "conditions": {
@@ -2753,8 +2912,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1100,
-        20
+        2752,
+        448
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -2767,8 +2926,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1100,
-        140
+        2752,
+        704
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -2781,8 +2940,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1100,
-        -100
+        2752,
+        192
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -2795,8 +2954,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1100,
-        260
+        2752,
+        960
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -2809,8 +2968,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        520,
-        80
+        1920,
+        192
       ],
       "parameters": {
         "resource": "row",
@@ -2833,8 +2992,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1380,
-        20
+        3008,
+        448
       ],
       "parameters": {
         "resource": "row",
@@ -2971,8 +3130,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1380,
-        140
+        3008,
+        704
       ],
       "parameters": {
         "resource": "row",
@@ -3109,8 +3268,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1380,
-        -100
+        3008,
+        192
       ],
       "parameters": {
         "resource": "row",
@@ -3417,8 +3576,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1380,
-        260
+        3008,
+        960
       ],
       "parameters": {
         "resource": "row",
@@ -3595,8 +3754,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1220,
-        1760
+        2752,
+        4480
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -3609,8 +3768,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        820,
-        80
+        2176,
+        192
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -3623,8 +3782,8 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        1900,
-        260
+        3840,
+        1472
       ],
       "parameters": {
         "resource": "message",
@@ -3648,8 +3807,8 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        940,
-        1760
+        2496,
+        4480
       ],
       "parameters": {
         "resource": "message",
