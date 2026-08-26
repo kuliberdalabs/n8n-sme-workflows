@@ -1,6 +1,6 @@
 # n8n-sme-workflows
 
-[n8n](https://n8n.io) workflow templates for SME back-office automation, engineered well past demo grade: lead intake, invoicing and dunning, document intake, support triage, ops reporting, bank reconciliation, Polish KSeF e-invoicing, and client onboarding.
+[n8n](https://n8n.io) workflow templates for SME back-office automation, engineered well past demo grade: lead intake, invoicing and dunning, document intake, support triage, ops reporting, bank reconciliation, Polish KSeF e-invoicing, client onboarding, and replay-safe kickoff booking.
 
 Agent cold start: read [`AGENTS.md`](AGENTS.md), select its one primary task route, and follow that route's ordered local sources and gates.
 
@@ -18,6 +18,7 @@ Each workflow is an import-ready JSON built to a consistent engineering standard
 | [06](workflows/06-bank-reconciliation/) | Bank ↔ Invoice Reconciliation | Deterministic (AI-free) matching of bank payments to invoices, review queue for ambiguity |
 | [07](workflows/07-ksef-exception-desk/) | KSeF Exception Desk | Exception handling for Poland's mandatory e-invoicing system: query-before-retry, durable state |
 | [08](workflows/08-client-onboarding-saga/) | Client Onboarding Saga | Saga-pattern orchestration of multi-step onboarding with durable state and duplicate-send protection |
+| [09](workflows/09-booking-lifecycle/) | Booking Lifecycle | Replay-safe client kickoff booking with durable intent, Google Calendar provider evidence, and Gmail drafts |
 
 ## Engineering approach
 

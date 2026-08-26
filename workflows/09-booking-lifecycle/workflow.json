@@ -1,0 +1,2920 @@
+{
+  "name": "Booking Lifecycle",
+  "nodes": [
+    {
+      "id": "09000000-0000-4000-8000-000000000001",
+      "name": "Booking Intake Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "booking-lifecycle",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "09000000-0000-4000-8000-000000000101"
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000002",
+      "name": "Validate Intake Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const crypto = require('crypto');\nconst root = $input.item.json || {};\nconst headers = root.headers && typeof root.headers === 'object' ? root.headers : {};\nconst header = (name) => {\n  const key = Object.keys(headers).find((candidate) => candidate.toLowerCase() === name.toLowerCase());\n  return key ? headers[key] : '';\n};\nconst rawAuthorization = typeof header('authorization') === 'string' ? header('authorization') : '';\nconst bearer = rawAuthorization.startsWith('Bearer ') ? rawAuthorization.slice(7) : '';\nconst rawHeaderToken = header('x-booking-token');\nconst provided = typeof rawHeaderToken === 'string' && rawHeaderToken !== '' ? rawHeaderToken : bearer;\nconst expected = typeof $vars.BOOKING_INTAKE_TOKEN === 'string' ? $vars.BOOKING_INTAKE_TOKEN : '';\nlet auth_ok = false;\nlet auth_reason = 'invalid_token';\nif (!expected) auth_reason = 'missing_server_token';\nelse if (!provided) auth_reason = 'missing_token';\nelse {\n  const left = crypto.createHash('sha256').update(provided).digest('hex');\n  const right = crypto.createHash('sha256').update(expected).digest('hex');\n  auth_ok = provided.length === expected.length && left === right;\n  auth_reason = auth_ok ? 'authorized' : 'invalid_token';\n}\nreturn { json: { ...root, auth_ok, auth_reason } };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000003",
+      "name": "Intake Authorized?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.auth_ok }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000004",
+      "name": "Build Unauthorized Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "return { json: { http_status: 401, response_body_json: JSON.stringify({ ok: false, outcome: 'unauthorized' }) } };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000005",
+      "name": "Respond Unauthorized",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.parse($json.response_body_json) }}",
+        "options": {
+          "responseCode": 401
+        }
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000006",
+      "name": "Normalize Booking Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const crypto = require('crypto');\nconst root = $input.item.json || {};\nconst body = root.body && typeof root.body === 'object' && !Array.isArray(root.body) ? root.body : root;\nconst stable = (value) => JSON.stringify(value, (key, item) => item && typeof item === 'object' && !Array.isArray(item)\n  ? Object.keys(item).sort().reduce((out, name) => { out[name] = item[name]; return out; }, {})\n  : item);\nconst hash = (value) => crypto.createHash('sha256').update(String(value)).digest('hex');\nconst required = ['booking_uid','onboarding_id','smoke_tag','verified_email','slot_start','slot_end','slot_tz'];\nconst errors = [];\nconst keys = Object.keys(body);\nfor (const key of required) if (!Object.prototype.hasOwnProperty.call(body, key)) errors.push('missing_' + key);\nfor (const key of keys) if (!required.includes(key)) errors.push('unknown_field_' + key);\nconst readRaw = (key, max) => {\n  const value = body[key];\n  if (typeof value !== 'string' || value.length === 0 || value.length > max) { errors.push('bad_' + key); return ''; }\n  if (value !== value.trim()) errors.push('bad_' + key);\n  return value;\n};\nconst booking_uid = readRaw('booking_uid', 512);\nconst onboarding_id = readRaw('onboarding_id', 128);\nconst smoke_tag = readRaw('smoke_tag', 80);\nconst verified_email = readRaw('verified_email', 320);\nconst slot_start = readRaw('slot_start', 64);\nconst slot_end = readRaw('slot_end', 64);\nconst slot_tz = readRaw('slot_tz', 100);\nif (booking_uid && !/^[A-Za-z0-9][A-Za-z0-9._:+-]{0,511}$/.test(booking_uid)) errors.push('bad_booking_uid_scope');\nif (onboarding_id && !/^[a-f0-9]{64}$/.test(onboarding_id)) errors.push('bad_onboarding_id_scope');\nif (smoke_tag && !/^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/.test(smoke_tag)) errors.push('bad_smoke_tag_scope');\nif (verified_email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/.test(verified_email)) errors.push('bad_verified_email');\nconst explicitOffsetIso = /^(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})(?:\\.(\\d{1,9}))?(Z|([+-])(\\d{2}):(\\d{2}))$/;\nconst parseSlot = (value, field) => {\n  const match = explicitOffsetIso.exec(value);\n  if (!match) { errors.push('bad_' + field + '_explicit_offset_iso'); return null; }\n  const [year, month, day, hour, minute, second] = match.slice(1, 7).map(Number);\n  const milliseconds = Number((match[7] || '').padEnd(3, '0').slice(0, 3));\n  const civil = new Date(0);\n  civil.setUTCFullYear(year, month - 1, day);\n  civil.setUTCHours(hour, minute, second, milliseconds);\n  const civilValid = civil.getUTCFullYear() === year && civil.getUTCMonth() === month - 1\n    && civil.getUTCDate() === day && civil.getUTCHours() === hour\n    && civil.getUTCMinutes() === minute && civil.getUTCSeconds() === second;\n  if (!civilValid) { errors.push('bad_' + field + '_civil_date'); return null; }\n  const offsetHour = match[8] === 'Z' ? 0 : Number(match[10]);\n  const offsetMinute = match[8] === 'Z' ? 0 : Number(match[11]);\n  if (offsetHour > 23 || offsetMinute > 59) { errors.push('bad_' + field + '_explicit_offset_iso'); return null; }\n  const offsetSign = match[8] === 'Z' || match[9] === '+' ? 1 : -1;\n  const offsetMinutes = offsetSign * (offsetHour * 60 + offsetMinute);\n  const instantMs = civil.getTime() - offsetMinutes * 60_000;\n  return { instantMs, year, month, day, hour, minute, second };\n};\nconst parsedStart = parseSlot(slot_start, 'slot_start');\nconst parsedEnd = parseSlot(slot_end, 'slot_end');\nconst startMs = parsedStart ? parsedStart.instantMs : NaN;\nconst endMs = parsedEnd ? parsedEnd.instantMs : NaN;\nif (Number.isFinite(startMs) && Number.isFinite(endMs) && startMs >= endMs) errors.push('slot_start_must_precede_end');\nlet zoneFormatter = null;\nif (slot_tz) {\n  try {\n    zoneFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: slot_tz, year: 'numeric', month: '2-digit', day: '2-digit',\n      hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });\n  } catch (error) { errors.push('bad_slot_tz_iana'); }\n}\nconst zoneMatches = (parsed) => {\n  const parts = Object.fromEntries(zoneFormatter.formatToParts(new Date(parsed.instantMs))\n    .filter((part) => part.type !== 'literal').map((part) => [part.type, Number(part.value)]));\n  return parts.year === parsed.year && parts.month === parsed.month && parts.day === parsed.day\n    && parts.hour === parsed.hour && parts.minute === parsed.minute && parts.second === parsed.second;\n};\nif (zoneFormatter && parsedStart && !zoneMatches(parsedStart)) errors.push('slot_start_offset_mismatch_slot_tz');\nif (zoneFormatter && parsedEnd && !zoneMatches(parsedEnd)) errors.push('slot_end_offset_mismatch_slot_tz');\nif (booking_uid && onboarding_id && slot_start && booking_uid !== onboarding_id + ':kickoff:' + slot_start) {\n  errors.push('booking_uid_must_match_workflow08_derivation');\n}\nconst request = { booking_uid, onboarding_id, smoke_tag, verified_email, slot_start, slot_end, slot_tz };\nconst request_bytes = stable(request);\nconst request_hash = hash(request_bytes);\nconst scope_key = hash(['booking.parent-scope.v1', onboarding_id, smoke_tag].join('\\n'));\nconst intent_key = hash(['booking.intent.v1', scope_key, booking_uid, request_hash].join('\\n'));\nconst provider_event_id = 'bkg' + hash(['booking.google-calendar.event.v1', scope_key, booking_uid, request_hash].join('\\n')).slice(0, 48);\nreturn { json: {\n  ...request,\n  valid_input: errors.length === 0,\n  errors,\n  request_bytes,\n  request_hash,\n  scope_key,\n  intent_key,\n  provider_event_id,\n  slot_start_utc: Number.isFinite(startMs) ? new Date(startMs).toISOString() : '',\n  slot_end_utc: Number.isFinite(endMs) ? new Date(endMs).toISOString() : '',\n  last_execution_id: $execution.id,\n} };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000007",
+      "name": "Booking Request Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1680,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.valid_input }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000008",
+      "name": "Build Invalid Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const n = $('Normalize Booking Request').item.json;\nreturn { json: { http_status: 400, response_body_json: JSON.stringify({ ok: false, outcome: 'malformed', errors: n.errors }) } };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000009",
+      "name": "Respond Booking Outcome",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2160,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.parse($json.response_body_json) }}",
+        "options": {
+          "responseCode": "={{ $json.http_status }}"
+        }
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000010",
+      "name": "Find Existing Booking Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2400,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_BOOKINGS_TABLE_ID",
+          "cachedResultName": "Bookings"
+        },
+        "returnAll": true,
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "onboarding_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Normalize Booking Request').item.json.onboarding_id }}"
+            },
+            {
+              "keyName": "smoke_tag",
+              "condition": "eq",
+              "keyValue": "={{ $('Normalize Booking Request').item.json.smoke_tag }}"
+            }
+          ]
+        }
+      },
+      "onError": "stopWorkflow",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000011",
+      "name": "Resolve Booking State",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const normalized = $('Normalize Booking Request').item.json;\nconst rows = $input.all().map((item) => item.json || {}).filter((row) => Object.keys(row).length);\nconst sameInstant = (left, right) => Number.isFinite(Date.parse(left)) && Date.parse(left) === Date.parse(right);\nconst parentScope = rows.filter((row) => row.onboarding_id === normalized.onboarding_id\n  && row.smoke_tag === normalized.smoke_tag);\nconst exactRequest = parentScope.filter((row) => row.booking_uid === normalized.booking_uid\n  && row.request_hash === normalized.request_hash);\nconst confirmedEvidence = (row) => {\n  if (String(row.status || '').toLowerCase() !== 'confirmed'\n    || row.provider_event_id !== normalized.provider_event_id\n    || typeof row.provider_event_status !== 'string' || row.provider_event_status.length === 0\n    || row.provider_event_status.toLowerCase() === 'cancelled'\n    || !sameInstant(row.slot_start_utc, normalized.slot_start_utc)\n    || !sameInstant(row.slot_end_utc, normalized.slot_end_utc)\n    || !sameInstant(row.provider_event_start_utc, normalized.slot_start_utc)\n    || !sameInstant(row.provider_event_end_utc, normalized.slot_end_utc)\n    || typeof row.provider_evidence_json !== 'string' || row.provider_evidence_json.length === 0) return false;\n  let evidence;\n  try { evidence = JSON.parse(row.provider_evidence_json); } catch (error) { return false; }\n  if (!evidence || typeof evidence !== 'object' || Array.isArray(evidence)) return false;\n  const evidenceStatus = typeof evidence.status === 'string' ? evidence.status : '';\n  return ['google_calendar_get','reconcile_google_calendar_get'].includes(evidence.source)\n    && evidence.id === normalized.provider_event_id\n    && evidenceStatus.length > 0 && evidenceStatus.toLowerCase() !== 'cancelled'\n    && evidenceStatus.toLowerCase() === row.provider_event_status.toLowerCase()\n    && sameInstant(evidence.start, normalized.slot_start_utc)\n    && sameInstant(evidence.end, normalized.slot_end_utc);\n};\nlet booking_action = 'create';\nlet outcome_status = 'new';\nlet review_reason = '';\nlet replay_row = null;\nif (exactRequest.length) {\n  const confirmed = exactRequest.filter(confirmedEvidence);\n  if (confirmed.length === 1 && exactRequest.length === 1 && parentScope.length === 1) {\n    booking_action = 'replay'; outcome_status = 'confirmed'; replay_row = confirmed[0];\n  } else {\n    booking_action = 'replay'; outcome_status = 'needs_review';\n    review_reason = confirmed.length > 1 ? 'ambiguous_confirmed_rows_no_recreate' : 'unresolved_existing_request_no_recreate';\n    replay_row = exactRequest[0];\n  }\n} else if (parentScope.length) {\n  booking_action = 'changed'; outcome_status = 'reschedule_required';\n  review_reason = 'same_booking_scope_changed_request_requires_human_review';\n}\nconst now = new Date().toISOString();\nreturn { json: {\n  ...normalized,\n  booking_action,\n  outcome_status,\n  review_reason,\n  existing_row_count: parentScope.length,\n  replay_row_json: JSON.stringify(replay_row || {}),\n  status: booking_action === 'create' ? 'intent_written' : outcome_status,\n  provider_event_status: '',\n  provider_event_start_utc: '',\n  provider_event_end_utc: '',\n  provider_evidence_json: '',\n  created_at_utc: now,\n  updated_at_utc: now,\n} };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000012",
+      "name": "Booking Replay?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2880,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.booking_action === 'replay' }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000013",
+      "name": "Build Replay Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3120,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const row = $('Resolve Booking State').item.json;\nreturn { json: { http_status: 200, response_body_json: JSON.stringify({ ok: row.outcome_status === 'confirmed', outcome: 'replay',\n  status: row.outcome_status, booking_uid: row.booking_uid, onboarding_id: row.onboarding_id, smoke_tag: row.smoke_tag,\n  provider_event_id: JSON.parse(row.replay_row_json || '{}').provider_event_id || '', calendar_create_attempted: false,\n  review_reason: row.review_reason || '' }) } };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000014",
+      "name": "Booking Changed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3360,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.booking_action === 'changed' }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000015",
+      "name": "Build Reschedule Review Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const row = $('Resolve Booking State').item.json; const now = new Date().toISOString();\nreturn { json: { ...row, status: 'reschedule_required', provider_event_status: '', provider_event_start_utc: '',\n  provider_event_end_utc: '', provider_evidence_json: '', review_reason: row.review_reason, created_at_utc: now, updated_at_utc: now } };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000016",
+      "name": "Insert Reschedule Review Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        3840,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_BOOKINGS_TABLE_ID",
+          "cachedResultName": "Bookings"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "booking_uid": "={{ $json.booking_uid }}",
+            "onboarding_id": "={{ $json.onboarding_id }}",
+            "smoke_tag": "={{ $json.smoke_tag }}",
+            "request_bytes": "={{ $json.request_bytes }}",
+            "request_hash": "={{ $json.request_hash }}",
+            "scope_key": "={{ $json.scope_key }}",
+            "intent_key": "={{ $json.intent_key }}",
+            "status": "={{ $json.status }}",
+            "verified_email": "={{ $json.verified_email }}",
+            "slot_start_utc": "={{ $json.slot_start_utc }}",
+            "slot_end_utc": "={{ $json.slot_end_utc }}",
+            "slot_tz": "={{ $json.slot_tz }}",
+            "provider_event_id": "={{ $json.provider_event_id }}",
+            "provider_event_status": "={{ $json.provider_event_status }}",
+            "provider_event_start_utc": "={{ $json.provider_event_start_utc }}",
+            "provider_event_end_utc": "={{ $json.provider_event_end_utc }}",
+            "provider_evidence_json": "={{ $json.provider_evidence_json }}",
+            "review_reason": "={{ $json.review_reason }}",
+            "created_at_utc": "={{ $json.created_at_utc }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "booking_uid",
+              "displayName": "booking_uid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "onboarding_id",
+              "displayName": "onboarding_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "request_bytes",
+              "displayName": "request_bytes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "scope_key",
+              "displayName": "scope_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "intent_key",
+              "displayName": "intent_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "verified_email",
+              "displayName": "verified_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "slot_start_utc",
+              "displayName": "slot_start_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "slot_end_utc",
+              "displayName": "slot_end_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "slot_tz",
+              "displayName": "slot_tz",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "provider_event_id",
+              "displayName": "provider_event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "provider_event_status",
+              "displayName": "provider_event_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "provider_event_start_utc",
+              "displayName": "provider_event_start_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "provider_event_end_utc",
+              "displayName": "provider_event_end_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "provider_evidence_json",
+              "displayName": "provider_evidence_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_reason",
+              "displayName": "review_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at_utc",
+              "displayName": "created_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000017",
+      "name": "Verify Review Acknowledgement",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4080,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const source = $('Build Reschedule Review Row').item.json;\nconst rows = $input.all().map((item) => item.json || {}).filter((row) => Object.keys(row).length);\nconst matches = rows.filter((row) => row.booking_uid === source.booking_uid\n  && row.onboarding_id === source.onboarding_id && row.smoke_tag === source.smoke_tag\n  && row.request_hash === source.request_hash && row.status === 'reschedule_required');\nif (matches.length !== 1) throw new Error('reschedule_required_persistence_ack_failed');\nreturn { json: matches[0] };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000018",
+      "name": "Build Human Review Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4320,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const row = $('Build Reschedule Review Row').item.json;\nreturn { json: { http_status: 202, response_body_json: JSON.stringify({ ok: true, outcome: 'human_review', status: 'reschedule_required',\n  booking_uid: row.booking_uid, onboarding_id: row.onboarding_id, smoke_tag: row.smoke_tag,\n  review_reason: row.review_reason, calendar_mutated: false }) } };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000019",
+      "name": "Insert Booking Intent",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        4560,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_BOOKINGS_TABLE_ID",
+          "cachedResultName": "Bookings"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "booking_uid": "={{ $json.booking_uid }}",
+            "onboarding_id": "={{ $json.onboarding_id }}",
+            "smoke_tag": "={{ $json.smoke_tag }}",
+            "request_bytes": "={{ $json.request_bytes }}",
+            "request_hash": "={{ $json.request_hash }}",
+            "scope_key": "={{ $json.scope_key }}",
+            "intent_key": "={{ $json.intent_key }}",
+            "status": "={{ $json.status }}",
+            "verified_email": "={{ $json.verified_email }}",
+            "slot_start_utc": "={{ $json.slot_start_utc }}",
+            "slot_end_utc": "={{ $json.slot_end_utc }}",
+            "slot_tz": "={{ $json.slot_tz }}",
+            "provider_event_id": "={{ $json.provider_event_id }}",
+            "provider_event_status": "={{ $json.provider_event_status }}",
+            "provider_event_start_utc": "={{ $json.provider_event_start_utc }}",
+            "provider_event_end_utc": "={{ $json.provider_event_end_utc }}",
+            "provider_evidence_json": "={{ $json.provider_evidence_json }}",
+            "review_reason": "={{ $json.review_reason }}",
+            "created_at_utc": "={{ $json.created_at_utc }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "booking_uid",
+              "displayName": "booking_uid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "onboarding_id",
+              "displayName": "onboarding_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "request_bytes",
+              "displayName": "request_bytes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "scope_key",
+              "displayName": "scope_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "intent_key",
+              "displayName": "intent_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "verified_email",
+              "displayName": "verified_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "slot_start_utc",
+              "displayName": "slot_start_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "slot_end_utc",
+              "displayName": "slot_end_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "slot_tz",
+              "displayName": "slot_tz",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "provider_event_id",
+              "displayName": "provider_event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "provider_event_status",
+              "displayName": "provider_event_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "provider_event_start_utc",
+              "displayName": "provider_event_start_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "provider_event_end_utc",
+              "displayName": "provider_event_end_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "provider_evidence_json",
+              "displayName": "provider_evidence_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_reason",
+              "displayName": "review_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at_utc",
+              "displayName": "created_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000020",
+      "name": "Verify Intent Acknowledgement",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const source = $('Resolve Booking State').item.json;\nconst rows = $input.all().map((item) => item.json || {}).filter((row) => Object.keys(row).length);\nconst matches = rows.filter((row) => row.booking_uid === source.booking_uid\n  && row.onboarding_id === source.onboarding_id && row.smoke_tag === source.smoke_tag\n  && row.request_hash === source.request_hash && row.status === 'intent_written');\nif (matches.length !== 1) throw new Error('intent_written_persistence_ack_failed');\nreturn { json: matches[0] };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000021",
+      "name": "Check Calendar Availability",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        5040,
+        0
+      ],
+      "parameters": {
+        "resource": "calendar",
+        "operation": "availability",
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $vars.BOOKING_CALENDAR_ID }}"
+        },
+        "timeMin": "={{ $('Normalize Booking Request').item.json.slot_start_utc }}",
+        "timeMax": "={{ $('Normalize Booking Request').item.json.slot_end_utc }}",
+        "options": {
+          "outputFormat": "availability",
+          "timezone": {
+            "__rl": true,
+            "mode": "id",
+            "value": "={{ $('Normalize Booking Request').item.json.slot_tz }}"
+          }
+        }
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000022",
+      "name": "Slot Available?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        5280,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.available === true }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000023",
+      "name": "Build Busy Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5520,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const row = $('Resolve Booking State').item.json;\nreturn { json: { ...row, status: 'needs_review', review_reason: 'calendar_slot_busy', updated_at_utc: new Date().toISOString() } };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000024",
+      "name": "Update Booking Busy",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        5760,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_BOOKINGS_TABLE_ID",
+          "cachedResultName": "Bookings"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "booking_uid",
+              "condition": "eq",
+              "keyValue": "={{ $json.booking_uid }}"
+            },
+            {
+              "keyName": "onboarding_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.onboarding_id }}"
+            },
+            {
+              "keyName": "smoke_tag",
+              "condition": "eq",
+              "keyValue": "={{ $json.smoke_tag }}"
+            },
+            {
+              "keyName": "request_hash",
+              "condition": "eq",
+              "keyValue": "={{ $json.request_hash }}"
+            },
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "intent_written"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "booking_uid": "={{ $json.booking_uid }}",
+            "onboarding_id": "={{ $json.onboarding_id }}",
+            "smoke_tag": "={{ $json.smoke_tag }}",
+            "request_bytes": "={{ $json.request_bytes }}",
+            "request_hash": "={{ $json.request_hash }}",
+            "scope_key": "={{ $json.scope_key }}",
+            "intent_key": "={{ $json.intent_key }}",
+            "status": "={{ $json.status }}",
+            "verified_email": "={{ $json.verified_email }}",
+            "slot_start_utc": "={{ $json.slot_start_utc }}",
+            "slot_end_utc": "={{ $json.slot_end_utc }}",
+            "slot_tz": "={{ $json.slot_tz }}",
+            "provider_event_id": "={{ $json.provider_event_id }}",
+            "provider_event_status": "={{ $json.provider_event_status }}",
+            "provider_event_start_utc": "={{ $json.provider_event_start_utc }}",
+            "provider_event_end_utc": "={{ $json.provider_event_end_utc }}",
+            "provider_evidence_json": "={{ $json.provider_evidence_json }}",
+            "review_reason": "={{ $json.review_reason }}",
+            "created_at_utc": "={{ $json.created_at_utc }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "booking_uid",
+              "displayName": "booking_uid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "onboarding_id",
+              "displayName": "onboarding_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "request_bytes",
+              "displayName": "request_bytes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "scope_key",
+              "displayName": "scope_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "intent_key",
+              "displayName": "intent_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "verified_email",
+              "displayName": "verified_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "slot_start_utc",
+              "displayName": "slot_start_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "slot_end_utc",
+              "displayName": "slot_end_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "slot_tz",
+              "displayName": "slot_tz",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "provider_event_id",
+              "displayName": "provider_event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "provider_event_status",
+              "displayName": "provider_event_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "provider_event_start_utc",
+              "displayName": "provider_event_start_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "provider_event_end_utc",
+              "displayName": "provider_event_end_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "provider_evidence_json",
+              "displayName": "provider_evidence_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_reason",
+              "displayName": "review_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at_utc",
+              "displayName": "created_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000025",
+      "name": "Verify Busy Acknowledgement",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const source = $('Build Busy Update').item.json;\nconst rows = $input.all().map((item) => item.json || {}).filter((row) => Object.keys(row).length);\nconst matches = rows.filter((row) => row.booking_uid === source.booking_uid\n  && row.onboarding_id === source.onboarding_id && row.smoke_tag === source.smoke_tag\n  && row.request_hash === source.request_hash && row.status === 'needs_review');\nif (matches.length < 1) throw new Error('needs_review_persistence_ack_failed');\nreturn { json: matches[0] };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000026",
+      "name": "Build Busy Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6240,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const row = $('Build Busy Update').item.json;\nreturn { json: { http_status: 409, response_body_json: JSON.stringify({ ok: false, outcome: 'busy', status: 'needs_review',\n  booking_uid: row.booking_uid, onboarding_id: row.onboarding_id, smoke_tag: row.smoke_tag,\n  review_reason: row.review_reason, calendar_create_attempted: false }) } };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000027",
+      "name": "Create Calendar Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        6480,
+        0
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "create",
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $vars.BOOKING_CALENDAR_ID }}"
+        },
+        "start": "={{ $('Normalize Booking Request').item.json.slot_start_utc }}",
+        "end": "={{ $('Normalize Booking Request').item.json.slot_end_utc }}",
+        "useDefaultReminders": true,
+        "additionalFields": {
+          "id": "={{ $('Normalize Booking Request').item.json.provider_event_id }}",
+          "summary": "={{ 'Client kickoff — ' + $('Normalize Booking Request').item.json.booking_uid }}",
+          "description": "={{ 'Booking UID: ' + $('Normalize Booking Request').item.json.booking_uid }}",
+          "sendUpdates": "none",
+          "showMeAs": "opaque",
+          "visibility": "private"
+        }
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000028",
+      "name": "Validate Created Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6720,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const expected = $('Normalize Booking Request').item.json;\nconst event = $input.item.json || {};\nconst start = event.start && (event.start.dateTime || event.start.date) || '';\nconst end = event.end && (event.end.dateTime || event.end.date) || '';\nconst status = typeof event.status === 'string' ? event.status : '';\nconst same = (left, right) => Number.isFinite(Date.parse(left)) && Date.parse(left) === Date.parse(right);\nif (!event.id || event.id !== expected.provider_event_id || !status || status.toLowerCase() === 'cancelled'\n  || !same(start, expected.slot_start_utc) || !same(end, expected.slot_end_utc)) {\n  throw new Error('calendar_create_provider_evidence_invalid');\n}\nreturn { json: { ...expected, provider_event_id: event.id, provider_event_status: status,\n  provider_event_start_utc: new Date(Date.parse(start)).toISOString(),\n  provider_event_end_utc: new Date(Date.parse(end)).toISOString() } };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000029",
+      "name": "Get Created Calendar Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        6960,
+        0
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "get",
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $vars.BOOKING_CALENDAR_ID }}"
+        },
+        "eventId": "={{ $json.provider_event_id }}",
+        "options": {}
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000030",
+      "name": "Validate Provider Readback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const expected = $('Normalize Booking Request').item.json;\nconst event = $input.item.json || {};\nconst start = event.start && (event.start.dateTime || event.start.date) || '';\nconst end = event.end && (event.end.dateTime || event.end.date) || '';\nconst status = typeof event.status === 'string' ? event.status : '';\nconst same = (left, right) => Number.isFinite(Date.parse(left)) && Date.parse(left) === Date.parse(right);\nif (!event.id || event.id !== expected.provider_event_id || !status || status.toLowerCase() === 'cancelled'\n  || !same(start, expected.slot_start_utc) || !same(end, expected.slot_end_utc)) {\n  throw new Error('calendar_get_provider_evidence_invalid');\n}\nconst now = new Date().toISOString();\nreturn { json: {\n  ...expected,\n  status: 'confirmed',\n  provider_event_id: event.id,\n  provider_event_status: status,\n  provider_event_start_utc: new Date(Date.parse(start)).toISOString(),\n  provider_event_end_utc: new Date(Date.parse(end)).toISOString(),\n  provider_evidence_json: JSON.stringify({ source: 'google_calendar_get', id: event.id, status,\n    start: new Date(Date.parse(start)).toISOString(), end: new Date(Date.parse(end)).toISOString() }),\n  review_reason: '',\n  updated_at_utc: now,\n} };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000031",
+      "name": "Update Booking Confirmed",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        7440,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_BOOKINGS_TABLE_ID",
+          "cachedResultName": "Bookings"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "booking_uid",
+              "condition": "eq",
+              "keyValue": "={{ $json.booking_uid }}"
+            },
+            {
+              "keyName": "onboarding_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.onboarding_id }}"
+            },
+            {
+              "keyName": "smoke_tag",
+              "condition": "eq",
+              "keyValue": "={{ $json.smoke_tag }}"
+            },
+            {
+              "keyName": "request_hash",
+              "condition": "eq",
+              "keyValue": "={{ $json.request_hash }}"
+            },
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "intent_written"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "booking_uid": "={{ $json.booking_uid }}",
+            "onboarding_id": "={{ $json.onboarding_id }}",
+            "smoke_tag": "={{ $json.smoke_tag }}",
+            "request_bytes": "={{ $json.request_bytes }}",
+            "request_hash": "={{ $json.request_hash }}",
+            "scope_key": "={{ $json.scope_key }}",
+            "intent_key": "={{ $json.intent_key }}",
+            "status": "={{ $json.status }}",
+            "verified_email": "={{ $json.verified_email }}",
+            "slot_start_utc": "={{ $json.slot_start_utc }}",
+            "slot_end_utc": "={{ $json.slot_end_utc }}",
+            "slot_tz": "={{ $json.slot_tz }}",
+            "provider_event_id": "={{ $json.provider_event_id }}",
+            "provider_event_status": "={{ $json.provider_event_status }}",
+            "provider_event_start_utc": "={{ $json.provider_event_start_utc }}",
+            "provider_event_end_utc": "={{ $json.provider_event_end_utc }}",
+            "provider_evidence_json": "={{ $json.provider_evidence_json }}",
+            "review_reason": "={{ $json.review_reason }}",
+            "created_at_utc": "={{ $json.created_at_utc }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "booking_uid",
+              "displayName": "booking_uid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "onboarding_id",
+              "displayName": "onboarding_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "request_bytes",
+              "displayName": "request_bytes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "scope_key",
+              "displayName": "scope_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "intent_key",
+              "displayName": "intent_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "verified_email",
+              "displayName": "verified_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "slot_start_utc",
+              "displayName": "slot_start_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "slot_end_utc",
+              "displayName": "slot_end_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "slot_tz",
+              "displayName": "slot_tz",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "provider_event_id",
+              "displayName": "provider_event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "provider_event_status",
+              "displayName": "provider_event_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "provider_event_start_utc",
+              "displayName": "provider_event_start_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "provider_event_end_utc",
+              "displayName": "provider_event_end_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "provider_evidence_json",
+              "displayName": "provider_evidence_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_reason",
+              "displayName": "review_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at_utc",
+              "displayName": "created_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000032",
+      "name": "Verify Booking Confirmation Ack",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7680,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const source = $('Validate Provider Readback').item.json;\nconst rows = $input.all().map((item) => item.json || {}).filter((row) => Object.keys(row).length);\nconst matches = rows.filter((row) => row.booking_uid === source.booking_uid\n  && row.onboarding_id === source.onboarding_id && row.smoke_tag === source.smoke_tag\n  && row.request_hash === source.request_hash && row.status === 'confirmed');\nif (matches.length !== 1) throw new Error('confirmed_persistence_ack_failed');\nreturn { json: matches[0] };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000033",
+      "name": "Build Confirmed Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7920,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const row = $('Verify Booking Confirmation Ack').item.json;\nreturn { json: { ...row, http_status: 200, response_body_json: JSON.stringify({ ok: true, outcome: 'confirmed', status: 'confirmed',\n  booking_uid: row.booking_uid, onboarding_id: row.onboarding_id, smoke_tag: row.smoke_tag,\n  slot_start_utc: row.slot_start_utc, provider_event_id: row.provider_event_id, draft_required_for_success: false }) } };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000034",
+      "name": "Create Confirmation Draft",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        8160,
+        0
+      ],
+      "parameters": {
+        "resource": "draft",
+        "operation": "create",
+        "subject": "={{ 'Your kickoff booking — ' + $json.booking_uid }}",
+        "emailType": "html",
+        "message": "={{ '<p>Your kickoff slot is reserved for ' + $json.slot_start_utc + '.</p><p>This message remains a draft until a human reviews and sends it.</p>' }}",
+        "options": {
+          "sendTo": "={{ $json.verified_email }}"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000035",
+      "name": "Finalize Confirmed Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const response = $('Build Confirmed Response').item.json;\nconst draft = $input.item.json || {};\nconst body = JSON.parse(response.response_body_json);\nbody.draft_created = Boolean(draft.id);\nbody.draft_status = draft.id ? 'created' : 'not_created_booking_remains_confirmed';\nreturn { json: { http_status: response.http_status, response_body_json: JSON.stringify(body) } };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000036",
+      "name": "Booking Reconcile Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        8640,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000037",
+      "name": "Find Unresolved Booking Intents",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        8880,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_BOOKINGS_TABLE_ID",
+          "cachedResultName": "Bookings"
+        },
+        "returnAll": true,
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "intent_written"
+            }
+          ]
+        }
+      },
+      "onError": "stopWorkflow",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000038",
+      "name": "Build Reconcile Candidates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9120,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const crypto = require('crypto');\nconst rows = $input.all().map((item) => item.json || {}).filter((row) => Object.keys(row).length);\nconst groups = new Map();\nfor (const row of rows) {\n  const key = [row.onboarding_id || '', row.smoke_tag || ''].join('\\n');\n  if (!groups.has(key)) groups.set(key, []);\n  groups.get(key).push(row);\n}\nconst hash = (value) => crypto.createHash('sha256').update(String(value)).digest('hex');\nconst reviewRow = (row, reason) => ({ json: { ...row, lookup_safe: false, status: 'needs_review',\n  review_reason: reason, updated_at_utc: new Date().toISOString() } });\nconst output = [];\nfor (const candidates of groups.values()) {\n  const byRequest = new Map();\n  for (const row of candidates) {\n    const requestKey = [row.booking_uid || '', row.request_hash || ''].join('\\n');\n    if (!byRequest.has(requestKey)) byRequest.set(requestKey, row);\n  }\n  if (candidates.length !== 1) {\n    for (const row of byRequest.values()) output.push(reviewRow(row, 'ambiguous_parent_scope_intent_rows_no_recreate'));\n    continue;\n  }\n  const row = candidates[0];\n  const timesValid = Number.isFinite(Date.parse(row.slot_start_utc)) && Number.isFinite(Date.parse(row.slot_end_utc))\n    && Date.parse(row.slot_start_utc) < Date.parse(row.slot_end_utc);\n  const scopeValid = typeof row.booking_uid === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:+-]{0,511}$/.test(row.booking_uid)\n    && typeof row.onboarding_id === 'string' && /^[a-f0-9]{64}$/.test(row.onboarding_id)\n    && typeof row.smoke_tag === 'string' && /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/.test(row.smoke_tag)\n    && typeof row.request_hash === 'string' && /^[a-f0-9]{64}$/.test(row.request_hash);\n  const expectedScope = scopeValid ? hash(['booking.parent-scope.v1', row.onboarding_id, row.smoke_tag].join('\\n')) : '';\n  const expectedIntent = scopeValid ? hash(['booking.intent.v1', expectedScope, row.booking_uid, row.request_hash].join('\\n')) : '';\n  const expectedProvider = scopeValid\n    ? 'bkg' + hash(['booking.google-calendar.event.v1', expectedScope, row.booking_uid, row.request_hash].join('\\n')).slice(0, 48)\n    : '';\n  const identityValid = row.scope_key === expectedScope && row.intent_key === expectedIntent\n    && row.provider_event_id === expectedProvider;\n  const lookup_safe = scopeValid && timesValid && identityValid;\n  output.push({ json: { ...row, lookup_safe, status: lookup_safe ? 'intent_written' : 'needs_review',\n    review_reason: lookup_safe ? '' : 'stored_intent_missing_safe_provider_identity',\n    updated_at_utc: new Date().toISOString() } });\n}\nreturn output;"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000039",
+      "name": "Provider Lookup Safe?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        9360,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.lookup_safe }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000040",
+      "name": "Get Stored Calendar Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        9600,
+        0
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "get",
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $vars.BOOKING_CALENDAR_ID }}"
+        },
+        "eventId": "={{ $json.provider_event_id }}",
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000041",
+      "name": "Resolve Reconcile Provider State",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9840,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const candidate = $('Build Reconcile Candidates').item.json;\nconst event = $input.item.json || {};\nconst start = event.start && (event.start.dateTime || event.start.date) || '';\nconst end = event.end && (event.end.dateTime || event.end.date) || '';\nconst status = typeof event.status === 'string' ? event.status : '';\nconst same = (left, right) => Number.isFinite(Date.parse(left)) && Date.parse(left) === Date.parse(right);\nconst confirmed = event.id === candidate.provider_event_id && status && status.toLowerCase() !== 'cancelled'\n  && same(start, candidate.slot_start_utc) && same(end, candidate.slot_end_utc);\nconst now = new Date().toISOString();\nreturn { json: { ...candidate,\n  status: confirmed ? 'confirmed' : 'needs_review',\n  provider_event_status: confirmed ? status : (status || ''),\n  provider_event_start_utc: confirmed ? new Date(Date.parse(start)).toISOString() : '',\n  provider_event_end_utc: confirmed ? new Date(Date.parse(end)).toISOString() : '',\n  provider_evidence_json: confirmed ? JSON.stringify({ source: 'reconcile_google_calendar_get', id: event.id, status,\n    start: new Date(Date.parse(start)).toISOString(), end: new Date(Date.parse(end)).toISOString() }) : '',\n  review_reason: confirmed ? '' : 'provider_missing_ambiguous_or_mismatched_no_recreate',\n  updated_at_utc: now,\n} };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000042",
+      "name": "Update Reconciled Booking",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        10080,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_BOOKINGS_TABLE_ID",
+          "cachedResultName": "Bookings"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "booking_uid",
+              "condition": "eq",
+              "keyValue": "={{ $json.booking_uid }}"
+            },
+            {
+              "keyName": "onboarding_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.onboarding_id }}"
+            },
+            {
+              "keyName": "smoke_tag",
+              "condition": "eq",
+              "keyValue": "={{ $json.smoke_tag }}"
+            },
+            {
+              "keyName": "request_hash",
+              "condition": "eq",
+              "keyValue": "={{ $json.request_hash }}"
+            },
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "intent_written"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "booking_uid": "={{ $json.booking_uid }}",
+            "onboarding_id": "={{ $json.onboarding_id }}",
+            "smoke_tag": "={{ $json.smoke_tag }}",
+            "request_bytes": "={{ $json.request_bytes }}",
+            "request_hash": "={{ $json.request_hash }}",
+            "scope_key": "={{ $json.scope_key }}",
+            "intent_key": "={{ $json.intent_key }}",
+            "status": "={{ $json.status }}",
+            "verified_email": "={{ $json.verified_email }}",
+            "slot_start_utc": "={{ $json.slot_start_utc }}",
+            "slot_end_utc": "={{ $json.slot_end_utc }}",
+            "slot_tz": "={{ $json.slot_tz }}",
+            "provider_event_id": "={{ $json.provider_event_id }}",
+            "provider_event_status": "={{ $json.provider_event_status }}",
+            "provider_event_start_utc": "={{ $json.provider_event_start_utc }}",
+            "provider_event_end_utc": "={{ $json.provider_event_end_utc }}",
+            "provider_evidence_json": "={{ $json.provider_evidence_json }}",
+            "review_reason": "={{ $json.review_reason }}",
+            "created_at_utc": "={{ $json.created_at_utc }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "booking_uid",
+              "displayName": "booking_uid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "onboarding_id",
+              "displayName": "onboarding_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "request_bytes",
+              "displayName": "request_bytes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "scope_key",
+              "displayName": "scope_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "intent_key",
+              "displayName": "intent_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "verified_email",
+              "displayName": "verified_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "slot_start_utc",
+              "displayName": "slot_start_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "slot_end_utc",
+              "displayName": "slot_end_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "slot_tz",
+              "displayName": "slot_tz",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "provider_event_id",
+              "displayName": "provider_event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "provider_event_status",
+              "displayName": "provider_event_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "provider_event_start_utc",
+              "displayName": "provider_event_start_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "provider_event_end_utc",
+              "displayName": "provider_event_end_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "provider_evidence_json",
+              "displayName": "provider_evidence_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_reason",
+              "displayName": "review_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at_utc",
+              "displayName": "created_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000043",
+      "name": "Verify Reconcile Persistence",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        10320,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const rows = $input.all().map((item) => item.json || {}).filter((row) => Object.keys(row).length);\nif (!rows.length || rows.some((row) => !['confirmed','needs_review'].includes(row.status))) throw new Error('reconcile_persistence_ack_failed');\nfor (const row of rows) if (row.status === 'confirmed' && (!row.provider_event_id || !row.provider_evidence_json)) throw new Error('reconcile_confirmed_without_provider_evidence');\nreturn $input.all();"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000044",
+      "name": "Booking Fixture Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        10560,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000045",
+      "name": "Select Fixture Scenario",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        10800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const crypto = require('crypto');\n// Safe local selector: edit this one constant before a manual run.\nconst selectedScenario = 'available';\nconst scenarios = ['available','busy','replay','invalid-timezone','failed-before-send','provider-success/ack-failure','changed-slot'];\nif (!scenarios.includes(selectedScenario)) throw new Error('unknown_fixture_scenario');\nconst stable = (value) => JSON.stringify(value, Object.keys(value).sort());\nconst hash = (value) => crypto.createHash('sha256').update(String(value)).digest('hex');\nconst base = {\n  booking_uid: 'fixture-booking-001',\n  onboarding_id: 'a'.repeat(64),\n  smoke_tag: 'TEST-FIX-BOOKING',\n  verified_email: 'fixture@example.test',\n  slot_start: '2026-09-01T09:00:00+02:00',\n  slot_end: '2026-09-01T10:00:00+02:00',\n  slot_tz: 'Europe/Warsaw',\n};\nconst request_hash = hash(stable(base));\nconst catalog = {\n  available: { fixture_mode: 'available', valid: true, existing: [], intent_ack: true, available: true,\n    provider: { id: 'bkgfixtureavailable001', status: 'confirmed', start: '2026-09-01T07:00:00.000Z', end: '2026-09-01T08:00:00.000Z' }, confirmation_ack: true,\n    outcome: 'confirmed', intent_writes: 1, provider_creates: 1, provider_gets: 1 },\n  busy: { fixture_mode: 'busy', valid: true, existing: [], intent_ack: true, available: false,\n    outcome: 'busy', intent_writes: 1, provider_creates: 0, provider_gets: 0 },\n  replay: { fixture_mode: 'replay', valid: true, existing: [{ request_hash, status: 'confirmed', provider_event_id: 'bkgfixturereplay001' }],\n    outcome: 'replay', intent_writes: 0, provider_creates: 0, provider_gets: 0 },\n  'invalid-timezone': { fixture_mode: 'invalid-timezone', valid: false, validation_error: 'bad_slot_tz_iana',\n    outcome: 'rejected', intent_writes: 0, provider_creates: 0, provider_gets: 0 },\n  'failed-before-send': { fixture_mode: 'failed-before-send', valid: true, existing: [], intent_ack: false,\n    outcome: 'failed_before_send', intent_writes: 1, provider_creates: 0, provider_gets: 0 },\n  'provider-success/ack-failure': { fixture_mode: 'provider-success/ack-failure', valid: true, existing: [], intent_ack: true, available: true,\n    provider: { id: 'bkgfixtureackfailure001', status: 'confirmed', start: '2026-09-01T07:00:00.000Z', end: '2026-09-01T08:00:00.000Z' }, confirmation_ack: false,\n    reconcile_adopted: true, outcome: 'recovered_confirmed', intent_writes: 1, provider_creates: 1, provider_gets: 2 },\n  'changed-slot': { fixture_mode: 'changed-slot', valid: true, existing: [{ request_hash: 'different-request-hash', status: 'confirmed' }],\n    outcome: 'reschedule_required', review_writes: 1, calendar_mutations: 0, provider_creates: 0, provider_gets: 0 },\n};\nreturn { json: { ...catalog[selectedScenario], request: base, request_hash, fixture_catalog_json: JSON.stringify(catalog), fixture_scenarios: scenarios } };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000046",
+      "name": "Route Booking Fixture",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        11040,
+        0
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.fixture_mode }}",
+                    "rightValue": "available",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "available"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.fixture_mode }}",
+                    "rightValue": "busy",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "busy"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.fixture_mode }}",
+                    "rightValue": "replay",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "replay"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.fixture_mode }}",
+                    "rightValue": "invalid-timezone",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "invalid-timezone"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.fixture_mode }}",
+                    "rightValue": "failed-before-send",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "failed-before-send"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.fixture_mode }}",
+                    "rightValue": "provider-success/ack-failure",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "provider-success/ack-failure"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.fixture_mode }}",
+                    "rightValue": "changed-slot",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "changed-slot"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none"
+        }
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000047",
+      "name": "Fixture Available",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        11280,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const row = $input.item.json || {};\nif (row.fixture_mode !== 'available') return [];\nif (!row.valid || !row.intent_ack || row.available !== true || row.provider_creates !== 1 || row.provider_gets !== 1 || !row.confirmation_ack || row.outcome !== 'confirmed') throw new Error('available_fixture_failed');\nreturn { json: { fixture_mode: row.fixture_mode, fixture_result: 'pass', outcome: row.outcome,\n  provider_creates: row.provider_creates, provider_gets: row.provider_gets } };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000048",
+      "name": "Fixture Busy",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        11520,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const row = $input.item.json || {};\nif (row.fixture_mode !== 'busy') return [];\nif (!row.valid || !row.intent_ack || row.available !== false || row.provider_creates !== 0 || row.outcome !== 'busy') throw new Error('busy_fixture_failed');\nreturn { json: { fixture_mode: row.fixture_mode, fixture_result: 'pass', outcome: row.outcome,\n  provider_creates: row.provider_creates, provider_gets: row.provider_gets } };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000049",
+      "name": "Fixture Replay",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        11760,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const row = $input.item.json || {};\nif (row.fixture_mode !== 'replay') return [];\nif (!row.valid || !row.existing?.length || row.intent_writes !== 0 || row.provider_creates !== 0 || row.outcome !== 'replay') throw new Error('replay_fixture_failed');\nreturn { json: { fixture_mode: row.fixture_mode, fixture_result: 'pass', outcome: row.outcome,\n  provider_creates: row.provider_creates, provider_gets: row.provider_gets } };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000050",
+      "name": "Fixture Invalid Timezone",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        12000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const row = $input.item.json || {};\nif (row.fixture_mode !== 'invalid-timezone') return [];\nif (row.valid || row.validation_error !== 'bad_slot_tz_iana' || row.intent_writes !== 0 || row.provider_creates !== 0 || row.outcome !== 'rejected') throw new Error('invalid_timezone_fixture_failed');\nreturn { json: { fixture_mode: row.fixture_mode, fixture_result: 'pass', outcome: row.outcome,\n  provider_creates: row.provider_creates, provider_gets: row.provider_gets } };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000051",
+      "name": "Fixture Failed Before Send",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        12240,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const row = $input.item.json || {};\nif (row.fixture_mode !== 'failed-before-send') return [];\nif (!row.valid || row.intent_ack !== false || row.intent_writes !== 1 || row.provider_creates !== 0 || row.outcome !== 'failed_before_send') throw new Error('failed_before_send_fixture_failed');\nreturn { json: { fixture_mode: row.fixture_mode, fixture_result: 'pass', outcome: row.outcome,\n  provider_creates: row.provider_creates, provider_gets: row.provider_gets } };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000052",
+      "name": "Fixture Provider Success Ack Failure",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        12480,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const row = $input.item.json || {};\nif (row.fixture_mode !== 'provider-success/ack-failure') return [];\nif (!row.valid || !row.provider || row.confirmation_ack !== false || row.provider_creates !== 1 || row.provider_gets !== 2 || !row.reconcile_adopted || row.outcome !== 'recovered_confirmed') throw new Error('provider_ack_failure_fixture_failed');\nreturn { json: { fixture_mode: row.fixture_mode, fixture_result: 'pass', outcome: row.outcome,\n  provider_creates: row.provider_creates, provider_gets: row.provider_gets } };"
+      }
+    },
+    {
+      "id": "09000000-0000-4000-8000-000000000053",
+      "name": "Fixture Changed Slot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        12720,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const row = $input.item.json || {};\nif (row.fixture_mode !== 'changed-slot') return [];\nif (!row.valid || !row.existing?.length || row.review_writes !== 1 || row.calendar_mutations !== 0 || row.provider_creates !== 0 || row.outcome !== 'reschedule_required') throw new Error('changed_slot_fixture_failed');\nreturn { json: { fixture_mode: row.fixture_mode, fixture_result: 'pass', outcome: row.outcome,\n  provider_creates: row.provider_creates, provider_gets: row.provider_gets } };"
+      }
+    }
+  ],
+  "connections": {
+    "Booking Intake Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Intake Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Intake Token": {
+      "main": [
+        [
+          {
+            "node": "Intake Authorized?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intake Authorized?": {
+      "main": [
+        [
+          {
+            "node": "Normalize Booking Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Unauthorized Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Unauthorized Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Unauthorized",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Booking Request": {
+      "main": [
+        [
+          {
+            "node": "Booking Request Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Booking Request Valid?": {
+      "main": [
+        [
+          {
+            "node": "Find Existing Booking Rows",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Invalid Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Invalid Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Booking Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Existing Booking Rows": {
+      "main": [
+        [
+          {
+            "node": "Resolve Booking State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Booking State": {
+      "main": [
+        [
+          {
+            "node": "Booking Replay?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Booking Replay?": {
+      "main": [
+        [
+          {
+            "node": "Build Replay Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Booking Changed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Replay Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Booking Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Booking Changed?": {
+      "main": [
+        [
+          {
+            "node": "Build Reschedule Review Row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insert Booking Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Reschedule Review Row": {
+      "main": [
+        [
+          {
+            "node": "Insert Reschedule Review Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Reschedule Review Row": {
+      "main": [
+        [
+          {
+            "node": "Verify Review Acknowledgement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Review Acknowledgement": {
+      "main": [
+        [
+          {
+            "node": "Build Human Review Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Human Review Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Booking Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Booking Intent": {
+      "main": [
+        [
+          {
+            "node": "Verify Intent Acknowledgement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Intent Acknowledgement": {
+      "main": [
+        [
+          {
+            "node": "Check Calendar Availability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Calendar Availability": {
+      "main": [
+        [
+          {
+            "node": "Slot Available?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slot Available?": {
+      "main": [
+        [
+          {
+            "node": "Create Calendar Event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Busy Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Busy Update": {
+      "main": [
+        [
+          {
+            "node": "Update Booking Busy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Booking Busy": {
+      "main": [
+        [
+          {
+            "node": "Verify Busy Acknowledgement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Busy Acknowledgement": {
+      "main": [
+        [
+          {
+            "node": "Build Busy Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Busy Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Booking Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Calendar Event": {
+      "main": [
+        [
+          {
+            "node": "Validate Created Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Created Event": {
+      "main": [
+        [
+          {
+            "node": "Get Created Calendar Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Created Calendar Event": {
+      "main": [
+        [
+          {
+            "node": "Validate Provider Readback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Provider Readback": {
+      "main": [
+        [
+          {
+            "node": "Update Booking Confirmed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Booking Confirmed": {
+      "main": [
+        [
+          {
+            "node": "Verify Booking Confirmation Ack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Booking Confirmation Ack": {
+      "main": [
+        [
+          {
+            "node": "Build Confirmed Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Confirmed Response": {
+      "main": [
+        [
+          {
+            "node": "Create Confirmation Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Confirmation Draft": {
+      "main": [
+        [
+          {
+            "node": "Finalize Confirmed Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Confirmed Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Booking Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Booking Reconcile Schedule": {
+      "main": [
+        [
+          {
+            "node": "Find Unresolved Booking Intents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Unresolved Booking Intents": {
+      "main": [
+        [
+          {
+            "node": "Build Reconcile Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Reconcile Candidates": {
+      "main": [
+        [
+          {
+            "node": "Provider Lookup Safe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Provider Lookup Safe?": {
+      "main": [
+        [
+          {
+            "node": "Get Stored Calendar Event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Reconciled Booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Stored Calendar Event": {
+      "main": [
+        [
+          {
+            "node": "Resolve Reconcile Provider State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Reconcile Provider State": {
+      "main": [
+        [
+          {
+            "node": "Update Reconciled Booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Reconciled Booking": {
+      "main": [
+        [
+          {
+            "node": "Verify Reconcile Persistence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Booking Fixture Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Select Fixture Scenario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Fixture Scenario": {
+      "main": [
+        [
+          {
+            "node": "Route Booking Fixture",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Booking Fixture": {
+      "main": [
+        [
+          {
+            "node": "Fixture Available",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fixture Busy",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fixture Replay",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fixture Invalid Timezone",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fixture Failed Before Send",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fixture Provider Success Ack Failure",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fixture Changed Slot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timezone": "UTC"
+  },
+  "versionId": "09000000-0000-4000-8000-000000000099",
+  "meta": null,
+  "tags": []
+}

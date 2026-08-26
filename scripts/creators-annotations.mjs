@@ -338,6 +338,58 @@ Adapt child adapters, service mappings, wait thresholds, reconciliation cadence,
       ]),
     ],
   },
+  '09-booking-lifecycle': {
+    overviewTitle: 'Create replay-safe client kickoff bookings',
+    overview: `## Create replay-safe client kickoff bookings
+
+### How it works
+1. Authenticates the booking webhook before validating the exact workflow 08 contract or touching durable and provider state.
+2. Validates strict offset timestamps against their IANA timezone, derives stable request evidence, and checks all booking history in the exact onboarding owner and run scope.
+3. Returns confirmed replays without new work and sends every changed slot or payload to human review without querying or mutating Google Calendar.
+4. Persists booking intent and verifies its acknowledgement before checking native Google Calendar availability, creating a deterministic event, and reading it back.
+5. Records confirmation only from matching, non-cancelled provider evidence, then attempts to create a Gmail draft after the confirmed Booking row is durably acknowledged.
+6. Reconciles unresolved intents by getting the stored provider event only; missing, duplicate, or mismatched state becomes human review and never another create.
+
+### Setup steps
+- [ ] Create the Bookings Data Table with the fields mapped in the Data Table nodes.
+- [ ] Set BOOKING_INTAKE_TOKEN and BOOKING_CALENDAR_ID in n8n Variables.
+- [ ] Connect Google Calendar and Gmail credentials to their native nodes.
+- [ ] Select one local fixture in the manual selector and exercise all seven modes while inactive.
+- [ ] Test a tagged webhook request and its exact replay before activation.
+
+### Customization
+Adapt the calendar, kickoff copy, reconciliation cadence, and review process while preserving stable parent scope, intent-before-create, provider readback, and draft-only communication.`,
+    sections: [
+      section('Protect booking intake', 'Authenticates first, validates the exact booking contract, and returns explicit unauthorized or malformed outcomes.', 0, 0, 6, [
+        'Booking Intake Webhook', 'Validate Intake Token', 'Intake Authorized?', 'Normalize Booking Request',
+        'Booking Request Valid?', 'Build Unauthorized Response', 'Respond Unauthorized', 'Build Invalid Response',
+      ], { 'Build Unauthorized Response': [3, 1], 'Respond Unauthorized': [4, 1], 'Build Invalid Response': [5, 1] }),
+      section('Resolve durable booking state', 'Reads stable parent-scope history, returns safe replays, and persists changed requests for human review.', 2112, 0, 4, [
+        'Find Existing Booking Rows', 'Resolve Booking State', 'Booking Replay?', 'Build Replay Response',
+        'Booking Changed?', 'Build Reschedule Review Row', 'Insert Reschedule Review Row', 'Verify Review Acknowledgement',
+      ]),
+      section('Persist intent and check availability', 'Acknowledges durable create intent before querying availability and records busy outcomes without creating an event.', 3712, 0, 4, [
+        'Insert Booking Intent', 'Verify Intent Acknowledgement', 'Check Calendar Availability', 'Slot Available?',
+        'Build Busy Update', 'Update Booking Busy', 'Verify Busy Acknowledgement', 'Build Busy Response',
+      ]),
+      section('Create and confirm provider event', 'Creates only after intent, validates create evidence, reads the event back, and acknowledges the confirmed row before drafting.', 5312, 0, 4, [
+        'Create Calendar Event', 'Validate Created Event', 'Get Created Calendar Event', 'Validate Provider Readback',
+        'Update Booking Confirmed', 'Verify Booking Confirmation Ack', 'Build Confirmed Response', 'Create Confirmation Draft',
+      ]),
+      section('Return honest outcomes', 'Builds human-review or confirmed receipts and converges all authenticated responses without overstating draft delivery.', 6912, 0, 3, [
+        'Build Human Review Response', 'Finalize Confirmed Response', 'Respond Booking Outcome',
+      ]),
+      section('Reconcile without recreating', 'Gets only a safely stored provider identity, adopts matching success, and holds every ambiguous result for review.', 0, 1024, 4, [
+        'Booking Reconcile Schedule', 'Find Unresolved Booking Intents', 'Build Reconcile Candidates', 'Provider Lookup Safe?',
+        'Get Stored Calendar Event', 'Resolve Reconcile Provider State', 'Update Reconciled Booking', 'Verify Reconcile Persistence',
+      ]),
+      section('Exercise isolated fixtures', 'Selects exactly one synthetic local scenario and terminates in its assertion without reaching state, Calendar, or Gmail.', 0, 2048, 5, [
+        'Booking Fixture Manual Trigger', 'Select Fixture Scenario', 'Route Booking Fixture', 'Fixture Available', 'Fixture Busy',
+        'Fixture Replay', 'Fixture Invalid Timezone', 'Fixture Failed Before Send',
+        'Fixture Provider Success Ack Failure', 'Fixture Changed Slot',
+      ]),
+    ],
+  },
   '07-ksef-exception-desk': {
     enforceEdgeCorridors: true,
     overviewTitle: 'Handle KSeF exceptions without blind resubmission',
