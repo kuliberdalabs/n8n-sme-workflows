@@ -52,6 +52,8 @@ Before editing a returned template, use the detail page's `Copy JSON` action to 
 
 Reviewer lesson from workflow `18420` (2026-08-20 and 2026-08-21): seven broad sections around 62 functional nodes failed first, but forcing the official annotator prompt's `ceil(node_count / 3)` target produced 21 micro-sections and failed again. The numeric prompt heuristic is not a reviewer contract. Compare with accepted templates, preserve the execution story, and choose a balanced stage map. The second correction uses 11 sections with 3–7 nodes each, consolidates repeated persistence/readback work, removes all one-node sections, and retains exact functional behavior.
 
+Immediate-acceptance lesson from template [`18704`](https://n8n.io/workflows/18704): its 49 functional nodes were grouped into nine narrative sections containing 9, 2, 8, 4, 4, 8, 3, 8, and 3 nodes, with 192 px top padding. It was accepted on its first submission; that is a factual precedent, not evidence that this layout caused acceptance or a universal section formula.
+
 ## Static gate
 
 The validator must prove all of the following before UI review:
