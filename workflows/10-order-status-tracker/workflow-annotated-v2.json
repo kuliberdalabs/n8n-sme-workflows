@@ -1,0 +1,4112 @@
+{
+  "name": "Order Status Tracker",
+  "nodes": [
+    {
+      "id": "bc68fa88-e9c7-4400-a22c-8910bf09ee6a",
+      "name": "Overview — Track orders and serve safe customer status lookups",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1024,
+        0
+      ],
+      "parameters": {
+        "content": "## Track orders and serve safe customer status lookups\n\n### How it works\n1. Uses separate server-side tokens for the create-only order intake lane and the internal status-update lane; request bodies cannot choose their own authority.\n2. Requires explicit source event ids, derives deterministic keys, rejects weak lookup secrets, and checks full Status History before evaluation so accepted or held replays do not write again.\n3. Creates one order, records accepted or held status evidence, and persists notification intent before Gmail is attempted. A valid re-entry into an already-notified status still updates the Order and History, but does not insert another pending notification or send Gmail again.\n4. Accepts exactly one status object per request, rejects batch-shaped payloads, holds strictly older events, and applies an explicit allowed-edge matrix without guessing.\n5. Serves a read-only customer lookup that requires tenant, order, and per-order verifier inputs and returns only order id, visible status, update time, and a safe message.\n6. Sweeps for notifications left pending for at least two hours and emails a controlled operations inbox.\n\n### Setup steps\n- [ ] Create Orders, Status History, and Notifications Data Tables, then re-select them in every table node.\n- [ ] Set separate ORDER_INTAKE_TOKEN and ORDER_STATUS_TOKEN n8n Variables.\n- [ ] Connect Gmail and replace ops@example.com with your controlled operations inbox.\n- [ ] Review the status vocabulary, allowed transitions, notification text, stale threshold, and schedule.\n- [ ] Test wrong tokens, weak verifiers, status arrays, replay, older and blocked transitions, lookup, Gmail failure, and stale rows while inactive.\n\n### Customization\nConnect your commerce or fulfilment adapters and adjust approved status wording while preserving tenant-scoped keys, separate authority, persist-before-send ordering, safe lookup projection, and explicit residual handling.",
+        "width": 896,
+        "height": 896
+      }
+    },
+    {
+      "id": "e6c9913e-7067-46e9-aab6-c94a14efc642",
+      "name": "Section 1 — Protect and classify order intake",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "content": "## Protect and classify order intake\nAuthenticates the create-only lane, normalizes required identity and time fields, then resolves the existing order safely.",
+        "width": 1536,
+        "height": 688,
+        "color": 7
+      }
+    },
+    {
+      "id": "ddd393e8-431c-4cb1-a1a5-e3b39607c71f",
+      "name": "Section 2 — Protect and classify status updates",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        768
+      ],
+      "parameters": {
+        "content": "## Protect and classify status updates\nAuthenticates one event, joins its Order, and checks full Status History by event key before stale, edge, or hold evaluation.",
+        "width": 1536,
+        "height": 688,
+        "color": 7
+      }
+    },
+    {
+      "id": "2c32fb76-695c-4748-a88d-fb2787beb6d0",
+      "name": "Section 3 — Deduplicate and route intake outcomes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        0
+      ],
+      "parameters": {
+        "content": "## Deduplicate and route intake outcomes\nChecks the notification ledger, then separates sendable, held, and no-write replay outcomes.",
+        "width": 1024,
+        "height": 688,
+        "color": 7
+      }
+    },
+    {
+      "id": "6dadb009-f4da-459c-ace0-de7ad9521a79",
+      "name": "Section 4 — Deduplicate and route status outcomes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        768
+      ],
+      "parameters": {
+        "content": "## Deduplicate and route status outcomes\nChecks every matching milestone row, then separates persistable transitions from held and true no-write outcomes.",
+        "width": 1024,
+        "height": 688,
+        "color": 7
+      }
+    },
+    {
+      "id": "59253a0d-71b8-46be-ac27-da0773194db9",
+      "name": "Section 5 — Persist and confirm intake notification",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2688,
+        0
+      ],
+      "parameters": {
+        "content": "## Persist and confirm intake notification\nWrites order, history, and pending notification state before Gmail, then records success or an explicit pending failure.",
+        "width": 2560,
+        "height": 432,
+        "color": 7
+      }
+    },
+    {
+      "id": "853c9847-751f-4205-a0aa-51c1a6204b9a",
+      "name": "Section 6 — Persist transition and send when new",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2688,
+        768
+      ],
+      "parameters": {
+        "content": "## Persist transition and send when new\nWrites every allowed transition and its History first, then only new notification keys continue to pending intent and Gmail.",
+        "width": 2304,
+        "height": 432,
+        "color": 7
+      }
+    },
+    {
+      "id": "6836903a-3370-4ab7-aa00-1ca91f871cfa",
+      "name": "Section 7 — Return held, replay, and dedup outcomes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        1536
+      ],
+      "parameters": {
+        "content": "## Return held, replay, and dedup outcomes\nPersists held evidence, returns true no-write outcomes, and acknowledges a persisted re-entry without another notification or email.",
+        "width": 1536,
+        "height": 688,
+        "color": 7
+      }
+    },
+    {
+      "id": "6a1549e6-aee1-4b03-a5e3-92820cd96978",
+      "name": "Section 8 — Serve the safe customer projection",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        2304
+      ],
+      "parameters": {
+        "content": "## Serve the safe customer projection\nLooks up one tenant-scoped order by verifier and returns only the four documented customer-safe fields.",
+        "width": 1536,
+        "height": 432,
+        "color": 7
+      }
+    },
+    {
+      "id": "94e48fd1-a9a9-4758-a0f4-048077f39502",
+      "name": "Section 9 — Surface stale pending notifications",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        2304
+      ],
+      "parameters": {
+        "content": "## Surface stale pending notifications\nFinds old pending Order rows, builds an escaped age-based summary, and alerts the controlled inbox.",
+        "width": 1536,
+        "height": 432,
+        "color": 7
+      }
+    },
+    {
+      "id": "7dae7b10-6b3a-4802-922e-b3dd096069b0",
+      "name": "Order Intake Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        64,
+        192
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "order-status-intake",
+        "responseMode": "responseNode"
+      },
+      "webhookId": "39710038-aed3-4532-bcfe-af8eb40ec978"
+    },
+    {
+      "id": "2a40732f-0f08-48de-a944-35cbe3e6a7f8",
+      "name": "Validate Intake Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        192
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const root = $input.item.json || {};\nconst headers = root.headers || {};\nconst pick = (name) => headers[name] || headers[name.toLowerCase()] || headers[name.toUpperCase()] || '';\nconst auth = String(pick('authorization') || '');\nconst bearer = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : '';\nconst provided = String(pick('x-order-intake-token') || bearer || '').trim();\nconst expected = String($vars.ORDER_INTAKE_TOKEN || '').trim();\nreturn { json: {\n  ...root,\n  auth_ok: Boolean(expected && provided && provided === expected),\n  auth_reason: !expected ? 'missing_server_token_var_ORDER_INTAKE_TOKEN' : !provided ? 'missing_token_header' : provided === expected ? '' : 'bad_token',\n  checked_at_utc: new Date().toISOString(),\n} };"
+      }
+    },
+    {
+      "id": "b6ff2e08-cd04-4212-8969-747f07478b31",
+      "name": "Intake Token Authorized?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        576,
+        192
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.auth_ok }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "b393d86a-4ecd-4093-8c28-10397f5425f5",
+      "name": "Respond Intake Unauthorized",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        832,
+        448
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, status: \"unauthorized\", reason: $json.auth_reason } }}",
+        "options": {
+          "responseCode": 401
+        }
+      }
+    },
+    {
+      "id": "90e9ed4c-0711-46a7-9521-fdf417644301",
+      "name": "Normalize Order Intake",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        192
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const crypto = require('crypto');\nconst rootValue = $input.item.json;\nconst root = rootValue && typeof rootValue === 'object' && !Array.isArray(rootValue) ? rootValue : {};\nconst bodyValue = Object.prototype.hasOwnProperty.call(root, 'body') ? root.body : root;\nconst bodyIsObject = Boolean(bodyValue && typeof bodyValue === 'object' && !Array.isArray(bodyValue));\nconst body = bodyIsObject ? bodyValue : {};\nconst collapse = (value) => String(value ?? '').replace(/\\s+/g, ' ').trim();\nconst esc = (value) => collapse(value).replace(/[&<>\"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[ch]));\nconst hash = (value) => crypto.createHash('sha256').update(String(value)).digest('hex');\nconst hasOffset = (value) => /(?:Z|[+-]\\d\\d:\\d\\d)$/.test(String(value || ''));\nconst eventAtRaw = collapse(body.event_at_utc || body.created_at_utc || body.updated_at_utc || '');\nconst now = new Date().toISOString();\nconst eventAt = eventAtRaw && hasOffset(eventAtRaw) && !Number.isNaN(Date.parse(eventAtRaw)) ? new Date(eventAtRaw).toISOString() : '';\nconst tenantKey = collapse(body.tenant_key || body.tenant_id || '').toLowerCase();\nconst orderId = collapse(body.order_id || body.order_number || body.id || '');\nconst customerName = collapse(body.customer_name || body.name || 'Customer');\nconst customerEmail = collapse(body.customer_email || body.email || '').toLowerCase();\nconst verifierValue = body.customer_status_token ?? body.status_token ?? body.verifier ?? '';\nconst verifierRaw = typeof verifierValue === 'string' ? verifierValue : '';\nconst verifier = verifierRaw.trim();\nconst verifierExact = verifierRaw === verifier;\nconst verifierStrong = verifier.length >= 24 && verifier.length <= 256;\nconst initialStatus = collapse(body.status || body.initial_status || 'Received');\nconst sourceRole = 'intake';\nconst sourceChannel = 'order-intake-webhook';\nconst sourceEvent = collapse(body.source_event_id || body.event_id || '');\nconst lineItems = Array.isArray(body.line_items) ? body.line_items : [];\nconst notes = collapse(body.order_notes || body.notes || '');\nconst errors = [];\nif (!bodyIsObject) errors.push('request_body_must_be_object');\nif (!tenantKey) errors.push('missing_tenant_key');\nif (!orderId) errors.push('missing_order_id');\nif (!eventAt) errors.push('timestamp_missing_explicit_offset');\nif (!sourceEvent) errors.push('missing_event_id');\nif (!verifier) errors.push('missing_customer_status_token');\nif (verifier && !verifierExact) errors.push('customer_status_token_must_not_have_padding');\nif (verifier && !verifierStrong) errors.push('customer_status_token_must_be_24_to_256_chars');\nif (!['Received', 'Confirmed'].includes(initialStatus)) errors.push('bad_initial_status');\nconst orderKey = tenantKey && orderId ? hash('order-tracker:order:' + tenantKey + ':' + orderId.toLowerCase()) : '';\nconst eventKey = orderKey && sourceEvent\n  ? hash('order-tracker:intake:' + orderKey + ':' + sourceEvent)\n  : hash('order-tracker:bad-intake:' + now + ':' + JSON.stringify(body).slice(0, 200));\nconst notificationKey = orderKey ? hash('order-tracker:notify:' + orderKey + ':' + initialStatus + ':v1') : '';\nreturn { json: {\n  tenant_key: tenantKey,\n  order_id: orderId,\n  order_key: orderKey,\n  customer_key: orderKey ? hash('order-tracker:customer:' + tenantKey + ':' + customerEmail + ':' + customerName.toLowerCase()) : '',\n  customer_name: customerName,\n  customer_name_html: esc(customerName),\n  customer_email_hash: customerEmail ? hash('email:' + customerEmail) : '',\n  customer_verifier_hash: verifierExact && verifierStrong && orderKey ? hash('order-tracker-verifier:' + orderKey + ':' + verifier) : '',\n  requested_status: initialStatus,\n  status_rank: initialStatus === 'Confirmed' ? 20 : 10,\n  source_role: sourceRole,\n  source_channel: sourceChannel,\n  source_event_id: sourceEvent,\n  event_at_utc: eventAt || now,\n  event_key: eventKey,\n  transition_key: orderKey ? hash('order-tracker:transition:' + orderKey + ':create:' + initialStatus) : '',\n  notification_key: notificationKey,\n  reason: collapse(body.reason || 'Order received'),\n  reason_html: esc(body.reason || 'Order received'),\n  order_notes: notes,\n  order_notes_html: esc(notes),\n  line_items_json: JSON.stringify(lineItems).slice(0, 9000),\n  validation_errors: errors,\n  smoke_tag: collapse(body.smoke_tag || ''),\n  now_utc: now,\n} };"
+      }
+    },
+    {
+      "id": "4d24c357-3c6b-4ce2-af68-6cf96490e79d",
+      "name": "Find Intake Order Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1088,
+        192
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_ORDERS_TABLE_ID",
+          "cachedResultName": "Orders"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "order_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.order_key }}"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": 1
+      },
+      "alwaysOutputData": true,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "92305c51-bd9d-4c0a-a692-ee501fe23bbf",
+      "name": "Build Intake Actions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        448
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const normalized = $('Normalize Order Intake').item.json || {};\nconst existingRows = $input.all().map((item) => item.json || {}).filter((row) => row.order_key);\nconst existing = existingRows.find((row) => row.order_key === normalized.order_key);\nconst now = new Date().toISOString();\nconst rank = Number(normalized.status_rank || 10);\nconst safeProjection = {\n  order_id: normalized.order_id,\n  status: normalized.requested_status,\n  updated_at_utc: now,\n  message: normalized.requested_status === 'Confirmed' ? 'Your order is confirmed.' : 'Your order was received.',\n};\nconst baseOrder = {\n  order_key: normalized.order_key || 'order-tracker:bad-intake:' + normalized.event_key,\n  order_id: normalized.order_id || 'MISSING',\n  tenant_key: normalized.tenant_key,\n  customer_key: normalized.customer_key,\n  customer_name: normalized.customer_name,\n  customer_name_html: normalized.customer_name_html,\n  customer_email_hash: normalized.customer_email_hash,\n  customer_verifier_hash: normalized.customer_verifier_hash,\n  customer_visible_status: normalized.validation_errors.length ? 'Needs Clarification' : normalized.requested_status,\n  internal_status: normalized.validation_errors.length ? 'Held Invalid Intake' : 'Open',\n  status_rank: normalized.validation_errors.length ? 15 : rank,\n  source_channel: normalized.source_channel,\n  source_role: normalized.source_role,\n  last_event_key: normalized.event_key,\n  last_transition_key: normalized.transition_key,\n  last_notified_status: '',\n  notification_status: normalized.validation_errors.length ? 'No Send' : 'Pending Send',\n  last_notification_key: normalized.notification_key,\n  last_email_id: '',\n  pending_since_utc: now,\n  oldest_open_age_hours: 0,\n  created_at_utc: now,\n  updated_at_utc: now,\n  event_at_utc: normalized.event_at_utc,\n  last_status_at_utc: normalized.event_at_utc,\n  status_reason: normalized.reason,\n  status_reason_html: normalized.reason_html,\n  order_notes: normalized.order_notes,\n  order_notes_html: normalized.order_notes_html,\n  line_items_json: normalized.line_items_json,\n  safe_projection_json: JSON.stringify(safeProjection),\n  smoke_tag: normalized.smoke_tag,\n  last_execution_id: $execution.id,\n};\nif (normalized.validation_errors.length) {\n  return [{ json: {\n    ...baseOrder,\n    action: 'held_invalid_intake',\n    should_insert_order: true,\n    should_persist_hold: true,\n    should_send_email: false,\n    response_code: 422,\n    response_status: 'held_invalid_intake',\n    reason: normalized.validation_errors.join(','),\n    reason_html: normalized.validation_errors.join(', '),\n    history_key: 'order-tracker:history:' + normalized.event_key,\n    event_type: 'intake_rejected',\n    from_status: '',\n    to_status: 'Needs Clarification',\n    notification_key: '',\n  } }];\n}\nif (existing) {\n  return [{ json: {\n    ...baseOrder,\n    action: 'duplicate_intake',\n    should_insert_order: false,\n    should_persist_hold: false,\n    should_send_email: false,\n    response_code: 200,\n    response_status: 'duplicate_ignored',\n    existing_status: existing.customer_visible_status || '',\n  } }];\n}\nconst subject = '[ORDER STATUS] Order ' + normalized.order_id + ' ' + normalized.requested_status;\nconst escEmail = (value) => String(value ?? '').replace(/\\s+/g, ' ').trim().replace(/[&<>\"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[ch]));\nconst body = '<p>Order <strong>' + escEmail(normalized.order_id) + '</strong> is now <strong>' + escEmail(normalized.requested_status) + '</strong>.</p><p>' + normalized.reason_html + '</p>';\nreturn [{ json: {\n  ...baseOrder,\n  action: 'insert_order_and_notify',\n  should_insert_order: true,\n  should_persist_hold: false,\n  should_send_email: true,\n  response_code: 202,\n  response_status: 'accepted_pending_controlled_email',\n  history_key: 'order-tracker:history:' + normalized.event_key,\n  event_type: 'order_created',\n  from_status: '',\n  to_status: normalized.requested_status,\n  notification_key: normalized.notification_key,\n  status: normalized.requested_status,\n  recipient_mode: 'controlled_inbox',\n  controlled_recipient: 'ops@example.com',\n  intended_recipient_hash: normalized.customer_email_hash,\n  email_subject: subject,\n  email_body_html: body,\n  email_sent: false,\n  test_email_id: '',\n  status_before_send: normalized.requested_status,\n} }];"
+      }
+    },
+    {
+      "id": "5c101202-931f-4919-8a99-7e9e20e85100",
+      "name": "Status Update Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        64,
+        960
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "order-status-update",
+        "responseMode": "responseNode"
+      },
+      "webhookId": "f142236b-933a-41e2-b317-46fe128c7e1a"
+    },
+    {
+      "id": "d8e23db3-a633-44e8-bbc8-e7bb3858baa1",
+      "name": "Validate Status Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        960
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const root = $input.item.json || {};\nconst headers = root.headers || {};\nconst pick = (name) => headers[name] || headers[name.toLowerCase()] || headers[name.toUpperCase()] || '';\nconst auth = String(pick('authorization') || '');\nconst bearer = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : '';\nconst provided = String(pick('x-order-status-token') || bearer || '').trim();\nconst expected = String($vars.ORDER_STATUS_TOKEN || '').trim();\nreturn { json: {\n  ...root,\n  auth_ok: Boolean(expected && provided && provided === expected),\n  auth_reason: !expected ? 'missing_server_token_var_ORDER_STATUS_TOKEN' : !provided ? 'missing_token_header' : provided === expected ? '' : 'bad_token',\n  checked_at_utc: new Date().toISOString(),\n} };"
+      }
+    },
+    {
+      "id": "998e6908-ef4e-44e9-8cd7-c723ddbdc0e9",
+      "name": "Status Token Authorized?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        576,
+        960
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.auth_ok }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "bfc3e23b-54aa-4637-a402-988c7d7c3516",
+      "name": "Normalize Status Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        960
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const crypto = require('crypto');\nconst rootValue = $input.item.json;\nconst root = rootValue && typeof rootValue === 'object' && !Array.isArray(rootValue) ? rootValue : {};\nconst bodyValue = Object.prototype.hasOwnProperty.call(root, 'body') ? root.body : root;\nconst bodyIsObject = Boolean(bodyValue && typeof bodyValue === 'object' && !Array.isArray(bodyValue));\nconst body = bodyIsObject ? bodyValue : {};\nconst collapse = (value) => String(value ?? '').replace(/\\s+/g, ' ').trim();\nconst hash = (value) => crypto.createHash('sha256').update(String(value)).digest('hex');\nconst hasOffset = (value) => /(?:Z|[+-]\\d\\d:\\d\\d)$/.test(String(value || ''));\nconst now = new Date().toISOString();\nconst tenantKey = collapse(body.tenant_key || body.tenant_id || '').toLowerCase();\nconst orderId = collapse(body.order_id || body.order_number || body.id || '');\nconst eventAtRaw = collapse(body.event_at_utc || body.updated_at_utc || '');\nconst eventAt = eventAtRaw && hasOffset(eventAtRaw) && !Number.isNaN(Date.parse(eventAtRaw)) ? new Date(eventAtRaw).toISOString() : '';\nconst orderKey = tenantKey && orderId ? hash('order-tracker:order:' + tenantKey + ':' + orderId.toLowerCase()) : '';\nconst status = collapse(body.status || body.to_status || '');\nconst sourceRole = 'internal';\nconst sourceChannel = 'status-update-webhook';\nconst sourceEvent = collapse(body.source_event_id || body.event_id || '');\nconst errors = [];\nif (!bodyIsObject) errors.push('request_body_must_be_object');\nif (bodyIsObject && Object.prototype.hasOwnProperty.call(body, 'events')) errors.push('events_array_not_supported');\nif (!tenantKey) errors.push('missing_tenant_key');\nif (!orderId) errors.push('missing_order_id');\nif (!status) errors.push('missing_status');\nif (!eventAt) errors.push('timestamp_missing_explicit_offset');\nif (!sourceEvent) errors.push('missing_event_id');\nconst eventKey = orderKey && sourceEvent\n  ? hash('order-tracker:status:' + orderKey + ':' + sourceEvent)\n  : hash('order-tracker:bad-status:' + now + ':' + JSON.stringify(body).slice(0, 200));\nreturn [{ json: {\n  tenant_key: tenantKey,\n  order_id: orderId,\n  order_key: orderKey,\n  requested_status: status,\n  source_role: sourceRole,\n  source_channel: sourceChannel,\n  source_event_id: sourceEvent,\n  event_at_utc: eventAt || now,\n  event_key: eventKey,\n  notification_key: orderKey ? hash('order-tracker:notify:' + orderKey + ':' + status + ':v1') : '',\n  reason: collapse(body.reason || ''),\n  reason_html: collapse(body.reason || '').replace(/[&<>\"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[ch])),\n  validation_errors: errors,\n  smoke_tag: collapse(body.smoke_tag || ''),\n  now_utc: now,\n} }];"
+      }
+    },
+    {
+      "id": "d78a9f06-d72f-4ca5-b684-1baaaad5f955",
+      "name": "Find Status Order Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1088,
+        960
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_ORDERS_TABLE_ID",
+          "cachedResultName": "Orders"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "order_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.order_key }}"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": 1
+      },
+      "alwaysOutputData": true,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "f89123e1-607c-4237-8a53-69490ca39852",
+      "name": "Build Status Actions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        1216
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const incoming = $items('Normalize Status Update').map((item) => item.json || {});\nconst lookups = $items('Find Status Order Rows').map((item) => item.json || {}).filter((row) => row.order_key);\nconst historyRows = $input.all().map((item) => item.json || {}).filter((row) => row.event_key);\nconst historyEventKeys = new Set(historyRows.map((row) => String(row.event_key)));\nconst rowsByKey = new Map();\nfor (const row of lookups) rowsByKey.set(String(row.order_key), row);\nconst RANK = { 'Received': 10, 'Needs Clarification': 15, 'Confirmed': 20, 'Blocked': 25, 'In Production': 30, 'Backordered': 35, 'Quality Hold': 35, 'Ready': 40, 'Shipped': 50, 'Collected': 60, 'Cancelled': 90, 'Lost / Closed': 95 };\nconst TERMINAL = new Set(['Collected', 'Cancelled', 'Lost / Closed']);\nconst TRUSTED_TERMINAL_ROLES = new Set(['internal', 'system', 'admin']);\nconst ALLOWED_EDGES = {\n  'Received': ['Confirmed', 'Cancelled'],\n  'Needs Clarification': ['Received', 'Confirmed', 'Cancelled'],\n  'Confirmed': ['In Production', 'Blocked', 'Backordered', 'Cancelled'],\n  'Blocked': ['Confirmed', 'In Production', 'Cancelled'],\n  'Backordered': ['Confirmed', 'In Production', 'Cancelled'],\n  'In Production': ['Quality Hold', 'Ready', 'Blocked', 'Backordered', 'Cancelled'],\n  'Quality Hold': ['In Production', 'Ready', 'Cancelled'],\n  'Ready': ['Shipped', 'Collected', 'Cancelled'],\n  'Shipped': ['Collected', 'Cancelled', 'Lost / Closed'],\n  'Collected': [],\n  'Cancelled': [],\n  'Lost / Closed': [],\n};\nconst allowed = new Set(Object.keys(RANK));\nconst now = new Date().toISOString();\nconst esc = (value) => String(value ?? '').replace(/\\s+/g, ' ').trim().replace(/[&<>\"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[ch]));\nreturn incoming.map((event) => {\n  const order = rowsByKey.get(String(event.order_key || '')) || {};\n  const current = order.customer_visible_status || '';\n  const target = event.requested_status;\n  const durableReplay = Boolean(event.event_key && historyEventKeys.has(String(event.event_key)));\n  const latestEventReplay = Boolean(order.last_event_key && order.last_event_key === event.event_key);\n  const replay = durableReplay || latestEventReplay;\n  const errors = replay ? [] : [...(event.validation_errors || [])];\n  const unchanged = Boolean(current && current === target && !replay);\n  const eventAtMs = Date.parse(event.event_at_utc || '');\n  const lastStatusAtMs = Date.parse(order.last_status_at_utc || '');\n  if (!replay) {\n    if (!allowed.has(target)) errors.push('unknown_status');\n    if (!order.order_key) errors.push('order_not_found');\n    if (Number.isFinite(eventAtMs) && Number.isFinite(lastStatusAtMs) && eventAtMs < lastStatusAtMs) errors.push('stale_status_event');\n    if (event.source_role === 'customer' && target === 'Cancelled') errors.push('customer_cancelled_requires_confirmation');\n    if (event.source_role === 'customer' && !['Needs Clarification', 'Cancelled'].includes(target)) errors.push('unauthorized_customer_status_write');\n    if (event.source_role === 'carrier' && target !== 'Shipped') errors.push('unauthorized_carrier_status_write');\n    if (!unchanged && TERMINAL.has(current) && target !== current) errors.push('terminal_state_blocks_transition');\n    if (!unchanged && current === 'Shipped' && !['Collected', 'Cancelled', 'Lost / Closed'].includes(target)) errors.push('shipped_semterminal_blocks_transition');\n    if (!unchanged && ['Collected', 'Cancelled', 'Lost / Closed'].includes(target) && !TRUSTED_TERMINAL_ROLES.has(event.source_role)) errors.push('terminal_target_requires_trusted_role');\n    if (!unchanged && order.order_key && allowed.has(current) && allowed.has(target)) {\n      const allowedTargets = ALLOWED_EDGES[current] || [];\n      if (!allowedTargets.includes(target)) errors.push('transition_not_allowed_' + current.replace(/[^A-Za-z0-9]+/g, '_') + '_to_' + target.replace(/[^A-Za-z0-9]+/g, '_'));\n    }\n  }\n  const shouldSend = errors.length === 0 && !replay && !unchanged;\n  const reason = errors.length ? errors.join(',') : replay ? 'replay_duplicate_event' : unchanged ? 'unchanged_status' : (event.reason || 'Status updated');\n  const rank = shouldSend ? (RANK[target] || Number(order.status_rank || 0)) : Number(order.status_rank || RANK[current] || RANK[target] || 0);\n  const safeProjection = {\n    order_id: event.order_id,\n    status: shouldSend ? target : current || target,\n    updated_at_utc: now,\n    message: shouldSend ? 'Your order status changed to ' + target + '.' : 'No customer-visible status change was made.',\n  };\n  return {\n    json: {\n      ...order,\n      order_key: event.order_key,\n      order_id: event.order_id,\n      customer_visible_status: shouldSend ? target : (current || target),\n      internal_status: errors.length ? 'Held Status Update' : replay ? 'Replay Ignored' : unchanged ? 'Unchanged' : 'Open',\n      status_rank: rank,\n      source_channel: event.source_channel,\n      source_role: event.source_role,\n      last_event_key: shouldSend ? event.event_key : (order.last_event_key || ''),\n      last_transition_key: shouldSend ? 'order-tracker:transition:' + event.order_key + ':' + current + ':' + target : (order.last_transition_key || ''),\n      last_notified_status: order.last_notified_status || '',\n      notification_status: shouldSend ? 'Pending Send' : (order.notification_status || 'No Send'),\n      last_notification_key: shouldSend ? event.notification_key : (order.last_notification_key || ''),\n      last_email_id: order.last_email_id || '',\n      pending_since_utc: shouldSend ? now : (order.pending_since_utc || now),\n      oldest_open_age_hours: 0,\n      updated_at_utc: now,\n      event_at_utc: event.event_at_utc,\n      last_status_at_utc: shouldSend ? event.event_at_utc : (order.last_status_at_utc || event.event_at_utc),\n      status_reason: reason,\n      status_reason_html: esc(reason),\n      safe_projection_json: JSON.stringify(safeProjection),\n      last_execution_id: $execution.id,\n      history_key: 'order-tracker:history:' + event.event_key,\n      event_key: event.event_key,\n      event_type: errors.length ? 'status_update_held' : replay ? 'status_update_replay' : unchanged ? 'status_update_unchanged' : 'status_changed',\n      from_status: current,\n      to_status: shouldSend ? target : (current || target),\n      action: shouldSend ? 'update_order_and_notify' : errors.length ? 'held_status_update' : replay ? 'duplicate_replay_ignored' : 'unchanged_status_ignored',\n      reason,\n      reason_html: esc(reason),\n      created_at_utc: now,\n      notification_key: shouldSend ? event.notification_key : '',\n      should_persist_transition: shouldSend,\n      should_send_email: shouldSend,\n      should_persist_hold: errors.length > 0,\n      response_code: errors.length ? 422 : 200,\n      response_status: shouldSend ? 'accepted_pending_controlled_email' : errors.length ? 'held_status_update' : replay ? 'duplicate_ignored' : 'unchanged_ignored',\n      status: target,\n      recipient_mode: 'controlled_inbox',\n      controlled_recipient: 'ops@example.com',\n      intended_recipient_hash: order.customer_email_hash || '',\n      email_subject: '[ORDER STATUS] Order ' + event.order_id + ' ' + target,\n      email_body_html: '<p>Order <strong>' + esc(event.order_id) + '</strong> is now <strong>' + esc(target) + '</strong>.</p><p>' + esc(reason) + '</p>',\n      email_sent: false,\n      test_email_id: '',\n      status_before_send: target,\n      smoke_tag: event.smoke_tag || order.smoke_tag || '',\n    },\n  };\n});"
+      }
+    },
+    {
+      "id": "f1938bb2-578a-4e50-b7d6-26a6548b6555",
+      "name": "Filter Intake Sendable Notifications",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2176,
+        192
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "return $input.all().filter((item) => Boolean(item.json && item.json.should_send_email)).map((item) => ({ json: item.json }));"
+      }
+    },
+    {
+      "id": "eaa7efa4-a28d-421e-81d5-0437243a719b",
+      "name": "Filter Status Sendable Notifications",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3264,
+        960
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const source = $items('Filter Status Persistable Transitions').map((item) => item.json || {});\nreturn source.filter((item) => item.should_persist_transition && item.should_send_email).map((item) => ({ json: item }));"
+      }
+    },
+    {
+      "id": "c3ce7a61-7fef-4650-a262-5cf77799bdfd",
+      "name": "Filter Intake Held Actions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2176,
+        448
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "return $input.all().filter((item) => Boolean(item.json && item.json.should_persist_hold)).map((item) => ({ json: item.json }));"
+      }
+    },
+    {
+      "id": "5e2cdb64-1de1-435f-93fd-d98097177371",
+      "name": "Filter Status Held Actions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2176,
+        1216
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "return $input.all().filter((item) => Boolean(item.json && item.json.should_persist_hold)).map((item) => ({ json: item.json }));"
+      }
+    },
+    {
+      "id": "609270af-0787-4872-8e90-0483050ec4a1",
+      "name": "Filter Intake Terminal No-Write Actions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        448
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "return $input.all().filter((item) => item.json && !item.json.should_send_email && !item.json.should_persist_hold).map((item) => ({ json: item.json }));"
+      }
+    },
+    {
+      "id": "687b039b-57ed-4119-96a7-255a7f037b0a",
+      "name": "Filter Status Terminal No-Write Actions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        1216
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "return $input.all().filter((item) => item.json && !item.json.should_persist_transition && !item.json.should_send_email && !item.json.should_persist_hold).map((item) => ({ json: item.json }));"
+      }
+    },
+    {
+      "id": "2b65adf5-ed31-46c5-8570-3f685b5593de",
+      "name": "Insert Intake Order Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2752,
+        192
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_ORDERS_TABLE_ID",
+          "cachedResultName": "Orders"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "order_key": "={{ $json.order_key }}",
+            "order_id": "={{ $json.order_id }}",
+            "tenant_key": "={{ $json.tenant_key }}",
+            "customer_key": "={{ $json.customer_key }}",
+            "customer_name": "={{ $json.customer_name }}",
+            "customer_name_html": "={{ $json.customer_name_html }}",
+            "customer_email_hash": "={{ $json.customer_email_hash }}",
+            "customer_verifier_hash": "={{ $json.customer_verifier_hash }}",
+            "customer_visible_status": "={{ $json.customer_visible_status }}",
+            "internal_status": "={{ $json.internal_status }}",
+            "status_rank": "={{ $json.status_rank }}",
+            "source_channel": "={{ $json.source_channel }}",
+            "source_role": "={{ $json.source_role }}",
+            "last_event_key": "={{ $json.last_event_key }}",
+            "last_transition_key": "={{ $json.last_transition_key }}",
+            "last_notified_status": "={{ $json.last_notified_status }}",
+            "notification_status": "={{ $json.notification_status }}",
+            "last_notification_key": "={{ $json.last_notification_key }}",
+            "last_email_id": "={{ $json.last_email_id }}",
+            "pending_since_utc": "={{ $json.pending_since_utc }}",
+            "oldest_open_age_hours": "={{ $json.oldest_open_age_hours }}",
+            "created_at_utc": "={{ $json.created_at_utc }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_status_at_utc": "={{ $json.last_status_at_utc }}",
+            "status_reason": "={{ $json.status_reason }}",
+            "status_reason_html": "={{ $json.status_reason_html }}",
+            "order_notes": "={{ $json.order_notes }}",
+            "order_notes_html": "={{ $json.order_notes_html }}",
+            "line_items_json": "={{ $json.line_items_json }}",
+            "safe_projection_json": "={{ $json.safe_projection_json }}",
+            "smoke_tag": "={{ $json.smoke_tag }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "order_key",
+              "displayName": "order_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tenant_key",
+              "displayName": "tenant_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "customer_key",
+              "displayName": "customer_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "customer_name_html",
+              "displayName": "customer_name_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "customer_email_hash",
+              "displayName": "customer_email_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "customer_verifier_hash",
+              "displayName": "customer_verifier_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "customer_visible_status",
+              "displayName": "customer_visible_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "internal_status",
+              "displayName": "internal_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status_rank",
+              "displayName": "status_rank",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "source_channel",
+              "displayName": "source_channel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "source_role",
+              "displayName": "source_role",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_event_key",
+              "displayName": "last_event_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_transition_key",
+              "displayName": "last_transition_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_notified_status",
+              "displayName": "last_notified_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "notification_status",
+              "displayName": "notification_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_notification_key",
+              "displayName": "last_notification_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_email_id",
+              "displayName": "last_email_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "pending_since_utc",
+              "displayName": "pending_since_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "oldest_open_age_hours",
+              "displayName": "oldest_open_age_hours",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at_utc",
+              "displayName": "created_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_status_at_utc",
+              "displayName": "last_status_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status_reason",
+              "displayName": "status_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status_reason_html",
+              "displayName": "status_reason_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "order_notes",
+              "displayName": "order_notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "order_notes_html",
+              "displayName": "order_notes_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "line_items_json",
+              "displayName": "line_items_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "safe_projection_json",
+              "displayName": "safe_projection_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "9e62d3b3-fd91-4573-b6d8-82f2ebdeefb9",
+      "name": "Update Status Order Transition",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2752,
+        960
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_ORDERS_TABLE_ID",
+          "cachedResultName": "Orders"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "order_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.order_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "customer_visible_status": "={{ $json.customer_visible_status }}",
+            "internal_status": "={{ $json.internal_status }}",
+            "status_rank": "={{ $json.status_rank }}",
+            "last_event_key": "={{ $json.last_event_key }}",
+            "last_transition_key": "={{ $json.last_transition_key }}",
+            "notification_status": "={{ $json.notification_status }}",
+            "last_notification_key": "={{ $json.last_notification_key }}",
+            "pending_since_utc": "={{ $json.pending_since_utc }}",
+            "oldest_open_age_hours": "={{ $json.oldest_open_age_hours }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_status_at_utc": "={{ $json.last_status_at_utc }}",
+            "status_reason": "={{ $json.status_reason }}",
+            "status_reason_html": "={{ $json.status_reason_html }}",
+            "safe_projection_json": "={{ $json.safe_projection_json }}",
+            "last_execution_id": "={{ $json.last_execution_id }}",
+            "last_notified_status": "={{ $json.last_notified_status }}",
+            "last_email_id": "={{ $json.last_email_id }}"
+          },
+          "schema": [
+            {
+              "id": "customer_visible_status",
+              "displayName": "customer_visible_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "internal_status",
+              "displayName": "internal_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status_rank",
+              "displayName": "status_rank",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_event_key",
+              "displayName": "last_event_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_transition_key",
+              "displayName": "last_transition_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "notification_status",
+              "displayName": "notification_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_notification_key",
+              "displayName": "last_notification_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "pending_since_utc",
+              "displayName": "pending_since_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "oldest_open_age_hours",
+              "displayName": "oldest_open_age_hours",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_status_at_utc",
+              "displayName": "last_status_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status_reason",
+              "displayName": "status_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status_reason_html",
+              "displayName": "status_reason_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "safe_projection_json",
+              "displayName": "safe_projection_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_notified_status",
+              "displayName": "last_notified_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_email_id",
+              "displayName": "last_email_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "318e6dab-a3d0-4dde-8c12-b731c1afa78f",
+      "name": "Insert Intake Status History Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        3008,
+        192
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_STATUS_HISTORY_TABLE_ID",
+          "cachedResultName": "Status History"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "history_key": "={{ $('Filter Intake Sendable Notifications').item.json.history_key }}",
+            "order_key": "={{ $('Filter Intake Sendable Notifications').item.json.order_key }}",
+            "order_id": "={{ $('Filter Intake Sendable Notifications').item.json.order_id }}",
+            "event_key": "={{ $('Filter Intake Sendable Notifications').item.json.last_event_key }}",
+            "event_type": "={{ $('Filter Intake Sendable Notifications').item.json.event_type }}",
+            "from_status": "={{ $('Filter Intake Sendable Notifications').item.json.from_status }}",
+            "to_status": "={{ $('Filter Intake Sendable Notifications').item.json.to_status }}",
+            "action": "={{ $('Filter Intake Sendable Notifications').item.json.action }}",
+            "source_role": "={{ $('Filter Intake Sendable Notifications').item.json.source_role }}",
+            "source_channel": "={{ $('Filter Intake Sendable Notifications').item.json.source_channel }}",
+            "event_at_utc": "={{ $('Filter Intake Sendable Notifications').item.json.event_at_utc }}",
+            "reason": "={{ $('Filter Intake Sendable Notifications').item.json.reason }}",
+            "reason_html": "={{ $('Filter Intake Sendable Notifications').item.json.reason_html }}",
+            "created_at_utc": "={{ $('Filter Intake Sendable Notifications').item.json.created_at_utc }}",
+            "notification_key": "={{ $('Filter Intake Sendable Notifications').item.json.notification_key }}",
+            "smoke_tag": "={{ $('Filter Intake Sendable Notifications').item.json.smoke_tag }}",
+            "last_execution_id": "={{ $('Filter Intake Sendable Notifications').item.json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "history_key",
+              "displayName": "history_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "order_key",
+              "displayName": "order_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "event_key",
+              "displayName": "event_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "from_status",
+              "displayName": "from_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "to_status",
+              "displayName": "to_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "source_role",
+              "displayName": "source_role",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "source_channel",
+              "displayName": "source_channel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "event_at_utc",
+              "displayName": "event_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "reason_html",
+              "displayName": "reason_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at_utc",
+              "displayName": "created_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "notification_key",
+              "displayName": "notification_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "e48f6b06-3ebe-403b-9cbf-d1c3783fef4e",
+      "name": "Insert Status History Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        3008,
+        960
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_STATUS_HISTORY_TABLE_ID",
+          "cachedResultName": "Status History"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "history_key": "={{ $('Filter Status Persistable Transitions').item.json.history_key }}",
+            "order_key": "={{ $('Filter Status Persistable Transitions').item.json.order_key }}",
+            "order_id": "={{ $('Filter Status Persistable Transitions').item.json.order_id }}",
+            "event_key": "={{ $('Filter Status Persistable Transitions').item.json.event_key }}",
+            "event_type": "={{ $('Filter Status Persistable Transitions').item.json.event_type }}",
+            "from_status": "={{ $('Filter Status Persistable Transitions').item.json.from_status }}",
+            "to_status": "={{ $('Filter Status Persistable Transitions').item.json.to_status }}",
+            "action": "={{ $('Filter Status Persistable Transitions').item.json.action }}",
+            "source_role": "={{ $('Filter Status Persistable Transitions').item.json.source_role }}",
+            "source_channel": "={{ $('Filter Status Persistable Transitions').item.json.source_channel }}",
+            "event_at_utc": "={{ $('Filter Status Persistable Transitions').item.json.event_at_utc }}",
+            "reason": "={{ $('Filter Status Persistable Transitions').item.json.reason }}",
+            "reason_html": "={{ $('Filter Status Persistable Transitions').item.json.reason_html }}",
+            "created_at_utc": "={{ $('Filter Status Persistable Transitions').item.json.created_at_utc }}",
+            "notification_key": "={{ $('Filter Status Persistable Transitions').item.json.notification_key }}",
+            "smoke_tag": "={{ $('Filter Status Persistable Transitions').item.json.smoke_tag }}",
+            "last_execution_id": "={{ $('Filter Status Persistable Transitions').item.json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "history_key",
+              "displayName": "history_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "order_key",
+              "displayName": "order_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "event_key",
+              "displayName": "event_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "from_status",
+              "displayName": "from_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "to_status",
+              "displayName": "to_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "source_role",
+              "displayName": "source_role",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "source_channel",
+              "displayName": "source_channel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "event_at_utc",
+              "displayName": "event_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "reason_html",
+              "displayName": "reason_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at_utc",
+              "displayName": "created_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "notification_key",
+              "displayName": "notification_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "2803c549-dfe4-4c28-9e61-4a4ebc3f8434",
+      "name": "Insert Intake Notification Pending Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        3264,
+        192
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_NOTIFICATIONS_TABLE_ID",
+          "cachedResultName": "Notifications"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "notification_key": "={{ $('Filter Intake Sendable Notifications').item.json.notification_key }}",
+            "order_key": "={{ $('Filter Intake Sendable Notifications').item.json.order_key }}",
+            "order_id": "={{ $('Filter Intake Sendable Notifications').item.json.order_id }}",
+            "status": "={{ $('Filter Intake Sendable Notifications').item.json.status }}",
+            "status_rank": "={{ $('Filter Intake Sendable Notifications').item.json.status_rank }}",
+            "recipient_mode": "={{ $('Filter Intake Sendable Notifications').item.json.recipient_mode }}",
+            "controlled_recipient": "={{ $('Filter Intake Sendable Notifications').item.json.controlled_recipient }}",
+            "intended_recipient_hash": "={{ $('Filter Intake Sendable Notifications').item.json.intended_recipient_hash }}",
+            "email_subject": "={{ $('Filter Intake Sendable Notifications').item.json.email_subject }}",
+            "email_body_html": "={{ $('Filter Intake Sendable Notifications').item.json.email_body_html }}",
+            "email_sent": "={{ $('Filter Intake Sendable Notifications').item.json.email_sent }}",
+            "test_email_id": "={{ $('Filter Intake Sendable Notifications').item.json.test_email_id }}",
+            "status_before_send": "={{ $('Filter Intake Sendable Notifications').item.json.status_before_send }}",
+            "created_at_utc": "={{ $('Filter Intake Sendable Notifications').item.json.created_at_utc }}",
+            "updated_at_utc": "={{ $('Filter Intake Sendable Notifications').item.json.updated_at_utc }}",
+            "smoke_tag": "={{ $('Filter Intake Sendable Notifications').item.json.smoke_tag }}",
+            "last_execution_id": "={{ $('Filter Intake Sendable Notifications').item.json.last_execution_id }}",
+            "delivery_status": "={{ $('Filter Intake Sendable Notifications').item.json.notification_status }}",
+            "send_error": ""
+          },
+          "schema": [
+            {
+              "id": "notification_key",
+              "displayName": "notification_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "order_key",
+              "displayName": "order_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status_rank",
+              "displayName": "status_rank",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "recipient_mode",
+              "displayName": "recipient_mode",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "controlled_recipient",
+              "displayName": "controlled_recipient",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "intended_recipient_hash",
+              "displayName": "intended_recipient_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_subject",
+              "displayName": "email_subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_body_html",
+              "displayName": "email_body_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "delivery_status",
+              "displayName": "delivery_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "send_error",
+              "displayName": "send_error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_sent",
+              "displayName": "email_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "test_email_id",
+              "displayName": "test_email_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status_before_send",
+              "displayName": "status_before_send",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at_utc",
+              "displayName": "created_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "41a7b1cd-8083-4cce-906c-8d02abe14767",
+      "name": "Insert Status Notification Pending Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        3520,
+        960
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_NOTIFICATIONS_TABLE_ID",
+          "cachedResultName": "Notifications"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "notification_key": "={{ $('Filter Status Sendable Notifications').item.json.notification_key }}",
+            "order_key": "={{ $('Filter Status Sendable Notifications').item.json.order_key }}",
+            "order_id": "={{ $('Filter Status Sendable Notifications').item.json.order_id }}",
+            "status": "={{ $('Filter Status Sendable Notifications').item.json.status }}",
+            "status_rank": "={{ $('Filter Status Sendable Notifications').item.json.status_rank }}",
+            "recipient_mode": "={{ $('Filter Status Sendable Notifications').item.json.recipient_mode }}",
+            "controlled_recipient": "={{ $('Filter Status Sendable Notifications').item.json.controlled_recipient }}",
+            "intended_recipient_hash": "={{ $('Filter Status Sendable Notifications').item.json.intended_recipient_hash }}",
+            "email_subject": "={{ $('Filter Status Sendable Notifications').item.json.email_subject }}",
+            "email_body_html": "={{ $('Filter Status Sendable Notifications').item.json.email_body_html }}",
+            "email_sent": "={{ $('Filter Status Sendable Notifications').item.json.email_sent }}",
+            "test_email_id": "={{ $('Filter Status Sendable Notifications').item.json.test_email_id }}",
+            "status_before_send": "={{ $('Filter Status Sendable Notifications').item.json.status_before_send }}",
+            "created_at_utc": "={{ $('Filter Status Sendable Notifications').item.json.created_at_utc }}",
+            "updated_at_utc": "={{ $('Filter Status Sendable Notifications').item.json.updated_at_utc }}",
+            "smoke_tag": "={{ $('Filter Status Sendable Notifications').item.json.smoke_tag }}",
+            "last_execution_id": "={{ $('Filter Status Sendable Notifications').item.json.last_execution_id }}",
+            "delivery_status": "={{ $('Filter Status Sendable Notifications').item.json.notification_status }}",
+            "send_error": ""
+          },
+          "schema": [
+            {
+              "id": "notification_key",
+              "displayName": "notification_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "order_key",
+              "displayName": "order_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status_rank",
+              "displayName": "status_rank",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "recipient_mode",
+              "displayName": "recipient_mode",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "controlled_recipient",
+              "displayName": "controlled_recipient",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "intended_recipient_hash",
+              "displayName": "intended_recipient_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_subject",
+              "displayName": "email_subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_body_html",
+              "displayName": "email_body_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "delivery_status",
+              "displayName": "delivery_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "send_error",
+              "displayName": "send_error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_sent",
+              "displayName": "email_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "test_email_id",
+              "displayName": "test_email_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status_before_send",
+              "displayName": "status_before_send",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at_utc",
+              "displayName": "created_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "c48120f4-17ef-4497-98c4-5c863cb29a7d",
+      "name": "Send Controlled Intake Status Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        3520,
+        192
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "ops@example.com",
+        "subject": "={{ $('Filter Intake Sendable Notifications').item.json.email_subject }}",
+        "emailType": "html",
+        "message": "={{ $('Filter Intake Sendable Notifications').item.json.email_body_html }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000,
+      "onError": "continueRegularOutput",
+      "webhookId": "e8cca0f3-fcfa-4daa-aa23-904bb834dfaf"
+    },
+    {
+      "id": "968cac68-705b-4079-9557-69a18ab17c79",
+      "name": "Send Controlled Status Update Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        3776,
+        960
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "ops@example.com",
+        "subject": "={{ $('Filter Status Sendable Notifications').item.json.email_subject }}",
+        "emailType": "html",
+        "message": "={{ $('Filter Status Sendable Notifications').item.json.email_body_html }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000,
+      "onError": "continueRegularOutput",
+      "webhookId": "280a1032-d913-41c1-819c-6b3ae0da68d8"
+    },
+    {
+      "id": "e62a0adf-2e2b-4d88-b7c2-0d3398921228",
+      "name": "Build Intake Sent Updates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3776,
+        192
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const action = $('Filter Intake Sendable Notifications').item.json || {};\nconst sent = $input.item.json || {};\nconst emailId = String(sent.id || sent.messageId || sent.threadId || '').trim();\nconst sendFailed = Boolean(sent.error || (sent.message && sent.message.error) || sent.name === 'NodeApiError' || !emailId);\nconst now = new Date().toISOString();\nreturn { json: {\n  ...action,\n  email_sent: !sendFailed,\n  test_email_id: sendFailed ? '' : emailId,\n  last_email_id: sendFailed ? (action.last_email_id || '') : emailId,\n  last_notified_status: sendFailed ? (action.last_notified_status || '') : (action.customer_visible_status || action.to_status || action.status || ''),\n  notification_status: sendFailed ? 'Pending Send' : 'Sent Controlled',\n  pending_since_utc: action.pending_since_utc || now,\n  oldest_open_age_hours: 0,\n  updated_at_utc: now,\n  last_execution_id: $execution.id,\n  response_code: sendFailed ? 202 : (action.response_code || 202),\n  response_status: sendFailed ? 'send_failed_pending_retry' : (action.response_status || 'sent_controlled'),\n  send_error: sendFailed ? JSON.stringify(sent).slice(0, 500) : '',\n} };"
+      }
+    },
+    {
+      "id": "8736ed3d-ab27-48b4-8292-7c5a05a4c213",
+      "name": "Build Status Sent Updates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4032,
+        960
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const action = $('Filter Status Sendable Notifications').item.json || {};\nconst sent = $input.item.json || {};\nconst emailId = String(sent.id || sent.messageId || sent.threadId || '').trim();\nconst sendFailed = Boolean(sent.error || (sent.message && sent.message.error) || sent.name === 'NodeApiError' || !emailId);\nconst now = new Date().toISOString();\nreturn { json: {\n  ...action,\n  email_sent: !sendFailed,\n  test_email_id: sendFailed ? '' : emailId,\n  last_email_id: sendFailed ? (action.last_email_id || '') : emailId,\n  last_notified_status: sendFailed ? (action.last_notified_status || '') : (action.customer_visible_status || action.to_status || action.status || ''),\n  notification_status: sendFailed ? 'Pending Send' : 'Sent Controlled',\n  pending_since_utc: action.pending_since_utc || now,\n  oldest_open_age_hours: 0,\n  updated_at_utc: now,\n  last_execution_id: $execution.id,\n  response_code: sendFailed ? 202 : (action.response_code || 202),\n  response_status: sendFailed ? 'send_failed_pending_retry' : (action.response_status || 'sent_controlled'),\n  send_error: sendFailed ? JSON.stringify(sent).slice(0, 500) : '',\n} };"
+      }
+    },
+    {
+      "id": "df162259-d114-421b-a476-ecb67d079c3e",
+      "name": "Update Intake Notification Sent",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        4032,
+        192
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_NOTIFICATIONS_TABLE_ID",
+          "cachedResultName": "Notifications"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "notification_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.notification_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "email_sent": "={{ $json.email_sent }}",
+            "test_email_id": "={{ $json.test_email_id }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_execution_id": "={{ $json.last_execution_id }}",
+            "delivery_status": "={{ $json.notification_status }}",
+            "send_error": "={{ $json.send_error }}"
+          },
+          "schema": [
+            {
+              "id": "delivery_status",
+              "displayName": "delivery_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "send_error",
+              "displayName": "send_error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_sent",
+              "displayName": "email_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "test_email_id",
+              "displayName": "test_email_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "d4529df5-5299-4e2d-89f1-26a77730fe6b",
+      "name": "Update Status Notification Sent",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        4288,
+        960
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_NOTIFICATIONS_TABLE_ID",
+          "cachedResultName": "Notifications"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "notification_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.notification_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "email_sent": "={{ $json.email_sent }}",
+            "test_email_id": "={{ $json.test_email_id }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_execution_id": "={{ $json.last_execution_id }}",
+            "delivery_status": "={{ $json.notification_status }}",
+            "send_error": "={{ $json.send_error }}"
+          },
+          "schema": [
+            {
+              "id": "delivery_status",
+              "displayName": "delivery_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "send_error",
+              "displayName": "send_error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_sent",
+              "displayName": "email_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "test_email_id",
+              "displayName": "test_email_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "1b647557-4702-495b-b631-09ba65647214",
+      "name": "Update Intake Order Notified",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        4288,
+        192
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_ORDERS_TABLE_ID",
+          "cachedResultName": "Orders"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "order_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Build Intake Sent Updates').item.json.order_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "customer_visible_status": "={{ $('Build Intake Sent Updates').item.json.customer_visible_status }}",
+            "internal_status": "={{ $('Build Intake Sent Updates').item.json.internal_status }}",
+            "status_rank": "={{ $('Build Intake Sent Updates').item.json.status_rank }}",
+            "last_event_key": "={{ $('Build Intake Sent Updates').item.json.last_event_key }}",
+            "last_transition_key": "={{ $('Build Intake Sent Updates').item.json.last_transition_key }}",
+            "last_notified_status": "={{ $('Build Intake Sent Updates').item.json.last_notified_status }}",
+            "notification_status": "={{ $('Build Intake Sent Updates').item.json.notification_status }}",
+            "last_notification_key": "={{ $('Build Intake Sent Updates').item.json.last_notification_key }}",
+            "last_email_id": "={{ $('Build Intake Sent Updates').item.json.last_email_id }}",
+            "pending_since_utc": "={{ $('Build Intake Sent Updates').item.json.pending_since_utc }}",
+            "oldest_open_age_hours": "={{ $('Build Intake Sent Updates').item.json.oldest_open_age_hours }}",
+            "updated_at_utc": "={{ $('Build Intake Sent Updates').item.json.updated_at_utc }}",
+            "last_status_at_utc": "={{ $('Build Intake Sent Updates').item.json.last_status_at_utc }}",
+            "status_reason": "={{ $('Build Intake Sent Updates').item.json.status_reason }}",
+            "status_reason_html": "={{ $('Build Intake Sent Updates').item.json.status_reason_html }}",
+            "safe_projection_json": "={{ $('Build Intake Sent Updates').item.json.safe_projection_json }}",
+            "last_execution_id": "={{ $('Build Intake Sent Updates').item.json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "customer_visible_status",
+              "displayName": "customer_visible_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "internal_status",
+              "displayName": "internal_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status_rank",
+              "displayName": "status_rank",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_event_key",
+              "displayName": "last_event_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_transition_key",
+              "displayName": "last_transition_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_notified_status",
+              "displayName": "last_notified_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "notification_status",
+              "displayName": "notification_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_notification_key",
+              "displayName": "last_notification_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_email_id",
+              "displayName": "last_email_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "pending_since_utc",
+              "displayName": "pending_since_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "oldest_open_age_hours",
+              "displayName": "oldest_open_age_hours",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_status_at_utc",
+              "displayName": "last_status_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status_reason",
+              "displayName": "status_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status_reason_html",
+              "displayName": "status_reason_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "safe_projection_json",
+              "displayName": "safe_projection_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "6fba5753-1995-4d5c-98df-22c00a7de1a8",
+      "name": "Update Status Order Notified",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        4544,
+        960
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_ORDERS_TABLE_ID",
+          "cachedResultName": "Orders"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "order_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Build Status Sent Updates').item.json.order_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "customer_visible_status": "={{ $('Build Status Sent Updates').item.json.customer_visible_status }}",
+            "internal_status": "={{ $('Build Status Sent Updates').item.json.internal_status }}",
+            "status_rank": "={{ $('Build Status Sent Updates').item.json.status_rank }}",
+            "last_event_key": "={{ $('Build Status Sent Updates').item.json.last_event_key }}",
+            "last_transition_key": "={{ $('Build Status Sent Updates').item.json.last_transition_key }}",
+            "last_notified_status": "={{ $('Build Status Sent Updates').item.json.last_notified_status }}",
+            "notification_status": "={{ $('Build Status Sent Updates').item.json.notification_status }}",
+            "last_notification_key": "={{ $('Build Status Sent Updates').item.json.last_notification_key }}",
+            "last_email_id": "={{ $('Build Status Sent Updates').item.json.last_email_id }}",
+            "pending_since_utc": "={{ $('Build Status Sent Updates').item.json.pending_since_utc }}",
+            "oldest_open_age_hours": "={{ $('Build Status Sent Updates').item.json.oldest_open_age_hours }}",
+            "updated_at_utc": "={{ $('Build Status Sent Updates').item.json.updated_at_utc }}",
+            "last_status_at_utc": "={{ $('Build Status Sent Updates').item.json.last_status_at_utc }}",
+            "status_reason": "={{ $('Build Status Sent Updates').item.json.status_reason }}",
+            "status_reason_html": "={{ $('Build Status Sent Updates').item.json.status_reason_html }}",
+            "safe_projection_json": "={{ $('Build Status Sent Updates').item.json.safe_projection_json }}",
+            "last_execution_id": "={{ $('Build Status Sent Updates').item.json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "customer_visible_status",
+              "displayName": "customer_visible_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "internal_status",
+              "displayName": "internal_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status_rank",
+              "displayName": "status_rank",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_event_key",
+              "displayName": "last_event_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_transition_key",
+              "displayName": "last_transition_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_notified_status",
+              "displayName": "last_notified_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "notification_status",
+              "displayName": "notification_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_notification_key",
+              "displayName": "last_notification_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_email_id",
+              "displayName": "last_email_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "pending_since_utc",
+              "displayName": "pending_since_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "oldest_open_age_hours",
+              "displayName": "oldest_open_age_hours",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_status_at_utc",
+              "displayName": "last_status_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status_reason",
+              "displayName": "status_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status_reason_html",
+              "displayName": "status_reason_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "safe_projection_json",
+              "displayName": "safe_projection_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "2b369016-1b37-4dd7-b928-2720e40cff8a",
+      "name": "Build Intake Success Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4544,
+        192
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const item = $('Build Intake Sent Updates').item.json || {};\nreturn { json: {\n  ok: item.response_code < 400,\n  status: item.response_status || item.action || 'ok',\n  order_id: item.order_id || '',\n  visible_status: item.customer_visible_status || item.to_status || '',\n  reason: item.reason || item.status_reason || '',\n} };"
+      }
+    },
+    {
+      "id": "af581faa-2956-4d47-8980-4af9b09e61f2",
+      "name": "Build Status Success Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2432,
+        1984
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const item = $('Build Status Sent Updates').item.json || {};\nconst responseCode = Number(item.response_code || 202);\nreturn { json: {\n  ok: responseCode < 400,\n  status: item.response_status || item.action || 'ok',\n  order_id: item.order_id || '',\n  visible_status: item.customer_visible_status || item.to_status || '',\n  reason: item.reason || item.status_reason || '',\n  response_code: responseCode,\n} };"
+      }
+    },
+    {
+      "id": "529d1455-bdc9-4b28-86a4-0289fc976508",
+      "name": "Respond Intake Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        4800,
+        192
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 202
+        }
+      }
+    },
+    {
+      "id": "530f517b-10e4-4f72-a74d-b76309f0fb02",
+      "name": "Insert Intake Held History Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1664,
+        1728
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_STATUS_HISTORY_TABLE_ID",
+          "cachedResultName": "Status History"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "history_key": "={{ $json.history_key }}",
+            "order_key": "={{ $json.order_key }}",
+            "order_id": "={{ $json.order_id }}",
+            "event_key": "={{ $json.event_key }}",
+            "event_type": "={{ $json.event_type }}",
+            "from_status": "={{ $json.from_status }}",
+            "to_status": "={{ $json.to_status }}",
+            "action": "={{ $json.action }}",
+            "source_role": "={{ $json.source_role }}",
+            "source_channel": "={{ $json.source_channel }}",
+            "event_at_utc": "={{ $json.event_at_utc }}",
+            "reason": "={{ $json.reason }}",
+            "reason_html": "={{ $json.reason_html }}",
+            "created_at_utc": "={{ $json.created_at_utc }}",
+            "notification_key": "={{ $json.notification_key }}",
+            "smoke_tag": "={{ $json.smoke_tag }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "history_key",
+              "displayName": "history_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "order_key",
+              "displayName": "order_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "event_key",
+              "displayName": "event_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "from_status",
+              "displayName": "from_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "to_status",
+              "displayName": "to_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "source_role",
+              "displayName": "source_role",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "source_channel",
+              "displayName": "source_channel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "event_at_utc",
+              "displayName": "event_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "reason_html",
+              "displayName": "reason_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at_utc",
+              "displayName": "created_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "notification_key",
+              "displayName": "notification_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "da4fc0c8-aa2d-4ea4-bdf2-974627cf6fb0",
+      "name": "Insert Status Held History Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1664,
+        1984
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_STATUS_HISTORY_TABLE_ID",
+          "cachedResultName": "Status History"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "history_key": "={{ $json.history_key }}",
+            "order_key": "={{ $json.order_key }}",
+            "order_id": "={{ $json.order_id }}",
+            "event_key": "={{ $json.event_key }}",
+            "event_type": "={{ $json.event_type }}",
+            "from_status": "={{ $json.from_status }}",
+            "to_status": "={{ $json.to_status }}",
+            "action": "={{ $json.action }}",
+            "source_role": "={{ $json.source_role }}",
+            "source_channel": "={{ $json.source_channel }}",
+            "event_at_utc": "={{ $json.event_at_utc }}",
+            "reason": "={{ $json.reason }}",
+            "reason_html": "={{ $json.reason_html }}",
+            "created_at_utc": "={{ $json.created_at_utc }}",
+            "notification_key": "={{ $json.notification_key }}",
+            "smoke_tag": "={{ $json.smoke_tag }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "history_key",
+              "displayName": "history_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "order_key",
+              "displayName": "order_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "event_key",
+              "displayName": "event_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "from_status",
+              "displayName": "from_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "to_status",
+              "displayName": "to_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "source_role",
+              "displayName": "source_role",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "source_channel",
+              "displayName": "source_channel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "event_at_utc",
+              "displayName": "event_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "reason_html",
+              "displayName": "reason_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at_utc",
+              "displayName": "created_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "notification_key",
+              "displayName": "notification_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "69a15e41-8670-463a-9267-b1e903383fc6",
+      "name": "Build Intake Terminal Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        1728
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const item = $input.item.json || {};\nreturn { json: {\n  ok: item.response_code < 400,\n  status: item.response_status || item.action || 'ok',\n  order_id: item.order_id || '',\n  visible_status: item.customer_visible_status || item.to_status || '',\n  reason: item.reason || item.status_reason || '',\n} };"
+      }
+    },
+    {
+      "id": "bebaa0d4-2b5e-4b2f-b17e-c10adbc33684",
+      "name": "Build Status Terminal Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2176,
+        1984
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const item = $input.item.json || {};\nconst unauthorized = item.auth_ok === false;\nconst responseCode = unauthorized ? 401 : Number(item.response_code || 200);\nreturn { json: {\n  ok: responseCode < 400,\n  status: unauthorized ? 'unauthorized' : (item.response_status || item.action || 'ok'),\n  order_id: item.order_id || '',\n  visible_status: item.customer_visible_status || item.to_status || '',\n  reason: unauthorized ? (item.auth_reason || 'unauthorized') : (item.reason || item.status_reason || ''),\n  response_code: responseCode,\n} };"
+      }
+    },
+    {
+      "id": "e5f85b43-b23b-485f-8089-197e246b53b9",
+      "name": "Respond Intake Terminal",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2176,
+        1728
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": "={{ $json.ok ? 200 : 422 }}"
+        }
+      }
+    },
+    {
+      "id": "8f5d3c02-6eac-4abb-bf47-f283f97d6650",
+      "name": "Respond Status Update",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2688,
+        1984
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": "={{ $json.response_code }}"
+        }
+      }
+    },
+    {
+      "id": "ecf3099a-6b73-4230-8c07-e273115d9b4f",
+      "name": "Customer Status Lookup Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        64,
+        2496
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "order-status-lookup",
+        "responseMode": "responseNode"
+      },
+      "webhookId": "c2e3db02-8cab-4a56-a2b1-ff8eea7c7c25"
+    },
+    {
+      "id": "82ba3332-da9c-45ae-b6ee-3857f83aaccb",
+      "name": "Normalize Status Lookup",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        2496
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const crypto = require('crypto');\nconst root = $input.item.json || {};\nconst body = root.body && typeof root.body === 'object' ? root.body : root;\nconst collapse = (value) => String(value ?? '').replace(/\\s+/g, ' ').trim();\nconst hash = (value) => crypto.createHash('sha256').update(String(value)).digest('hex');\nconst tenantKey = collapse(body.tenant_key || body.tenant_id || '').toLowerCase();\nconst orderId = collapse(body.order_id || body.order_number || body.id);\nconst verifier = collapse(body.customer_status_token || body.status_token || body.verifier);\nconst orderKey = tenantKey && orderId ? hash('order-tracker:order:' + tenantKey + ':' + orderId.toLowerCase()) : '';\nreturn { json: {\n  tenant_key: tenantKey,\n  order_id: orderId,\n  order_key: orderKey,\n  provided_verifier_hash: verifier && orderKey ? hash('order-tracker-verifier:' + orderKey + ':' + verifier) : '',\n  lookup_ok: Boolean(tenantKey && orderId && verifier),\n} };"
+      }
+    },
+    {
+      "id": "9c68837e-7764-4ca3-aed6-eea19e9c7eb7",
+      "name": "Find Lookup Order Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        576,
+        2496
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_ORDERS_TABLE_ID",
+          "cachedResultName": "Orders"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "order_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.order_key }}"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": 1
+      },
+      "alwaysOutputData": true,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "e2ab21b9-6cae-4cb8-91e9-aea2a83e1ff6",
+      "name": "Build Safe Lookup Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        2496
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const lookup = $('Normalize Status Lookup').item.json || {};\nconst rows = $input.all().map((item) => item.json || {}).filter((row) => row.order_key);\nconst row = rows.find((item) => item.order_key === lookup.order_key);\nconst authorized = Boolean(row && lookup.lookup_ok && row.customer_verifier_hash && row.customer_verifier_hash === lookup.provided_verifier_hash);\nif (!authorized) {\n  return { json: { ok: false, status: 'not_found', reason: 'order_not_found_or_bad_verifier' } };\n}\nlet projection = {};\ntry { projection = JSON.parse(row.safe_projection_json || '{}'); } catch (err) { projection = {}; }\nreturn { json: {\n  ok: true,\n  status: 'found',\n  order: {\n    order_id: row.order_id,\n    customer_visible_status: row.customer_visible_status,\n    updated_at_utc: row.updated_at_utc,\n    message: projection.message || 'Order status is available.',\n  },\n} };"
+      }
+    },
+    {
+      "id": "b9407cf3-8164-4999-b4fe-0723b84e659c",
+      "name": "Respond Customer Status Lookup",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1088,
+        2496
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": "={{ $json.ok ? 200 : 404 }}"
+        }
+      }
+    },
+    {
+      "id": "d4a23ef9-283c-488a-b79b-214c290c97aa",
+      "name": "Stale Order Sweep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        1664,
+        2496
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1,
+              "triggerAtMinute": 13
+            }
+          ]
+        },
+        "timezone": "UTC"
+      }
+    },
+    {
+      "id": "24381326-824f-4615-93b7-acd733175c33",
+      "name": "Find Pending Notification Orders",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1920,
+        2496
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_ORDERS_TABLE_ID",
+          "cachedResultName": "Orders"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "notification_status",
+              "condition": "eq",
+              "keyValue": "Pending Send"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "949edde7-e1fc-436a-bb5d-970b39c8f441",
+      "name": "Build Stale Pending Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2176,
+        2496
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const rows = $input.all().map((item) => item.json || {}).filter((row) => row.order_key);\nconst now = Date.now();\nconst stale = rows.map((row) => {\n  const started = Date.parse(row.pending_since_utc || row.updated_at_utc || '');\n  const age = Number.isFinite(started) ? (now - started) / 36e5 : 0;\n  return { ...row, pending_age_hours: age };\n}).filter((row) => row.notification_status === 'Pending Send' && row.pending_age_hours >= 2);\nif (!stale.length) return [];\nconst oldest = Math.max(...stale.map((row) => row.pending_age_hours));\nconst htmlRows = stale.map((row) => '<li>' + String(row.order_id).replace(/[&<>\"']/g, '') + ': ' + String(row.customer_visible_status).replace(/[&<>\"']/g, '') + ' pending ' + row.pending_age_hours.toFixed(1) + 'h</li>').join('');\nreturn [{ json: {\n  stale_alert_needed: true,\n  email_subject: '[ORDER STATUS] Stale order notification queue',\n  report_html: '<p>Pending controlled emails need review.</p><ul>' + htmlRows + '</ul>',\n  stale_count: stale.length,\n  oldest_pending_age_hours: oldest,\n} }];"
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "9d274c37-de5f-4a2b-a9c5-df2ec577180b",
+      "name": "Stale Alert Needed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2432,
+        2496
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.stale_alert_needed }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "803310d1-e100-4706-bc10-b67319c3aa93",
+      "name": "Send Controlled Stale Alert",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2688,
+        2496
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "ops@example.com",
+        "subject": "={{ $json.email_subject }}",
+        "emailType": "html",
+        "message": "={{ $json.report_html }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000,
+      "webhookId": "a1be7cfd-ec1b-44bf-88e4-d930bc227655"
+    },
+    {
+      "id": "b425c124-3ebe-423c-9b71-47b6a05e075a",
+      "name": "Find Intake Existing Notification Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1664,
+        192
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_NOTIFICATIONS_TABLE_ID",
+          "cachedResultName": "Notifications"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "notification_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.notification_key }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "d95e85ad-2f0e-4a58-b5ba-fe5c692ecc39",
+      "name": "Apply Intake Notification Dedup",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        192
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const source = $items('Build Intake Actions').map((item) => item.json || {});\nconst sentKeys = new Set($input.all().map((item) => item.json || {}).filter((row) => row.notification_key && (row.email_sent === true || String(row.test_email_id || '').trim())).map((row) => row.notification_key));\nreturn source.map((action) => {\n  if (action.should_send_email && action.notification_key && sentKeys.has(action.notification_key)) {\n    return { json: {\n      ...action,\n      should_send_email: false,\n      should_persist_hold: false,\n      action: 'notification_already_sent',\n      response_code: 200,\n      response_status: 'notification_already_sent',\n      reason: 'notification_key_already_sent',\n      reason_html: 'notification_key_already_sent',\n      notification_status: 'Sent Controlled',\n      pending_since_utc: action.pending_since_utc || action.updated_at_utc || new Date().toISOString(),\n      ledger_dedup_hit: true,\n    } };\n  }\n  return { json: action };\n});"
+      }
+    },
+    {
+      "id": "3c8873f8-6459-4eda-8d98-a3e386cd81eb",
+      "name": "Find Status Existing Notification Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1664,
+        960
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_NOTIFICATIONS_TABLE_ID",
+          "cachedResultName": "Notifications"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "notification_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.notification_key }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true,
+      "onError": "stopWorkflow"
+    },
+    {
+      "id": "5d245cd0-cbd3-493a-9076-b95e3f60ad48",
+      "name": "Apply Status Notification Dedup",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        960
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const source = $items('Build Status Actions').map((item) => item.json || {});\nconst sentByKey = new Map();\nfor (const item of $input.all()) {\n  const row = item.json || {};\n  const messageId = String(row.test_email_id || '').trim();\n  const provesSent = row.email_sent === true || Boolean(messageId);\n  if (!row.notification_key || !provesSent) continue;\n  const current = sentByKey.get(row.notification_key);\n  if (!current || (!String(current.test_email_id || '').trim() && messageId)) sentByKey.set(row.notification_key, row);\n}\nreturn source.map((action) => {\n  const sent = sentByKey.get(action.notification_key);\n  if (action.should_persist_transition && action.should_send_email && sent) {\n    const sentId = String(sent.test_email_id || '').trim();\n    return { json: {\n      ...action,\n      should_persist_transition: true,\n      should_send_email: false,\n      should_persist_hold: false,\n      action: 'update_order_without_repeat_notification',\n      response_code: 200,\n      response_status: 'status_updated_notification_already_sent',\n      reason: 'notification_key_already_sent',\n      reason_html: 'notification_key_already_sent',\n      last_notified_status: action.status || action.customer_visible_status || '',\n      notification_status: 'Sent Controlled',\n      last_notification_key: action.notification_key,\n      last_email_id: sentId || action.last_email_id || '',\n      pending_since_utc: sent.updated_at_utc || sent.created_at_utc || action.updated_at_utc || new Date().toISOString(),\n      email_sent: true,\n      test_email_id: sentId,\n      ledger_dedup_hit: true,\n    } };\n  }\n  return { json: action };\n});"
+      }
+    },
+    {
+      "id": "0d6fe990-61a4-4aaf-82df-47477710d5c7",
+      "name": "Filter Status Persistable Transitions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2176,
+        960
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "return $input.all().filter((item) => Boolean(item.json && item.json.should_persist_transition)).map((item) => ({ json: item.json }));"
+      }
+    },
+    {
+      "id": "1504672b-b6e8-432a-8257-21068c052d52",
+      "name": "Filter Status Persisted Without Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        1984
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const source = $items('Filter Status Persistable Transitions').map((item) => item.json || {});\nreturn source.filter((item) => item.should_persist_transition && !item.should_send_email).map((item) => ({ json: item }));"
+      }
+    },
+    {
+      "id": "7e40df4d-800f-4c0d-8f6c-1e00b9e59bd5",
+      "name": "Find Status Event History Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        832,
+        1216
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_STATUS_HISTORY_TABLE_ID",
+          "cachedResultName": "Status History"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "event_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Normalize Status Update').item.json.event_key }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "alwaysOutputData": true,
+      "onError": "stopWorkflow"
+    }
+  ],
+  "connections": {
+    "Order Intake Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Intake Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Intake Token": {
+      "main": [
+        [
+          {
+            "node": "Intake Token Authorized?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intake Token Authorized?": {
+      "main": [
+        [
+          {
+            "node": "Normalize Order Intake",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Intake Unauthorized",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Order Intake": {
+      "main": [
+        [
+          {
+            "node": "Find Intake Order Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Intake Order Row": {
+      "main": [
+        [
+          {
+            "node": "Build Intake Actions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Status Update Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Status Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Status Token": {
+      "main": [
+        [
+          {
+            "node": "Status Token Authorized?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Status Token Authorized?": {
+      "main": [
+        [
+          {
+            "node": "Normalize Status Update",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Status Terminal Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Status Update": {
+      "main": [
+        [
+          {
+            "node": "Find Status Order Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Status Order Rows": {
+      "main": [
+        [
+          {
+            "node": "Find Status Event History Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Intake Sendable Notifications": {
+      "main": [
+        [
+          {
+            "node": "Insert Intake Order Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Status Sendable Notifications": {
+      "main": [
+        [
+          {
+            "node": "Insert Status Notification Pending Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Intake Held Actions": {
+      "main": [
+        [
+          {
+            "node": "Insert Intake Held History Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Status Held Actions": {
+      "main": [
+        [
+          {
+            "node": "Insert Status Held History Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Intake Terminal No-Write Actions": {
+      "main": [
+        [
+          {
+            "node": "Build Intake Terminal Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Status Terminal No-Write Actions": {
+      "main": [
+        [
+          {
+            "node": "Build Status Terminal Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Intake Order Row": {
+      "main": [
+        [
+          {
+            "node": "Insert Intake Status History Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Intake Status History Row": {
+      "main": [
+        [
+          {
+            "node": "Insert Intake Notification Pending Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Status History Row": {
+      "main": [
+        [
+          {
+            "node": "Filter Status Sendable Notifications",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter Status Persisted Without Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Intake Notification Pending Row": {
+      "main": [
+        [
+          {
+            "node": "Send Controlled Intake Status Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Status Notification Pending Row": {
+      "main": [
+        [
+          {
+            "node": "Send Controlled Status Update Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Controlled Intake Status Email": {
+      "main": [
+        [
+          {
+            "node": "Build Intake Sent Updates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Controlled Status Update Email": {
+      "main": [
+        [
+          {
+            "node": "Build Status Sent Updates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Intake Sent Updates": {
+      "main": [
+        [
+          {
+            "node": "Update Intake Notification Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Status Sent Updates": {
+      "main": [
+        [
+          {
+            "node": "Update Status Notification Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Intake Notification Sent": {
+      "main": [
+        [
+          {
+            "node": "Update Intake Order Notified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status Notification Sent": {
+      "main": [
+        [
+          {
+            "node": "Update Status Order Notified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Intake Order Notified": {
+      "main": [
+        [
+          {
+            "node": "Build Intake Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status Order Notified": {
+      "main": [
+        [
+          {
+            "node": "Build Status Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Intake Success Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Intake Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Status Success Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Status Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Intake Held History Row": {
+      "main": [
+        [
+          {
+            "node": "Build Intake Terminal Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Status Held History Row": {
+      "main": [
+        [
+          {
+            "node": "Build Status Terminal Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Intake Terminal Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Intake Terminal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Status Terminal Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Status Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer Status Lookup Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Status Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Status Lookup": {
+      "main": [
+        [
+          {
+            "node": "Find Lookup Order Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Lookup Order Row": {
+      "main": [
+        [
+          {
+            "node": "Build Safe Lookup Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Safe Lookup Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Customer Status Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stale Order Sweep": {
+      "main": [
+        [
+          {
+            "node": "Find Pending Notification Orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Pending Notification Orders": {
+      "main": [
+        [
+          {
+            "node": "Build Stale Pending Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Stale Pending Summary": {
+      "main": [
+        [
+          {
+            "node": "Stale Alert Needed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stale Alert Needed?": {
+      "main": [
+        [
+          {
+            "node": "Send Controlled Stale Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply Intake Notification Dedup": {
+      "main": [
+        [
+          {
+            "node": "Filter Intake Held Actions",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter Intake Sendable Notifications",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter Intake Terminal No-Write Actions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply Status Notification Dedup": {
+      "main": [
+        [
+          {
+            "node": "Filter Status Persistable Transitions",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter Status Held Actions",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter Status Terminal No-Write Actions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Intake Actions": {
+      "main": [
+        [
+          {
+            "node": "Find Intake Existing Notification Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Status Actions": {
+      "main": [
+        [
+          {
+            "node": "Find Status Existing Notification Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Intake Existing Notification Row": {
+      "main": [
+        [
+          {
+            "node": "Apply Intake Notification Dedup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Status Existing Notification Row": {
+      "main": [
+        [
+          {
+            "node": "Apply Status Notification Dedup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status Order Transition": {
+      "main": [
+        [
+          {
+            "node": "Insert Status History Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Status Persistable Transitions": {
+      "main": [
+        [
+          {
+            "node": "Update Status Order Transition",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Status Persisted Without Email": {
+      "main": [
+        [
+          {
+            "node": "Build Status Terminal Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Status Event History Rows": {
+      "main": [
+        [
+          {
+            "node": "Build Status Actions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "UTC"
+  },
+  "tags": []
+}

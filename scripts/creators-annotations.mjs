@@ -390,6 +390,90 @@ Adapt the calendar, kickoff copy, reconciliation cadence, and review process whi
       ]),
     ],
   },
+  '10-order-status-tracker': {
+    overviewTitle: 'Track orders and serve safe customer status lookups',
+    overview: `## Track orders and serve safe customer status lookups
+
+### How it works
+1. Uses separate server-side tokens for the create-only order intake lane and the internal status-update lane; request bodies cannot choose their own authority.
+2. Requires explicit source event ids, derives deterministic keys, rejects weak lookup secrets, and checks full Status History before evaluation so accepted or held replays do not write again.
+3. Creates one order, records accepted or held status evidence, and persists notification intent before Gmail is attempted. A valid re-entry into an already-notified status still updates the Order and History, but does not insert another pending notification or send Gmail again.
+4. Accepts exactly one status object per request, rejects batch-shaped payloads, holds strictly older events, and applies an explicit allowed-edge matrix without guessing.
+5. Serves a read-only customer lookup that requires tenant, order, and per-order verifier inputs and returns only order id, visible status, update time, and a safe message.
+6. Sweeps for notifications left pending for at least two hours and emails a controlled operations inbox.
+
+### Setup steps
+- [ ] Create Orders, Status History, and Notifications Data Tables, then re-select them in every table node.
+- [ ] Set separate ORDER_INTAKE_TOKEN and ORDER_STATUS_TOKEN n8n Variables.
+- [ ] Connect Gmail and replace ops@example.com with your controlled operations inbox.
+- [ ] Review the status vocabulary, allowed transitions, notification text, stale threshold, and schedule.
+- [ ] Test wrong tokens, weak verifiers, status arrays, replay, older and blocked transitions, lookup, Gmail failure, and stale rows while inactive.
+
+### Customization
+Connect your commerce or fulfilment adapters and adjust approved status wording while preserving tenant-scoped keys, separate authority, persist-before-send ordering, safe lookup projection, and explicit residual handling.`,
+    sections: [
+      section('Protect and classify order intake', 'Authenticates the create-only lane, normalizes required identity and time fields, then resolves the existing order safely.', 0, 0, 5, [
+        'Order Intake Webhook', 'Validate Intake Token', 'Intake Token Authorized?', 'Respond Intake Unauthorized',
+        'Normalize Order Intake', 'Find Intake Order Row', 'Build Intake Actions',
+      ], {
+        'Order Intake Webhook': [0, 0], 'Validate Intake Token': [1, 0], 'Intake Token Authorized?': [2, 0],
+        'Normalize Order Intake': [3, 0], 'Find Intake Order Row': [4, 0],
+        'Respond Intake Unauthorized': [3, 1], 'Build Intake Actions': [4, 1],
+      }),
+      section('Protect and classify status updates', 'Authenticates one event, joins its Order, and checks full Status History by event key before stale, edge, or hold evaluation.', 0, 768, 5, [
+        'Status Update Webhook', 'Validate Status Token', 'Status Token Authorized?',
+        'Normalize Status Update', 'Find Status Order Rows', 'Find Status Event History Rows', 'Build Status Actions',
+      ], {
+        'Status Update Webhook': [0, 0], 'Validate Status Token': [1, 0], 'Status Token Authorized?': [2, 0],
+        'Normalize Status Update': [3, 0], 'Find Status Order Rows': [4, 0],
+        'Find Status Event History Rows': [3, 1], 'Build Status Actions': [4, 1],
+      }),
+      section('Deduplicate and route intake outcomes', 'Checks the notification ledger, then separates sendable, held, and no-write replay outcomes.', 1600, 0, 3, [
+        'Find Intake Existing Notification Row', 'Apply Intake Notification Dedup',
+        'Filter Intake Sendable Notifications', 'Filter Intake Held Actions', 'Filter Intake Terminal No-Write Actions',
+      ], {
+        'Find Intake Existing Notification Row': [0, 0], 'Apply Intake Notification Dedup': [1, 0],
+        'Filter Intake Sendable Notifications': [2, 0], 'Filter Intake Held Actions': [2, 1],
+        'Filter Intake Terminal No-Write Actions': [1, 1],
+      }),
+      section('Deduplicate and route status outcomes', 'Checks every matching milestone row, then separates persistable transitions from held and true no-write outcomes.', 1600, 768, 3, [
+        'Find Status Existing Notification Row', 'Apply Status Notification Dedup',
+        'Filter Status Persistable Transitions', 'Filter Status Held Actions', 'Filter Status Terminal No-Write Actions',
+      ], {
+        'Find Status Existing Notification Row': [0, 0], 'Apply Status Notification Dedup': [1, 0],
+        'Filter Status Persistable Transitions': [2, 0], 'Filter Status Held Actions': [2, 1],
+        'Filter Status Terminal No-Write Actions': [1, 1],
+      }),
+      section('Persist and confirm intake notification', 'Writes order, history, and pending notification state before Gmail, then records success or an explicit pending failure.', 2688, 0, 9, [
+        'Insert Intake Order Row', 'Insert Intake Status History Row', 'Insert Intake Notification Pending Row',
+        'Send Controlled Intake Status Email', 'Build Intake Sent Updates', 'Update Intake Notification Sent',
+        'Update Intake Order Notified', 'Build Intake Success Response', 'Respond Intake Success',
+      ]),
+      section('Persist transition and send when new', 'Writes every allowed transition and its History first, then only new notification keys continue to pending intent and Gmail.', 2688, 768, 8, [
+        'Update Status Order Transition', 'Insert Status History Row', 'Filter Status Sendable Notifications', 'Insert Status Notification Pending Row',
+        'Send Controlled Status Update Email', 'Build Status Sent Updates', 'Update Status Notification Sent',
+        'Update Status Order Notified',
+      ]),
+      section('Return held, replay, and dedup outcomes', 'Persists held evidence, returns true no-write outcomes, and acknowledges a persisted re-entry without another notification or email.', 1600, 1536, 5, [
+        'Insert Intake Held History Row', 'Build Intake Terminal Response', 'Respond Intake Terminal',
+        'Insert Status Held History Row', 'Filter Status Persisted Without Email',
+        'Build Status Terminal Response', 'Build Status Success Response', 'Respond Status Update',
+      ], {
+        'Insert Intake Held History Row': [0, 0], 'Build Intake Terminal Response': [1, 0], 'Respond Intake Terminal': [2, 0],
+        'Insert Status Held History Row': [0, 1], 'Filter Status Persisted Without Email': [1, 1],
+        'Build Status Terminal Response': [2, 1], 'Build Status Success Response': [3, 1],
+        'Respond Status Update': [4, 1],
+      }),
+      section('Serve the safe customer projection', 'Looks up one tenant-scoped order by verifier and returns only the four documented customer-safe fields.', 0, 2304, 5, [
+        'Customer Status Lookup Webhook', 'Normalize Status Lookup', 'Find Lookup Order Row',
+        'Build Safe Lookup Response', 'Respond Customer Status Lookup',
+      ]),
+      section('Surface stale pending notifications', 'Finds old pending Order rows, builds an escaped age-based summary, and alerts the controlled inbox.', 1600, 2304, 5, [
+        'Stale Order Sweep', 'Find Pending Notification Orders', 'Build Stale Pending Summary',
+        'Stale Alert Needed?', 'Send Controlled Stale Alert',
+      ]),
+    ],
+  },
   '07-ksef-exception-desk': {
     enforceEdgeCorridors: true,
     overviewTitle: 'Handle KSeF exceptions without blind resubmission',

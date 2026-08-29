@@ -19,6 +19,7 @@ Each workflow is an import-ready JSON built to a consistent engineering standard
 | [07](workflows/07-ksef-exception-desk/) | KSeF Exception Desk | Exception handling for Poland's mandatory e-invoicing system: query-before-retry, durable state |
 | [08](workflows/08-client-onboarding-saga/) | Client Onboarding Saga | Saga-pattern orchestration of multi-step onboarding with durable state and duplicate-send protection |
 | [09](workflows/09-booking-lifecycle/) | Booking Lifecycle | Replay-safe client kickoff booking with durable intent, Google Calendar provider evidence, and Gmail drafts |
+| [10](workflows/10-order-status-tracker/) | Order Status Tracker | Token-separated order intake and status transitions with durable history, notification dedup, stale-pending visibility, and safe customer lookup |
 
 ## Engineering approach
 
