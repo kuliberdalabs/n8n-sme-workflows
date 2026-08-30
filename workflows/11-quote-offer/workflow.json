@@ -1,0 +1,4070 @@
+{
+  "name": "Quote and Offer Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "quote-offer-intake",
+        "responseMode": "responseNode"
+      },
+      "id": "20216a13-4bfd-473b-a5b8-61ad7a7415d5",
+      "name": "Quote Intake Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\nconst root = $input.item.json || {};\nconst headers = root.headers && typeof root.headers === 'object' && !Array.isArray(root.headers) ? root.headers : {};\nconst vars = typeof $vars === 'object' && $vars ? $vars : {};\nconst expected = typeof vars.QUOTE_INTAKE_TOKEN === 'string' ? vars.QUOTE_INTAKE_TOKEN : '';\nlet provided = '';\nfor (const [key, value] of Object.entries(headers)) {\n  const lower = String(key).toLowerCase();\n  if (lower === 'x-quote-intake-token') provided = typeof value === 'string' ? value : '';\n  if (!provided && lower === 'authorization' && typeof value === 'string' && value.startsWith('Bearer ')) provided = value.slice(7);\n}\nconst exact = (left, right) => {\n  const a = String(left);\n  const b = String(right);\n  if (!a || a.length !== b.length) return false;\n  return crypto.createHash('sha256').update(a).digest('hex') === crypto.createHash('sha256').update(b).digest('hex');\n};\nconst auth_ok = expected.length > 0 && provided.length > 0 && exact(expected, provided);\nconst safeHeaders = Object.fromEntries(Object.entries(headers).filter(([key]) => !['x-quote-intake-token','authorization'].includes(String(key).toLowerCase())));\nreturn { json: { ...root, headers: safeHeaders, auth_ok, auth_reason: auth_ok ? 'ok' : (!expected ? 'missing_server_token_var_QUOTE_INTAKE_TOKEN' : (!provided ? 'missing_quote_intake_token' : 'quote_intake_token_mismatch')) } };"
+      },
+      "id": "106662d1-e180-4624-af97-c1b44a0c1b08",
+      "name": "Validate Quote Intake Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.auth_ok }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "b9529c67-6ce1-4e0c-adba-9ad73701e4ec",
+      "name": "Quote Intake Authorized?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        512,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return { json: { ok: false, status: 'unauthorized', reason: String($json.auth_reason || 'unauthorized'), response_code: 401 } };"
+      },
+      "id": "ff7b7bcd-650c-449c-ae2f-8dec4ddd4ac0",
+      "name": "Build Quote Intake Unauthorized Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        768,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\nconst root = $input.item.json || {};\nconst body = root.body;\nconst isObject = body !== null && typeof body === 'object' && !Array.isArray(body);\nconst source = isObject ? body : {};\nconst own = (key) => Object.prototype.hasOwnProperty.call(source, key);\nconst collapse = (value) => String(value ?? '').replace(/\\s+/g, ' ').trim();\nconst lower = (value) => collapse(value).toLowerCase();\nconst rawString = (key, max) => {\n  if (!own(key)) return { value: '', invalid: false, missing: true };\n  const value = source[key];\n  if (typeof value !== 'string' || value.length > max) return { value: '', invalid: true, missing: false };\n  return { value, invalid: false, missing: value.length === 0 };\n};\nconst bounded = (key, max) => {\n  if (!own(key)) return { value: '', invalid: false, missing: true };\n  const value = source[key];\n  if (typeof value !== 'string') return { value: '', invalid: true, missing: false };\n  const normalized = collapse(value);\n  return { value: normalized.slice(0, max), invalid: normalized.length > max, missing: normalized.length === 0 };\n};\nconst hash = (value) => crypto.createHash('sha256').update(String(value), 'utf8').digest('hex');\nconst html = (value) => String(value ?? '').replace(/[&<>\"']/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;' }[char]));\nconst errors = [];\nif (!isObject) errors.push('request_body_must_be_one_object');\nif (own('requests') || own('items')) errors.push('batch_payload_not_supported');\nconst onboardingRaw = rawString('onboarding_id', 64);\nconst smokeRaw = rawString('smoke_tag', 80);\nconst clientNameField = bounded('client_name', 160);\nconst companyField = bounded('company', 200);\nconst emailField = bounded('email', 254);\nconst verifiedField = bounded('verified_email', 254);\nconst serviceField = bounded('service_code', 64);\nconst detailsField = bounded('request_details', 2000);\nconst textField = bounded('request_text', 2000);\nconst onboarding_id = onboardingRaw.value;\nconst smoke_tag = smokeRaw.value;\nconst client_name = clientNameField.value;\nconst company = companyField.value;\nconst email = lower(emailField.value);\nconst verified_email = lower(verifiedField.value);\nconst service_code = lower(serviceField.value);\nconst request_details = detailsField.value || textField.value;\nconst request_text = textField.value || detailsField.value;\nif (onboardingRaw.invalid || onboardingRaw.missing || !/^[a-f0-9]{64}$/.test(onboarding_id)) errors.push('bad_onboarding_id');\nif (smokeRaw.invalid || smokeRaw.missing || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/.test(smoke_tag)) errors.push('bad_smoke_tag');\nif (clientNameField.invalid || !client_name) errors.push('bad_client_name');\nif (companyField.invalid || !company) errors.push('bad_company');\nconst emailPattern = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/;\nif (emailField.invalid || !emailPattern.test(email)) errors.push('bad_email');\nif (verifiedField.invalid) errors.push('bad_verified_email_type_or_length');\nif (serviceField.invalid || !service_code) errors.push('bad_service_code');\nif (detailsField.invalid || textField.invalid || !request_details) errors.push('bad_request_details');\nif (detailsField.value && textField.value && detailsField.value !== textField.value) errors.push('request_details_request_text_mismatch');\nconst quantityValue = source.quantity;\nconst quantity = typeof quantityValue === 'number' ? quantityValue : (typeof quantityValue === 'string' && /^\\d+$/.test(quantityValue) ? Number(quantityValue) : NaN);\nif (!Number.isSafeInteger(quantity) || quantity < 1) errors.push('bad_quantity');\nconst PRICE_BOOK_VERSION = 'QUOTE_SAMPLE_V1_2026-08-30';\nconst PRICE_BOOK = {\n  ai_audit: { label: 'AI workflow audit', unit_net_minor: 180000, min: 1, max: 1 },\n  automation_retainer: { label: 'Automation operations retainer', unit_net_minor: 150000, min: 1, max: 6 },\n  workflow_build: { label: 'Production workflow build', unit_net_minor: 320000, min: 1, max: 3 },\n  ops_sprint: { label: 'Operations automation sprint', unit_net_minor: 480000, min: 1, max: 2 },\n};\nconst rules = PRICE_BOOK[service_code] || null;\nif (rules && Number.isSafeInteger(quantity) && (quantity < rules.min || quantity > rules.max)) errors.push('quantity_outside_price_book_bounds');\nconst submission_id = onboarding_id && email && service_code && Number.isFinite(quantity) && request_details\n  ? hash([onboarding_id, email, service_code, quantity, request_details].join('\\n').toLowerCase())\n  : '';\nconst recipient_verified = emailPattern.test(email) && verified_email === email;\nconst unit_net_minor = rules ? rules.unit_net_minor : 0;\nconst total_net_minor = rules && Number.isSafeInteger(quantity) ? unit_net_minor * quantity : 0;\nconst reviewReasons = [];\nif (!rules && service_code) reviewReasons.push('price book entry required');\nif (!verified_email) reviewReasons.push('verified_email missing');\nelse if (!recipient_verified) reviewReasons.push('email and verified_email mismatch');\nconst edgeText = request_details.toLowerCase();\nfor (const entry of [\n  ['discount or special pricing requested', /\\b(discount|coupon|promo|rabat|rabatt)\\b/i],\n  ['legal or procurement terms requested', /\\b(legal|procurement|msa|dpa|binding terms|contract terms)\\b/i],\n  ['unusual delivery or SLA requested', /\\b(urgent|same day|24h|weekend|guarantee|custom sla)\\b/i],\n]) if (entry[1].test(edgeText)) reviewReasons.push(entry[0]);\nif (total_net_minor > 500000) reviewReasons.push('total above automatic send band');\nconst valid_input = errors.length === 0;\nconst needs_review = valid_input && reviewReasons.length > 0;\nconst now = new Date();\nconst created_at_utc = now.toISOString();\nconst expires_at_utc = new Date(now.getTime() + 14 * 86400000).toISOString();\nconst request_fingerprint = valid_input ? hash(JSON.stringify({\n  contract: 'quote-request.v1', price_book_version: PRICE_BOOK_VERSION, has_price_book_entry: !!rules, onboarding_id, smoke_tag,\n  client_name, company, email, verified_email, service_code, quantity, request_details,\n})) : '';\nconst quote_key = valid_input ? hash('quote.offer.v1\\n' + submission_id + '\\n' + onboarding_id + '\\n' + smoke_tag) : '';\nconst offer_number = valid_input ? 'QO-' + created_at_utc.slice(0,10).replace(/-/g,'') + '-' + submission_id.slice(0,8).toUpperCase() : '';\nconst money = (minor) => (Number(minor || 0) / 100).toFixed(2);\nconst offer_subject = valid_input ? 'Fixed-price quote ' + offer_number + ' for ' + company : '';\nconst serviceLabel = rules ? rules.label : 'Price book entry required';\nconst offer_html = valid_input ? [\n  '<section style=\"font-family:Arial,sans-serif;color:#17202a;line-height:1.5;max-width:720px\">',\n  '<h1>Fixed-price quote ' + html(offer_number) + '</h1>',\n  '<p>Prepared for <strong>' + html(company) + '</strong>, attention ' + html(client_name) + '.</p>',\n  '<p><strong>Service:</strong> ' + html(serviceLabel) + '<br><strong>Quantity:</strong> ' + quantity + '<br><strong>Unit net:</strong> ' + money(unit_net_minor) + ' USD<br><strong>Total net:</strong> ' + money(total_net_minor) + ' USD</p>',\n  '<p><strong>Request:</strong> ' + html(request_details) + '</p>',\n  '<p><strong>Valid until:</strong> ' + html(expires_at_utc.slice(0,10)) + '<br><strong>Price book:</strong> ' + html(PRICE_BOOK_VERSION) + '</p>',\n  '<p style=\"font-size:12px;color:#5d6d7e\">Reference: ' + html(submission_id) + '</p>',\n  '</section>',\n].join('') : '';\nreturn { json: {\n  valid_input, validation_errors: errors, quote_key, submission_id, offer_submission_id: submission_id,\n  onboarding_id, smoke_tag, request_fingerprint, client_name, company, email, verified_email, recipient_verified,\n  service_code, service_label: serviceLabel, has_price_book_entry: !!rules, quantity: Number.isFinite(quantity) ? quantity : 0,\n  request_details, price_book_version: PRICE_BOOK_VERSION, currency: 'USD', unit_net_minor, total_net_minor,\n  offer_number, offer_subject, offer_html, needs_review, review_reason: reviewReasons.join('; '),\n  created_at_utc, updated_at_utc: created_at_utc, expires_at_utc, last_execution_id: $execution.id,\n} };"
+      },
+      "id": "88fc7ace-9729-43cd-a2b8-09438c0db9e5",
+      "name": "Normalize Quote Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.valid_input }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "6372e068-65be-40e2-a025-413c90ea00c3",
+      "name": "Quote Request Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1280,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const n = $input.item.json || {};\nreturn { json: { ok: false, status: 'validation_failed', errors: Array.isArray(n.validation_errors) ? n.validation_errors : ['invalid_request'], response_code: 422 } };"
+      },
+      "id": "c3bc99cd-9dc4-4d23-a269-1af85baab881",
+      "name": "Build Quote Invalid Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_QUOTE_OFFERS_TABLE_ID",
+          "cachedResultName": "Quote_Offers"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "submission_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.submission_id }}"
+            },
+            {
+              "keyName": "onboarding_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.onboarding_id }}"
+            },
+            {
+              "keyName": "smoke_tag",
+              "condition": "eq",
+              "keyValue": "={{ $json.smoke_tag }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "id": "df4b8876-d0e4-49fa-a11a-e03caf38039e",
+      "name": "Find Existing Quote Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1792,
+        0
+      ],
+      "alwaysOutputData": true,
+      "onError": "stopWorkflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const sourceRows = $input.all().map((item) => item.json || {}).filter((row) => Object.keys(row).length);\nconst normalizedItems = $items('Normalize Quote Request');\nif (normalizedItems.length !== 1) throw new Error('quote_normalization_cardinality_violation');\nconst n = normalizedItems[0].json || {};\nconst rows = sourceRows.filter((row) => String(row.submission_id || '') === n.submission_id && String(row.onboarding_id || '') === n.onboarding_id && String(row.smoke_tag || '') === n.smoke_tag);\nif (rows.length > 1) return { json: { ...n, action: 'terminal', terminal_status: 'ambiguous_duplicate_scope', response_code: 409, match_count: rows.length } };\nif (rows.length === 1) {\n  const row = rows[0];\n  if (String(row.request_fingerprint || '') !== n.request_fingerprint) return { json: { ...n, action: 'terminal', terminal_status: 'submission_identity_conflict', response_code: 409, match_count: 1 } };\n  return { json: { ...n, action: 'terminal', terminal_status: 'duplicate_replay', response_code: 200, match_count: 1, existing_status: String(row.status || ''), existing_lifecycle_state: String(row.lifecycle_state || ''), email_sent: row.email_sent === true, review_alert_sent: row.review_alert_sent === true } };\n}\nconst needsReview = n.needs_review === true;\nconst now = n.created_at_utc;\nreturn { json: {\n  ...n,\n  action: needsReview ? 'new_review' : 'new_standard',\n  status: needsReview ? 'Needs Review' : 'Offer Pending Email',\n  lifecycle_state: needsReview ? 'Needs Review' : 'Standard Send Pending',\n  email_sent: false, email_provider_message_id: '', email_provider_thread_id: '', email_send_error: '',\n  send_intent_at_utc: needsReview ? null : now, email_sent_at_utc: null,\n  review_alert_sent: false, review_alert_provider_message_id: '', review_alert_provider_thread_id: '', review_alert_send_error: '',\n  review_alert_intent_at_utc: needsReview ? now : null, review_alert_sent_at_utc: null,\n  approval_action: '', approval_actor: '', approval_note: '', approval_event_id: '', approval_event_fingerprint: '', approval_event_at_utc: null,\n  stale_alert_pending_bucket: '', stale_alert_sent_bucket: '', stale_alert_reason: '', stale_alert_intent_at_utc: null,\n  stale_alert_sent_at_utc: null, stale_alert_provider_message_id: '', stale_alert_provider_thread_id: '',\n} };"
+      },
+      "id": "096c2985-9e1f-408a-aac2-ff32b94eef75",
+      "name": "Resolve Quote Intake",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2048,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().filter((item) => String(item.json.action || '') === 'terminal');"
+      },
+      "id": "65f88c30-c151-4b05-ae09-f1c18c58a3d3",
+      "name": "Filter Quote Terminal Outcome",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2304,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().filter((item) => String(item.json.action || '') === 'new_standard');"
+      },
+      "id": "c633d602-1bb0-4932-ad3a-da69b9564daa",
+      "name": "Filter New Standard Quote",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().filter((item) => String(item.json.action || '') === 'new_review');"
+      },
+      "id": "687f544f-e244-465b-a2ad-e08787e30ac8",
+      "name": "Filter New Review Quote",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const n = $input.item.json || {};\nconst ok = n.terminal_status === 'duplicate_replay';\nreturn { json: { ok, status: String(n.terminal_status || 'terminal'), submission_id: n.submission_id || null, existing_status: n.existing_status || null, existing_lifecycle_state: n.existing_lifecycle_state || null, match_count: Number(n.match_count || 0), response_code: Number(n.response_code || (ok ? 200 : 409)) } };"
+      },
+      "id": "d0d1e560-f384-4ed1-aca1-ea902c6d9553",
+      "name": "Build Quote Terminal Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_QUOTE_OFFERS_TABLE_ID",
+          "cachedResultName": "Quote_Offers"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "quote_key": "={{ $json.quote_key }}",
+            "submission_id": "={{ $json.submission_id }}",
+            "offer_submission_id": "={{ $json.offer_submission_id }}",
+            "onboarding_id": "={{ $json.onboarding_id }}",
+            "smoke_tag": "={{ $json.smoke_tag }}",
+            "request_fingerprint": "={{ $json.request_fingerprint }}",
+            "client_name": "={{ $json.client_name }}",
+            "company": "={{ $json.company }}",
+            "email": "={{ $json.email }}",
+            "verified_email": "={{ $json.verified_email }}",
+            "recipient_verified": "={{ $json.recipient_verified }}",
+            "has_price_book_entry": "={{ $json.has_price_book_entry }}",
+            "service_code": "={{ $json.service_code }}",
+            "service_label": "={{ $json.service_label }}",
+            "quantity": "={{ $json.quantity }}",
+            "request_details": "={{ $json.request_details }}",
+            "price_book_version": "={{ $json.price_book_version }}",
+            "currency": "={{ $json.currency }}",
+            "unit_net_minor": "={{ $json.unit_net_minor }}",
+            "total_net_minor": "={{ $json.total_net_minor }}",
+            "offer_number": "={{ $json.offer_number }}",
+            "offer_subject": "={{ $json.offer_subject }}",
+            "offer_html": "={{ $json.offer_html }}",
+            "status": "={{ $json.status }}",
+            "lifecycle_state": "={{ $json.lifecycle_state }}",
+            "review_reason": "={{ $json.review_reason }}",
+            "email_sent": "={{ $json.email_sent }}",
+            "email_provider_message_id": "={{ $json.email_provider_message_id }}",
+            "email_provider_thread_id": "={{ $json.email_provider_thread_id }}",
+            "email_send_error": "={{ $json.email_send_error }}",
+            "send_intent_at_utc": "={{ $json.send_intent_at_utc }}",
+            "email_sent_at_utc": "={{ $json.email_sent_at_utc }}",
+            "review_alert_sent": "={{ $json.review_alert_sent }}",
+            "review_alert_provider_message_id": "={{ $json.review_alert_provider_message_id }}",
+            "review_alert_provider_thread_id": "={{ $json.review_alert_provider_thread_id }}",
+            "review_alert_send_error": "={{ $json.review_alert_send_error }}",
+            "review_alert_intent_at_utc": "={{ $json.review_alert_intent_at_utc }}",
+            "review_alert_sent_at_utc": "={{ $json.review_alert_sent_at_utc }}",
+            "approval_action": "={{ $json.approval_action }}",
+            "approval_actor": "={{ $json.approval_actor }}",
+            "approval_note": "={{ $json.approval_note }}",
+            "approval_event_id": "={{ $json.approval_event_id }}",
+            "approval_event_fingerprint": "={{ $json.approval_event_fingerprint }}",
+            "approval_event_at_utc": "={{ $json.approval_event_at_utc }}",
+            "expires_at_utc": "={{ $json.expires_at_utc }}",
+            "stale_alert_pending_bucket": "={{ $json.stale_alert_pending_bucket }}",
+            "stale_alert_sent_bucket": "={{ $json.stale_alert_sent_bucket }}",
+            "stale_alert_reason": "={{ $json.stale_alert_reason }}",
+            "stale_alert_intent_at_utc": "={{ $json.stale_alert_intent_at_utc }}",
+            "stale_alert_sent_at_utc": "={{ $json.stale_alert_sent_at_utc }}",
+            "stale_alert_provider_message_id": "={{ $json.stale_alert_provider_message_id }}",
+            "stale_alert_provider_thread_id": "={{ $json.stale_alert_provider_thread_id }}",
+            "created_at_utc": "={{ $json.created_at_utc }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "quote_key",
+              "displayName": "quote_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "submission_id",
+              "displayName": "submission_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "offer_submission_id",
+              "displayName": "offer_submission_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "onboarding_id",
+              "displayName": "onboarding_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "request_fingerprint",
+              "displayName": "request_fingerprint",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "client_name",
+              "displayName": "client_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "company",
+              "displayName": "company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "verified_email",
+              "displayName": "verified_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "recipient_verified",
+              "displayName": "recipient_verified",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "has_price_book_entry",
+              "displayName": "has_price_book_entry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "service_code",
+              "displayName": "service_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "service_label",
+              "displayName": "service_label",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "quantity",
+              "displayName": "quantity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "request_details",
+              "displayName": "request_details",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "price_book_version",
+              "displayName": "price_book_version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "currency",
+              "displayName": "currency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "unit_net_minor",
+              "displayName": "unit_net_minor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "total_net_minor",
+              "displayName": "total_net_minor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "offer_number",
+              "displayName": "offer_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "offer_subject",
+              "displayName": "offer_subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "offer_html",
+              "displayName": "offer_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "lifecycle_state",
+              "displayName": "lifecycle_state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "review_reason",
+              "displayName": "review_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_sent",
+              "displayName": "email_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_provider_message_id",
+              "displayName": "email_provider_message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_provider_thread_id",
+              "displayName": "email_provider_thread_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_send_error",
+              "displayName": "email_send_error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "send_intent_at_utc",
+              "displayName": "send_intent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_sent_at_utc",
+              "displayName": "email_sent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_alert_sent",
+              "displayName": "review_alert_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_alert_provider_message_id",
+              "displayName": "review_alert_provider_message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_alert_provider_thread_id",
+              "displayName": "review_alert_provider_thread_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_alert_send_error",
+              "displayName": "review_alert_send_error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_alert_intent_at_utc",
+              "displayName": "review_alert_intent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_alert_sent_at_utc",
+              "displayName": "review_alert_sent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_action",
+              "displayName": "approval_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_actor",
+              "displayName": "approval_actor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_note",
+              "displayName": "approval_note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_event_id",
+              "displayName": "approval_event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_event_fingerprint",
+              "displayName": "approval_event_fingerprint",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_event_at_utc",
+              "displayName": "approval_event_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "expires_at_utc",
+              "displayName": "expires_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "stale_alert_pending_bucket",
+              "displayName": "stale_alert_pending_bucket",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "stale_alert_sent_bucket",
+              "displayName": "stale_alert_sent_bucket",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "stale_alert_reason",
+              "displayName": "stale_alert_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "stale_alert_intent_at_utc",
+              "displayName": "stale_alert_intent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "stale_alert_sent_at_utc",
+              "displayName": "stale_alert_sent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "stale_alert_provider_message_id",
+              "displayName": "stale_alert_provider_message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "stale_alert_provider_thread_id",
+              "displayName": "stale_alert_provider_thread_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at_utc",
+              "displayName": "created_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "id": "ae3814ea-f075-4e70-a226-b492a52c5374",
+      "name": "Insert Standard Send Intent",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        768,
+        256
+      ],
+      "onError": "stopWorkflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ackItems = $input.all();\nif (ackItems.length !== 1) throw new Error('standard_intent_ack_cardinality_violation');\nconst source = ackItems[0].json || {};\nconst actionItems = $items('Filter New Standard Quote');\nif (actionItems.length !== 1) throw new Error('standard_intent_source_cardinality_violation');\nconst action = actionItems[0].json || {};\nif (String(source.submission_id || '') !== action.submission_id || String(source.request_fingerprint || '') !== action.request_fingerprint || String(source.lifecycle_state || '') !== 'Standard Send Pending' || source.email_sent === true) throw new Error('standard_send_intent_not_acknowledged');\nreturn { json: action };"
+      },
+      "id": "fa3bb7a4-b7b7-46a0-a558-a5757165e813",
+      "name": "Verify Standard Intent Acknowledgement",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.email }}",
+        "subject": "={{ $json.offer_subject }}",
+        "emailType": "html",
+        "message": "={{ $json.offer_html }}"
+      },
+      "id": "4db122d4-84cb-4896-a616-134e7a04c5c6",
+      "name": "Send Standard Client Offer",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1280,
+        256
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const provider = $input.item.json || {};\nconst items = $items('Verify Standard Intent Acknowledgement');\nif (items.length !== 1) throw new Error('standard_intent_cardinality_violation');\nconst row = items[0].json || {};\nconst clean = (value) => typeof value === 'string' ? value.trim().slice(0,512) : '';\nconst messageId = clean(provider.id || provider.messageId);\nconst threadId = clean(provider.threadId);\nconst error = clean(provider.error && provider.error.message ? provider.error.message : provider.error);\nconst confirmed = !error && messageId.length > 0 && threadId.length > 0;\nconst now = new Date().toISOString();\nreturn { json: { ...row, status: confirmed ? 'Offer Sent' : 'Offer Pending Email', lifecycle_state: confirmed ? 'Offer Sent' : 'Standard Send Pending', email_sent: confirmed, email_provider_message_id: confirmed ? messageId : '', email_provider_thread_id: confirmed ? threadId : '', email_send_error: confirmed ? '' : (error || 'missing_gmail_message_or_thread_id'), email_sent_at_utc: confirmed ? now : null, updated_at_utc: now, last_execution_id: $execution.id, provider_confirmed: confirmed } };"
+      },
+      "id": "d0e28a0a-9edc-453e-a550-02446edbe2dd",
+      "name": "Validate Standard Gmail Evidence",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_QUOTE_OFFERS_TABLE_ID",
+          "cachedResultName": "Quote_Offers"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "quote_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.quote_key }}"
+            },
+            {
+              "keyName": "submission_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.submission_id }}"
+            },
+            {
+              "keyName": "onboarding_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.onboarding_id }}"
+            },
+            {
+              "keyName": "smoke_tag",
+              "condition": "eq",
+              "keyValue": "={{ $json.smoke_tag }}"
+            },
+            {
+              "keyName": "request_fingerprint",
+              "condition": "eq",
+              "keyValue": "={{ $json.request_fingerprint }}"
+            },
+            {
+              "keyName": "lifecycle_state",
+              "condition": "eq",
+              "keyValue": "Standard Send Pending"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.status }}",
+            "lifecycle_state": "={{ $json.lifecycle_state }}",
+            "email_sent": "={{ $json.email_sent }}",
+            "email_provider_message_id": "={{ $json.email_provider_message_id }}",
+            "email_provider_thread_id": "={{ $json.email_provider_thread_id }}",
+            "email_send_error": "={{ $json.email_send_error }}",
+            "email_sent_at_utc": "={{ $json.email_sent_at_utc }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "lifecycle_state",
+              "displayName": "lifecycle_state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_sent",
+              "displayName": "email_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_provider_message_id",
+              "displayName": "email_provider_message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_provider_thread_id",
+              "displayName": "email_provider_thread_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_send_error",
+              "displayName": "email_send_error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_sent_at_utc",
+              "displayName": "email_sent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "id": "530c2c15-a976-4b01-a61a-15fbb9c7d858",
+      "name": "Update Standard Offer Delivery",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1792,
+        256
+      ],
+      "alwaysOutputData": true,
+      "onError": "stopWorkflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ackItems = $input.all();\nif (ackItems.length !== 1) throw new Error('standard_delivery_ack_cardinality_violation');\nconst ack = ackItems[0].json || {};\nconst items = $items('Validate Standard Gmail Evidence');\nif (items.length !== 1) throw new Error('standard_delivery_cardinality_violation');\nconst n = items[0].json || {};\nconst expectedLifecycle = n.provider_confirmed === true ? 'Offer Sent' : 'Standard Send Pending';\nconst sameIdentity = ['quote_key','submission_id','onboarding_id','smoke_tag','request_fingerprint'].every((key) => String(ack[key] || '') === String(n[key] || ''));\nconst providerMatches = n.provider_confirmed === true\n  ? ack.email_sent === true && String(ack.email_provider_message_id || '') === n.email_provider_message_id && String(ack.email_provider_thread_id || '') === n.email_provider_thread_id\n  : ack.email_sent !== true && !String(ack.email_provider_message_id || '') && !String(ack.email_provider_thread_id || '');\nif (!sameIdentity || String(ack.lifecycle_state || '') !== expectedLifecycle || !providerMatches) throw new Error('standard_delivery_update_not_acknowledged');\nreturn { json: { ok: n.provider_confirmed === true, status: n.provider_confirmed === true ? 'offer_sent' : 'offer_send_pending_reconciliation', submission_id: n.submission_id, offer_number: n.offer_number, email_sent: n.email_sent === true, response_code: n.provider_confirmed === true ? 201 : 202 } };"
+      },
+      "id": "2e7cc218-cfe8-47e5-a330-fa5fa027f5ae",
+      "name": "Build Standard Quote Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2048,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_QUOTE_OFFERS_TABLE_ID",
+          "cachedResultName": "Quote_Offers"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "quote_key": "={{ $json.quote_key }}",
+            "submission_id": "={{ $json.submission_id }}",
+            "offer_submission_id": "={{ $json.offer_submission_id }}",
+            "onboarding_id": "={{ $json.onboarding_id }}",
+            "smoke_tag": "={{ $json.smoke_tag }}",
+            "request_fingerprint": "={{ $json.request_fingerprint }}",
+            "client_name": "={{ $json.client_name }}",
+            "company": "={{ $json.company }}",
+            "email": "={{ $json.email }}",
+            "verified_email": "={{ $json.verified_email }}",
+            "recipient_verified": "={{ $json.recipient_verified }}",
+            "has_price_book_entry": "={{ $json.has_price_book_entry }}",
+            "service_code": "={{ $json.service_code }}",
+            "service_label": "={{ $json.service_label }}",
+            "quantity": "={{ $json.quantity }}",
+            "request_details": "={{ $json.request_details }}",
+            "price_book_version": "={{ $json.price_book_version }}",
+            "currency": "={{ $json.currency }}",
+            "unit_net_minor": "={{ $json.unit_net_minor }}",
+            "total_net_minor": "={{ $json.total_net_minor }}",
+            "offer_number": "={{ $json.offer_number }}",
+            "offer_subject": "={{ $json.offer_subject }}",
+            "offer_html": "={{ $json.offer_html }}",
+            "status": "={{ $json.status }}",
+            "lifecycle_state": "={{ $json.lifecycle_state }}",
+            "review_reason": "={{ $json.review_reason }}",
+            "email_sent": "={{ $json.email_sent }}",
+            "email_provider_message_id": "={{ $json.email_provider_message_id }}",
+            "email_provider_thread_id": "={{ $json.email_provider_thread_id }}",
+            "email_send_error": "={{ $json.email_send_error }}",
+            "send_intent_at_utc": "={{ $json.send_intent_at_utc }}",
+            "email_sent_at_utc": "={{ $json.email_sent_at_utc }}",
+            "review_alert_sent": "={{ $json.review_alert_sent }}",
+            "review_alert_provider_message_id": "={{ $json.review_alert_provider_message_id }}",
+            "review_alert_provider_thread_id": "={{ $json.review_alert_provider_thread_id }}",
+            "review_alert_send_error": "={{ $json.review_alert_send_error }}",
+            "review_alert_intent_at_utc": "={{ $json.review_alert_intent_at_utc }}",
+            "review_alert_sent_at_utc": "={{ $json.review_alert_sent_at_utc }}",
+            "approval_action": "={{ $json.approval_action }}",
+            "approval_actor": "={{ $json.approval_actor }}",
+            "approval_note": "={{ $json.approval_note }}",
+            "approval_event_id": "={{ $json.approval_event_id }}",
+            "approval_event_fingerprint": "={{ $json.approval_event_fingerprint }}",
+            "approval_event_at_utc": "={{ $json.approval_event_at_utc }}",
+            "expires_at_utc": "={{ $json.expires_at_utc }}",
+            "stale_alert_pending_bucket": "={{ $json.stale_alert_pending_bucket }}",
+            "stale_alert_sent_bucket": "={{ $json.stale_alert_sent_bucket }}",
+            "stale_alert_reason": "={{ $json.stale_alert_reason }}",
+            "stale_alert_intent_at_utc": "={{ $json.stale_alert_intent_at_utc }}",
+            "stale_alert_sent_at_utc": "={{ $json.stale_alert_sent_at_utc }}",
+            "stale_alert_provider_message_id": "={{ $json.stale_alert_provider_message_id }}",
+            "stale_alert_provider_thread_id": "={{ $json.stale_alert_provider_thread_id }}",
+            "created_at_utc": "={{ $json.created_at_utc }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "quote_key",
+              "displayName": "quote_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "submission_id",
+              "displayName": "submission_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "offer_submission_id",
+              "displayName": "offer_submission_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "onboarding_id",
+              "displayName": "onboarding_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "smoke_tag",
+              "displayName": "smoke_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "request_fingerprint",
+              "displayName": "request_fingerprint",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "client_name",
+              "displayName": "client_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "company",
+              "displayName": "company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "verified_email",
+              "displayName": "verified_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "recipient_verified",
+              "displayName": "recipient_verified",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "has_price_book_entry",
+              "displayName": "has_price_book_entry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "service_code",
+              "displayName": "service_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "service_label",
+              "displayName": "service_label",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "quantity",
+              "displayName": "quantity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "request_details",
+              "displayName": "request_details",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "price_book_version",
+              "displayName": "price_book_version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "currency",
+              "displayName": "currency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "unit_net_minor",
+              "displayName": "unit_net_minor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "total_net_minor",
+              "displayName": "total_net_minor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "offer_number",
+              "displayName": "offer_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "offer_subject",
+              "displayName": "offer_subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "offer_html",
+              "displayName": "offer_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "lifecycle_state",
+              "displayName": "lifecycle_state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "review_reason",
+              "displayName": "review_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_sent",
+              "displayName": "email_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_provider_message_id",
+              "displayName": "email_provider_message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_provider_thread_id",
+              "displayName": "email_provider_thread_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_send_error",
+              "displayName": "email_send_error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "send_intent_at_utc",
+              "displayName": "send_intent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_sent_at_utc",
+              "displayName": "email_sent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_alert_sent",
+              "displayName": "review_alert_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_alert_provider_message_id",
+              "displayName": "review_alert_provider_message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_alert_provider_thread_id",
+              "displayName": "review_alert_provider_thread_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_alert_send_error",
+              "displayName": "review_alert_send_error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_alert_intent_at_utc",
+              "displayName": "review_alert_intent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_alert_sent_at_utc",
+              "displayName": "review_alert_sent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_action",
+              "displayName": "approval_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_actor",
+              "displayName": "approval_actor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_note",
+              "displayName": "approval_note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_event_id",
+              "displayName": "approval_event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_event_fingerprint",
+              "displayName": "approval_event_fingerprint",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_event_at_utc",
+              "displayName": "approval_event_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "expires_at_utc",
+              "displayName": "expires_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "stale_alert_pending_bucket",
+              "displayName": "stale_alert_pending_bucket",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "stale_alert_sent_bucket",
+              "displayName": "stale_alert_sent_bucket",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "stale_alert_reason",
+              "displayName": "stale_alert_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "stale_alert_intent_at_utc",
+              "displayName": "stale_alert_intent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "stale_alert_sent_at_utc",
+              "displayName": "stale_alert_sent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "stale_alert_provider_message_id",
+              "displayName": "stale_alert_provider_message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "stale_alert_provider_thread_id",
+              "displayName": "stale_alert_provider_thread_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at_utc",
+              "displayName": "created_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "id": "80765f6a-85d9-4b9c-a584-fc095402c7cb",
+      "name": "Insert Review Alert Intent",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2304,
+        256
+      ],
+      "onError": "stopWorkflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ackItems = $input.all();\nif (ackItems.length !== 1) throw new Error('review_intent_ack_cardinality_violation');\nconst source = ackItems[0].json || {};\nconst actionItems = $items('Filter New Review Quote');\nif (actionItems.length !== 1) throw new Error('review_intent_source_cardinality_violation');\nconst action = actionItems[0].json || {};\nif (String(source.submission_id || '') !== action.submission_id || String(source.request_fingerprint || '') !== action.request_fingerprint || String(source.status || '') !== 'Needs Review' || source.email_sent === true || source.review_alert_sent === true) throw new Error('review_alert_intent_not_acknowledged');\nreturn { json: action };"
+      },
+      "id": "4d11c11d-b5df-4cdb-a7ec-42cd61a9545f",
+      "name": "Verify Review Intent Acknowledgement",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "ops@example.test",
+        "subject": "={{ \"Quote needs review: \" + $json.offer_number }}",
+        "emailType": "html",
+        "message": "={{ \"<p>Quote <strong>\" + $json.offer_number + \"</strong> needs review.</p><p>Reason: \" + $json.review_reason + \"</p><p>Submission: \" + $json.submission_id + \"</p>\" }}"
+      },
+      "id": "4d62bf72-61ff-42ce-a842-a9046a537484",
+      "name": "Send Quote Review Alert",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        256,
+        512
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const provider = $input.item.json || {};\nconst items = $items('Verify Review Intent Acknowledgement');\nif (items.length !== 1) throw new Error('review_intent_cardinality_violation');\nconst row = items[0].json || {};\nconst clean = (value) => typeof value === 'string' ? value.trim().slice(0,512) : '';\nconst messageId = clean(provider.id || provider.messageId);\nconst threadId = clean(provider.threadId);\nconst error = clean(provider.error && provider.error.message ? provider.error.message : provider.error);\nconst confirmed = !error && messageId.length > 0 && threadId.length > 0;\nconst now = new Date().toISOString();\nreturn { json: { ...row, status: 'Needs Review', lifecycle_state: 'Needs Review', email_sent: false, review_alert_sent: confirmed, review_alert_provider_message_id: confirmed ? messageId : '', review_alert_provider_thread_id: confirmed ? threadId : '', review_alert_send_error: confirmed ? '' : (error || 'missing_gmail_message_or_thread_id'), review_alert_sent_at_utc: confirmed ? now : null, updated_at_utc: now, last_execution_id: $execution.id, provider_confirmed: confirmed } };"
+      },
+      "id": "fcaf1f07-ca72-4515-a3eb-373b0a639f46",
+      "name": "Validate Review Alert Gmail Evidence",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_QUOTE_OFFERS_TABLE_ID",
+          "cachedResultName": "Quote_Offers"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "quote_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.quote_key }}"
+            },
+            {
+              "keyName": "submission_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.submission_id }}"
+            },
+            {
+              "keyName": "onboarding_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.onboarding_id }}"
+            },
+            {
+              "keyName": "smoke_tag",
+              "condition": "eq",
+              "keyValue": "={{ $json.smoke_tag }}"
+            },
+            {
+              "keyName": "request_fingerprint",
+              "condition": "eq",
+              "keyValue": "={{ $json.request_fingerprint }}"
+            },
+            {
+              "keyName": "lifecycle_state",
+              "condition": "eq",
+              "keyValue": "Needs Review"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.status }}",
+            "lifecycle_state": "={{ $json.lifecycle_state }}",
+            "email_sent": "={{ $json.email_sent }}",
+            "review_alert_sent": "={{ $json.review_alert_sent }}",
+            "review_alert_provider_message_id": "={{ $json.review_alert_provider_message_id }}",
+            "review_alert_provider_thread_id": "={{ $json.review_alert_provider_thread_id }}",
+            "review_alert_send_error": "={{ $json.review_alert_send_error }}",
+            "review_alert_sent_at_utc": "={{ $json.review_alert_sent_at_utc }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "lifecycle_state",
+              "displayName": "lifecycle_state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_sent",
+              "displayName": "email_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_alert_sent",
+              "displayName": "review_alert_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_alert_provider_message_id",
+              "displayName": "review_alert_provider_message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_alert_provider_thread_id",
+              "displayName": "review_alert_provider_thread_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_alert_send_error",
+              "displayName": "review_alert_send_error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "review_alert_sent_at_utc",
+              "displayName": "review_alert_sent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "id": "19f588d4-037e-478d-a17c-511c5c3d7440",
+      "name": "Update Review Alert Delivery",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        768,
+        512
+      ],
+      "alwaysOutputData": true,
+      "onError": "stopWorkflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ackItems = $input.all();\nif (ackItems.length !== 1) throw new Error('review_alert_ack_cardinality_violation');\nconst ack = ackItems[0].json || {};\nconst items = $items('Validate Review Alert Gmail Evidence');\nif (items.length !== 1) throw new Error('review_alert_cardinality_violation');\nconst n = items[0].json || {};\nconst sameIdentity = ['quote_key','submission_id','onboarding_id','smoke_tag','request_fingerprint'].every((key) => String(ack[key] || '') === String(n[key] || ''));\nconst providerMatches = n.provider_confirmed === true\n  ? ack.review_alert_sent === true && String(ack.review_alert_provider_message_id || '') === n.review_alert_provider_message_id && String(ack.review_alert_provider_thread_id || '') === n.review_alert_provider_thread_id\n  : ack.review_alert_sent !== true && !String(ack.review_alert_provider_message_id || '') && !String(ack.review_alert_provider_thread_id || '');\nif (!sameIdentity || String(ack.status || '') !== 'Needs Review' || String(ack.lifecycle_state || '') !== 'Needs Review' || ack.email_sent === true || !providerMatches) throw new Error('review_alert_update_not_acknowledged');\nreturn { json: { ok: true, status: n.provider_confirmed === true ? 'needs_review' : 'needs_review_alert_pending', submission_id: n.submission_id, offer_number: n.offer_number, review_reason: n.review_reason, email_sent: false, review_alert_sent: n.review_alert_sent === true, response_code: 202 } };"
+      },
+      "id": "4933fe70-9e00-4b7c-a32b-249fc76784f5",
+      "name": "Build Review Quote Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": "={{ $json.response_code }}"
+        }
+      },
+      "id": "a8afc3c2-aa5a-4b26-a3e6-4fc487491301",
+      "name": "Respond Quote Outcome",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1280,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "quote-offer-approval",
+        "responseMode": "responseNode"
+      },
+      "id": "4e823ad4-cda3-4a56-a1e4-8bbe4a38bcff",
+      "name": "Quote Approval Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        1536,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\nconst root = $input.item.json || {};\nconst headers = root.headers && typeof root.headers === 'object' && !Array.isArray(root.headers) ? root.headers : {};\nconst vars = typeof $vars === 'object' && $vars ? $vars : {};\nconst expected = typeof vars.QUOTE_APPROVAL_TOKEN === 'string' ? vars.QUOTE_APPROVAL_TOKEN : '';\nlet provided = '';\nfor (const [key, value] of Object.entries(headers)) {\n  const lower = String(key).toLowerCase();\n  if (lower === 'x-quote-approval-token') provided = typeof value === 'string' ? value : '';\n  if (!provided && lower === 'authorization' && typeof value === 'string' && value.startsWith('Bearer ')) provided = value.slice(7);\n}\nconst auth_ok = expected.length > 0 && expected.length === provided.length\n  && crypto.createHash('sha256').update(expected).digest('hex') === crypto.createHash('sha256').update(provided).digest('hex');\nconst safeHeaders = Object.fromEntries(Object.entries(headers).filter(([key]) => !['x-quote-approval-token','authorization'].includes(String(key).toLowerCase())));\nreturn { json: { ...root, headers: safeHeaders, auth_ok, auth_reason: auth_ok ? 'ok' : (!expected ? 'missing_server_token_var_QUOTE_APPROVAL_TOKEN' : (!provided ? 'missing_quote_approval_token' : 'quote_approval_token_mismatch')) } };"
+      },
+      "id": "c381e074-304d-429f-aae4-20ef1c5f5110",
+      "name": "Validate Quote Approval Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.auth_ok }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "d282b79f-e5d1-4893-a5cc-16cb19ff11d7",
+      "name": "Quote Approval Authorized?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2048,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return { json: { ok: false, status: 'unauthorized', reason: String($json.auth_reason || 'unauthorized'), response_code: 401 } };"
+      },
+      "id": "ff00c8e6-49e6-4e44-a035-2a218d1951bd",
+      "name": "Build Quote Approval Unauthorized Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2304,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\nconst root = $input.item.json || {};\nconst body = root.body;\nconst validObject = body !== null && typeof body === 'object' && !Array.isArray(body);\nconst source = validObject ? body : {};\nconst bounded = (key, max, required = true) => {\n  if (!Object.prototype.hasOwnProperty.call(source, key)) return { value: '', invalid: required };\n  if (typeof source[key] !== 'string') return { value: '', invalid: true };\n  const value = source[key].replace(/\\s+/g,' ').trim();\n  return { value: value.slice(0,max), invalid: value.length > max || (required && !value) };\n};\nconst exactString = (key, max) => {\n  if (!Object.prototype.hasOwnProperty.call(source, key) || typeof source[key] !== 'string') return { value: '', invalid: true };\n  const value = source[key];\n  return { value, invalid: !value || value.length > max };\n};\nconst submission = exactString('submission_id',64);\nconst onboarding = exactString('onboarding_id',64);\nconst smoke = exactString('smoke_tag',80);\nconst actionField = bounded('action',16);\nconst actor = bounded('approval_actor',120);\nconst note = bounded('approval_note',1000,false);\nconst eventId = bounded('approval_event_id',200);\nconst eventAt = bounded('approval_event_at_utc',64);\nconst action = actionField.value.toLowerCase();\nconst errors = [];\nif (!validObject) errors.push('request_body_must_be_one_object');\nif (!/^[a-f0-9]{64}$/.test(submission.value) || submission.invalid) errors.push('bad_submission_id');\nif (!/^[a-f0-9]{64}$/.test(onboarding.value) || onboarding.invalid) errors.push('bad_onboarding_id');\nif (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/.test(smoke.value) || smoke.invalid) errors.push('bad_smoke_tag');\nif (!['approve','reject'].includes(action) || actionField.invalid) errors.push('bad_approval_action');\nif (actor.invalid) errors.push('bad_approval_actor');\nif (note.invalid) errors.push('bad_approval_note');\nif (eventId.invalid) errors.push('bad_approval_event_id');\nconst explicitOffset = /(?:Z|[+-]\\d{2}:\\d{2})$/i.test(eventAt.value);\nconst eventMs = Date.parse(eventAt.value);\nif (eventAt.invalid || !explicitOffset || !Number.isFinite(eventMs)) errors.push('bad_approval_event_at_utc');\nconst approval_event_at_utc = Number.isFinite(eventMs) ? new Date(eventMs).toISOString() : null;\nconst approval_event_fingerprint = errors.length === 0\n  ? crypto.createHash('sha256').update(JSON.stringify({ action, approval_actor: actor.value, approval_note: note.value, approval_event_id: eventId.value, approval_event_at_utc }), 'utf8').digest('hex')\n  : '';\nreturn { json: { valid_approval: errors.length === 0, validation_errors: errors, submission_id: submission.value, onboarding_id: onboarding.value, smoke_tag: smoke.value, action, approval_actor: actor.value, approval_note: note.value, approval_event_id: eventId.value, approval_event_fingerprint, approval_event_at_utc, last_execution_id: $execution.id } };"
+      },
+      "id": "02235fd5-aad3-4ed4-ab21-9308326b9c8a",
+      "name": "Normalize Quote Approval",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        768
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.valid_approval }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "233a5304-d66d-427e-a485-fa7a2a8151c0",
+      "name": "Quote Approval Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        256,
+        768
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return { json: { ok: false, status: 'validation_failed', errors: Array.isArray($json.validation_errors) ? $json.validation_errors : ['invalid_approval'], response_code: 422 } };"
+      },
+      "id": "d1f1e798-52a2-4960-a354-2158c8e8a4a0",
+      "name": "Build Quote Approval Invalid Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        768
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_QUOTE_OFFERS_TABLE_ID",
+          "cachedResultName": "Quote_Offers"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "submission_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.submission_id }}"
+            },
+            {
+              "keyName": "onboarding_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.onboarding_id }}"
+            },
+            {
+              "keyName": "smoke_tag",
+              "condition": "eq",
+              "keyValue": "={{ $json.smoke_tag }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "id": "78d86fb2-5021-4961-a171-30952611c62a",
+      "name": "Find Approval Quote Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        768,
+        768
+      ],
+      "alwaysOutputData": true,
+      "onError": "stopWorkflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map((item) => item.json || {}).filter((row) => Object.keys(row).length);\nconst approvalItems = $items('Normalize Quote Approval');\nif (approvalItems.length !== 1) throw new Error('approval_normalization_cardinality_violation');\nconst a = approvalItems[0].json || {};\nconst exact = rows.filter((row) => String(row.submission_id || '') === a.submission_id && String(row.onboarding_id || '') === a.onboarding_id && String(row.smoke_tag || '') === a.smoke_tag);\nif (exact.length === 0) return { json: { ...a, action: 'approval_terminal', terminal_status: 'quote_not_found', response_code: 404, match_count: 0 } };\nif (exact.length > 1) return { json: { ...a, action: 'approval_terminal', terminal_status: 'ambiguous_duplicate_scope', response_code: 409, match_count: exact.length } };\nconst row = exact[0];\nconst base = { ...row, ...a, quote_key: row.quote_key, request_fingerprint: row.request_fingerprint, match_count: 1 };\nconst lifecycle = String(row.lifecycle_state || '');\nif (String(row.approval_event_id || '') && String(row.approval_event_id || '') === a.approval_event_id) {\n  const sameEvent = String(row.approval_event_fingerprint || '') && String(row.approval_event_fingerprint || '') === a.approval_event_fingerprint;\n  return { json: { ...base, action: 'approval_terminal', terminal_status: sameEvent ? 'approval_event_replay' : 'approval_event_identity_conflict', response_code: sameEvent ? 200 : 409 } };\n}\nif (['Offer Sent','Rejected','Expired'].includes(lifecycle)) return { json: { ...base, action: 'approval_terminal', terminal_status: 'quote_' + lifecycle.toLowerCase().replace(/ /g,'_'), response_code: 409 } };\nif (['Standard Send Pending','Approval Send Pending'].includes(lifecycle)) return { json: { ...base, action: 'approval_terminal', terminal_status: 'send_pending_reconciliation', response_code: 202 } };\nif (lifecycle !== 'Needs Review') return { json: { ...base, action: 'approval_terminal', terminal_status: 'quote_not_approvable', response_code: 409 } };\nconst expiresMs = Date.parse(row.expires_at_utc || '');\nif (!Number.isFinite(expiresMs) || expiresMs <= Date.now()) return { json: { ...base, action: 'approval_expire', response_code: 410 } };\nif (a.action === 'reject') return { json: { ...base, action: 'approval_reject', response_code: 200 } };\nif (row.has_price_book_entry !== true) return { json: { ...base, action: 'approval_terminal', terminal_status: 'price_book_entry_required', response_code: 409 } };\nif (row.recipient_verified !== true || String(row.email || '') !== String(row.verified_email || '')) return { json: { ...base, action: 'approval_terminal', terminal_status: 'verified_recipient_required', response_code: 409 } };\nreturn { json: { ...base, action: 'approval_send', response_code: 200 } };"
+      },
+      "id": "c0cf4b9b-1af7-44f8-aac8-5651415e4768",
+      "name": "Resolve Quote Approval",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        768
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().filter((item) => String(item.json.action || '') === 'approval_terminal');"
+      },
+      "id": "1cee9b76-cd1d-41c7-a052-2656ddbbca59",
+      "name": "Filter Approval Terminal Outcome",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        768
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().filter((item) => String(item.json.action || '') === 'approval_reject');"
+      },
+      "id": "40616803-4b4b-449f-a7d6-4bd1023f3267",
+      "name": "Filter Approval Rejection",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        768
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().filter((item) => String(item.json.action || '') === 'approval_expire');"
+      },
+      "id": "efbdb6d9-d845-43d5-a042-88d6ce862320",
+      "name": "Filter Approval Expiry",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        768
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().filter((item) => String(item.json.action || '') === 'approval_send');"
+      },
+      "id": "b636732c-51ec-4912-a5df-094fe1faf1a3",
+      "name": "Filter Approval Send",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2048,
+        768
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const n = $input.item.json || {};\nconst ok = n.terminal_status === 'approval_event_replay';\nreturn { json: { ok, status: String(n.terminal_status || 'approval_terminal'), submission_id: n.submission_id || null, match_count: Number(n.match_count || 0), response_code: Number(n.response_code || 409) } };"
+      },
+      "id": "09d6fe87-2954-4858-ad26-d0da9dad25ba",
+      "name": "Build Approval Terminal Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2304,
+        768
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const n = $input.item.json || {};\nconst now = new Date().toISOString();\nreturn { json: { ...n, status: 'Needs Review', lifecycle_state: 'Rejected', approval_action: 'reject', updated_at_utc: now, last_execution_id: $execution.id } };"
+      },
+      "id": "923bd0d3-8414-43ae-aca1-cdd05fe7cad5",
+      "name": "Build Quote Rejection Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        1024
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_QUOTE_OFFERS_TABLE_ID",
+          "cachedResultName": "Quote_Offers"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "quote_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.quote_key }}"
+            },
+            {
+              "keyName": "submission_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.submission_id }}"
+            },
+            {
+              "keyName": "onboarding_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.onboarding_id }}"
+            },
+            {
+              "keyName": "smoke_tag",
+              "condition": "eq",
+              "keyValue": "={{ $json.smoke_tag }}"
+            },
+            {
+              "keyName": "request_fingerprint",
+              "condition": "eq",
+              "keyValue": "={{ $json.request_fingerprint }}"
+            },
+            {
+              "keyName": "lifecycle_state",
+              "condition": "eq",
+              "keyValue": "Needs Review"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.status }}",
+            "lifecycle_state": "={{ $json.lifecycle_state }}",
+            "approval_action": "={{ $json.approval_action }}",
+            "approval_actor": "={{ $json.approval_actor }}",
+            "approval_note": "={{ $json.approval_note }}",
+            "approval_event_id": "={{ $json.approval_event_id }}",
+            "approval_event_fingerprint": "={{ $json.approval_event_fingerprint }}",
+            "approval_event_at_utc": "={{ $json.approval_event_at_utc }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "lifecycle_state",
+              "displayName": "lifecycle_state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_action",
+              "displayName": "approval_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_actor",
+              "displayName": "approval_actor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_note",
+              "displayName": "approval_note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_event_id",
+              "displayName": "approval_event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_event_fingerprint",
+              "displayName": "approval_event_fingerprint",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_event_at_utc",
+              "displayName": "approval_event_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "id": "5f089c21-1cf5-45f9-ae6d-d5c3754c2b43",
+      "name": "Update Quote Rejected",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        256,
+        1024
+      ],
+      "alwaysOutputData": true,
+      "onError": "stopWorkflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ackItems = $input.all();\nif (ackItems.length !== 1) throw new Error('rejection_ack_cardinality_violation');\nconst source = ackItems[0].json || {};\nconst items = $items('Build Quote Rejection Update');\nif (items.length !== 1) throw new Error('rejection_update_cardinality_violation');\nconst n = items[0].json || {};\nif (String(source.quote_key || '') !== n.quote_key || String(source.lifecycle_state || '') !== 'Rejected' || String(source.approval_event_id || '') !== n.approval_event_id) throw new Error('rejection_not_acknowledged');\nreturn { json: { ok: true, status: 'quote_rejected', submission_id: n.submission_id, approval_event_id: n.approval_event_id, response_code: 200 } };"
+      },
+      "id": "856a1dce-ca92-4f65-a826-2da923d0a855",
+      "name": "Verify Rejection Acknowledgement",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        1024
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const n = $input.item.json || {};\nconst now = new Date().toISOString();\nreturn { json: { ...n, status: 'Needs Review', lifecycle_state: 'Expired', approval_action: 'expire_guard', updated_at_utc: now, last_execution_id: $execution.id } };"
+      },
+      "id": "ebc51757-8e5a-41d0-a232-bf2fba8fe16e",
+      "name": "Build Quote Expiry Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        768,
+        1024
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_QUOTE_OFFERS_TABLE_ID",
+          "cachedResultName": "Quote_Offers"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "quote_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.quote_key }}"
+            },
+            {
+              "keyName": "submission_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.submission_id }}"
+            },
+            {
+              "keyName": "onboarding_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.onboarding_id }}"
+            },
+            {
+              "keyName": "smoke_tag",
+              "condition": "eq",
+              "keyValue": "={{ $json.smoke_tag }}"
+            },
+            {
+              "keyName": "request_fingerprint",
+              "condition": "eq",
+              "keyValue": "={{ $json.request_fingerprint }}"
+            },
+            {
+              "keyName": "lifecycle_state",
+              "condition": "eq",
+              "keyValue": "Needs Review"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.status }}",
+            "lifecycle_state": "={{ $json.lifecycle_state }}",
+            "approval_action": "={{ $json.approval_action }}",
+            "approval_actor": "={{ $json.approval_actor }}",
+            "approval_note": "={{ $json.approval_note }}",
+            "approval_event_id": "={{ $json.approval_event_id }}",
+            "approval_event_fingerprint": "={{ $json.approval_event_fingerprint }}",
+            "approval_event_at_utc": "={{ $json.approval_event_at_utc }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "lifecycle_state",
+              "displayName": "lifecycle_state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_action",
+              "displayName": "approval_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_actor",
+              "displayName": "approval_actor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_note",
+              "displayName": "approval_note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_event_id",
+              "displayName": "approval_event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_event_fingerprint",
+              "displayName": "approval_event_fingerprint",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_event_at_utc",
+              "displayName": "approval_event_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "id": "bce9a66f-3491-4ef0-ad87-bfe6c4197ff1",
+      "name": "Update Quote Expired",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1024,
+        1024
+      ],
+      "alwaysOutputData": true,
+      "onError": "stopWorkflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ackItems = $input.all();\nif (ackItems.length !== 1) throw new Error('expiry_ack_cardinality_violation');\nconst source = ackItems[0].json || {};\nconst items = $items('Build Quote Expiry Update');\nif (items.length !== 1) throw new Error('expiry_update_cardinality_violation');\nconst n = items[0].json || {};\nif (String(source.quote_key || '') !== n.quote_key || String(source.lifecycle_state || '') !== 'Expired' || String(source.approval_event_id || '') !== n.approval_event_id) throw new Error('expiry_not_acknowledged');\nreturn { json: { ok: false, status: 'quote_expired', submission_id: n.submission_id, approval_event_id: n.approval_event_id, response_code: 410 } };"
+      },
+      "id": "4670f10f-f931-4628-a2ce-81999ecdf58b",
+      "name": "Verify Expiry Acknowledgement",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        1024
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const n = $input.item.json || {};\nconst now = new Date().toISOString();\nreturn { json: { ...n, status: 'Offer Pending Email', lifecycle_state: 'Approval Send Pending', approval_action: 'approve', send_intent_at_utc: now, email_sent: false, email_provider_message_id: '', email_provider_thread_id: '', email_send_error: '', updated_at_utc: now, last_execution_id: $execution.id } };"
+      },
+      "id": "a5773538-1efc-42c4-af9c-da15ca24693f",
+      "name": "Build Approval Send Intent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_QUOTE_OFFERS_TABLE_ID",
+          "cachedResultName": "Quote_Offers"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "quote_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.quote_key }}"
+            },
+            {
+              "keyName": "submission_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.submission_id }}"
+            },
+            {
+              "keyName": "onboarding_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.onboarding_id }}"
+            },
+            {
+              "keyName": "smoke_tag",
+              "condition": "eq",
+              "keyValue": "={{ $json.smoke_tag }}"
+            },
+            {
+              "keyName": "request_fingerprint",
+              "condition": "eq",
+              "keyValue": "={{ $json.request_fingerprint }}"
+            },
+            {
+              "keyName": "lifecycle_state",
+              "condition": "eq",
+              "keyValue": "Needs Review"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.status }}",
+            "lifecycle_state": "={{ $json.lifecycle_state }}",
+            "approval_action": "={{ $json.approval_action }}",
+            "approval_actor": "={{ $json.approval_actor }}",
+            "approval_note": "={{ $json.approval_note }}",
+            "approval_event_id": "={{ $json.approval_event_id }}",
+            "approval_event_fingerprint": "={{ $json.approval_event_fingerprint }}",
+            "approval_event_at_utc": "={{ $json.approval_event_at_utc }}",
+            "send_intent_at_utc": "={{ $json.send_intent_at_utc }}",
+            "email_sent": "={{ $json.email_sent }}",
+            "email_provider_message_id": "={{ $json.email_provider_message_id }}",
+            "email_provider_thread_id": "={{ $json.email_provider_thread_id }}",
+            "email_send_error": "={{ $json.email_send_error }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "lifecycle_state",
+              "displayName": "lifecycle_state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_action",
+              "displayName": "approval_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_actor",
+              "displayName": "approval_actor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_note",
+              "displayName": "approval_note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_event_id",
+              "displayName": "approval_event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_event_fingerprint",
+              "displayName": "approval_event_fingerprint",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "approval_event_at_utc",
+              "displayName": "approval_event_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "send_intent_at_utc",
+              "displayName": "send_intent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_sent",
+              "displayName": "email_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_provider_message_id",
+              "displayName": "email_provider_message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_provider_thread_id",
+              "displayName": "email_provider_thread_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_send_error",
+              "displayName": "email_send_error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "id": "c1e6104f-610f-4750-a6b4-6e15d8657f4e",
+      "name": "Update Approval Send Intent",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1792,
+        1024
+      ],
+      "alwaysOutputData": true,
+      "onError": "stopWorkflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ackItems = $input.all();\nif (ackItems.length !== 1) throw new Error('approval_send_intent_ack_cardinality_violation');\nconst source = ackItems[0].json || {};\nconst items = $items('Build Approval Send Intent');\nif (items.length !== 1) throw new Error('approval_send_intent_cardinality_violation');\nconst n = items[0].json || {};\nif (String(source.quote_key || '') !== n.quote_key || String(source.lifecycle_state || '') !== 'Approval Send Pending' || String(source.approval_event_id || '') !== n.approval_event_id || source.email_sent === true) throw new Error('approval_send_intent_not_acknowledged');\nreturn { json: n };"
+      },
+      "id": "fc713f34-8930-47bb-a4ed-992d520d643c",
+      "name": "Verify Approval Send Intent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2048,
+        1024
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.email }}",
+        "subject": "={{ $json.offer_subject }}",
+        "emailType": "html",
+        "message": "={{ $json.offer_html }}"
+      },
+      "id": "9aadb211-955b-4dbb-a770-2292d234f438",
+      "name": "Send Approved Client Offer",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2304,
+        1024
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const provider = $input.item.json || {};\nconst items = $items('Verify Approval Send Intent');\nif (items.length !== 1) throw new Error('approval_send_intent_cardinality_violation');\nconst row = items[0].json || {};\nconst clean = (value) => typeof value === 'string' ? value.trim().slice(0,512) : '';\nconst messageId = clean(provider.id || provider.messageId);\nconst threadId = clean(provider.threadId);\nconst error = clean(provider.error && provider.error.message ? provider.error.message : provider.error);\nconst confirmed = !error && messageId.length > 0 && threadId.length > 0;\nconst now = new Date().toISOString();\nreturn { json: { ...row, status: confirmed ? 'Offer Sent' : 'Offer Pending Email', lifecycle_state: confirmed ? 'Offer Sent' : 'Approval Send Pending', email_sent: confirmed, email_provider_message_id: confirmed ? messageId : '', email_provider_thread_id: confirmed ? threadId : '', email_send_error: confirmed ? '' : (error || 'missing_gmail_message_or_thread_id'), email_sent_at_utc: confirmed ? now : null, updated_at_utc: now, last_execution_id: $execution.id, provider_confirmed: confirmed } };"
+      },
+      "id": "c4650444-0268-4470-a71d-a9d9430528db",
+      "name": "Validate Approved Gmail Evidence",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_QUOTE_OFFERS_TABLE_ID",
+          "cachedResultName": "Quote_Offers"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "quote_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.quote_key }}"
+            },
+            {
+              "keyName": "submission_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.submission_id }}"
+            },
+            {
+              "keyName": "onboarding_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.onboarding_id }}"
+            },
+            {
+              "keyName": "smoke_tag",
+              "condition": "eq",
+              "keyValue": "={{ $json.smoke_tag }}"
+            },
+            {
+              "keyName": "request_fingerprint",
+              "condition": "eq",
+              "keyValue": "={{ $json.request_fingerprint }}"
+            },
+            {
+              "keyName": "lifecycle_state",
+              "condition": "eq",
+              "keyValue": "Approval Send Pending"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.status }}",
+            "lifecycle_state": "={{ $json.lifecycle_state }}",
+            "email_sent": "={{ $json.email_sent }}",
+            "email_provider_message_id": "={{ $json.email_provider_message_id }}",
+            "email_provider_thread_id": "={{ $json.email_provider_thread_id }}",
+            "email_send_error": "={{ $json.email_send_error }}",
+            "email_sent_at_utc": "={{ $json.email_sent_at_utc }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "lifecycle_state",
+              "displayName": "lifecycle_state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_sent",
+              "displayName": "email_sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_provider_message_id",
+              "displayName": "email_provider_message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_provider_thread_id",
+              "displayName": "email_provider_thread_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_send_error",
+              "displayName": "email_send_error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email_sent_at_utc",
+              "displayName": "email_sent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "id": "25ec890b-d164-42c6-a9de-0b5ae0b3bda1",
+      "name": "Update Approved Offer Delivery",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        256,
+        1280
+      ],
+      "alwaysOutputData": true,
+      "onError": "stopWorkflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ackItems = $input.all();\nif (ackItems.length !== 1) throw new Error('approved_delivery_ack_cardinality_violation');\nconst ack = ackItems[0].json || {};\nconst items = $items('Validate Approved Gmail Evidence');\nif (items.length !== 1) throw new Error('approved_delivery_cardinality_violation');\nconst n = items[0].json || {};\nconst expectedLifecycle = n.provider_confirmed === true ? 'Offer Sent' : 'Approval Send Pending';\nconst sameIdentity = ['quote_key','submission_id','onboarding_id','smoke_tag','request_fingerprint'].every((key) => String(ack[key] || '') === String(n[key] || ''));\nconst providerMatches = n.provider_confirmed === true\n  ? ack.email_sent === true && String(ack.email_provider_message_id || '') === n.email_provider_message_id && String(ack.email_provider_thread_id || '') === n.email_provider_thread_id\n  : ack.email_sent !== true && !String(ack.email_provider_message_id || '') && !String(ack.email_provider_thread_id || '');\nif (!sameIdentity || String(ack.lifecycle_state || '') !== expectedLifecycle || !providerMatches) throw new Error('approved_delivery_update_not_acknowledged');\nreturn { json: { ok: n.provider_confirmed === true, status: n.provider_confirmed === true ? 'offer_sent' : 'approved_send_pending_reconciliation', submission_id: n.submission_id, offer_number: n.offer_number, approval_event_id: n.approval_event_id, email_sent: n.email_sent === true, response_code: n.provider_confirmed === true ? 200 : 202 } };"
+      },
+      "id": "bd28504d-b84c-4a79-af76-cdc53d39cce9",
+      "name": "Build Approval Send Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": "={{ $json.response_code }}"
+        }
+      },
+      "id": "87b33096-2df5-422a-a729-6ebe50d2e6ea",
+      "name": "Respond Approval Outcome",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        768,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1,
+              "triggerAtMinute": 17
+            }
+          ]
+        },
+        "timezone": "UTC"
+      },
+      "id": "2fe87384-f299-4e29-afd1-ab87a7a6227f",
+      "name": "Quote Observability Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        1024,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_QUOTE_OFFERS_TABLE_ID",
+          "cachedResultName": "Quote_Offers"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": []
+        },
+        "returnAll": true
+      },
+      "id": "3c08f4a1-a1a0-4843-a1d5-34b410897d5e",
+      "name": "Find Observable Quote Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1280,
+        1280
+      ],
+      "alwaysOutputData": true,
+      "onError": "stopWorkflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map((item) => item.json || {}).filter((row) => row.quote_key && row.request_fingerprint);\nconst now = new Date();\nconst day = now.toISOString().slice(0,10);\nconst ageHours = (row) => {\n  const ms = Date.parse(row.updated_at_utc || row.created_at_utc || '');\n  return Number.isFinite(ms) ? Math.max(0, Math.floor((now.getTime() - ms) / 3600000)) : 0;\n};\nconst groups = new Map();\nfor (const row of rows) {\n  const key = [row.quote_key,row.submission_id,row.onboarding_id,row.smoke_tag,row.request_fingerprint].join('\\n');\n  if (!groups.has(key)) groups.set(key, []);\n  groups.get(key).push(row);\n}\nconst alerts = [];\nfor (const [key, grouped] of groups.entries()) {\n  const [quote_key,submission_id,onboarding_id,smoke_tag,request_fingerprint] = key.split('\\n');\n  const age = Math.max(...grouped.map(ageHours));\n  const lifecycleValues = [...new Set(grouped.map((row) => String(row.lifecycle_state || '')))].sort();\n  const reviewSentValues = [...new Set(grouped.map((row) => row.review_alert_sent === true))];\n  const lifecycle = lifecycleValues.length === 1 ? lifecycleValues[0] : 'AMBIGUOUS';\n  let reason = '';\n  if (grouped.length > 1) reason = 'ambiguous_duplicate_scope';\n  else if (lifecycle === 'Needs Review' && reviewSentValues[0] !== true && age >= 1) reason = 'review_alert_unconfirmed';\n  else if (lifecycle === 'Needs Review' && age >= 24) reason = 'needs_review_stale';\n  else if (['Standard Send Pending','Approval Send Pending'].includes(lifecycle) && age >= 2) reason = 'client_email_pending';\n  if (!reason) continue;\n  const bucket = reason + ':' + day;\n  if (grouped.every((item) => String(item.stale_alert_sent_bucket || '') === bucket)) continue;\n  const offerNumbers = [...new Set(grouped.map((row) => String(row.offer_number || '')).filter(Boolean))].sort();\n  alerts.push({\n    quote_key, submission_id, onboarding_id, smoke_tag, request_fingerprint,\n    offer_number: offerNumbers.join(' / '), lifecycle_state: lifecycleValues.join(' / '),\n    duplicate_scope_count: grouped.length, age_hours: age, stale_alert_reason: reason,\n    stale_alert_pending_bucket: bucket, stale_alert_intent_at_utc: now.toISOString(),\n    updated_at_utc: now.toISOString(), last_execution_id: $execution.id,\n  });\n}\nreturn { json: { alert_needed: alerts.length > 0, alert_count: alerts.length, alert_rows_json: JSON.stringify(alerts) } };"
+      },
+      "id": "762f3a79-42b6-45ab-ae7c-0ceccfdcf936",
+      "name": "Build Stale Quote Alerts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.alert_needed }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": true
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "27557ecd-7b9d-4614-a771-c0764202e131",
+      "name": "Stale Quote Alert Needed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1792,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = JSON.parse(String($json.alert_rows_json || '[]'));\nif (!Array.isArray(rows)) throw new Error('stale_alert_rows_not_array');\nreturn rows.map((row) => ({ json: row }));"
+      },
+      "id": "f50bc533-fa94-4391-a46a-ddf29d4bd0a0",
+      "name": "Emit Stale Alert Intent Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2048,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_QUOTE_OFFERS_TABLE_ID",
+          "cachedResultName": "Quote_Offers"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "quote_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.quote_key }}"
+            },
+            {
+              "keyName": "submission_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.submission_id }}"
+            },
+            {
+              "keyName": "onboarding_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.onboarding_id }}"
+            },
+            {
+              "keyName": "smoke_tag",
+              "condition": "eq",
+              "keyValue": "={{ $json.smoke_tag }}"
+            },
+            {
+              "keyName": "request_fingerprint",
+              "condition": "eq",
+              "keyValue": "={{ $json.request_fingerprint }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "stale_alert_pending_bucket": "={{ $json.stale_alert_pending_bucket }}",
+            "stale_alert_reason": "={{ $json.stale_alert_reason }}",
+            "stale_alert_intent_at_utc": "={{ $json.stale_alert_intent_at_utc }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "stale_alert_pending_bucket",
+              "displayName": "stale_alert_pending_bucket",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "stale_alert_reason",
+              "displayName": "stale_alert_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "stale_alert_intent_at_utc",
+              "displayName": "stale_alert_intent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "id": "840e4788-dd9d-4ede-a0ec-1c10a34ed046",
+      "name": "Update Stale Alert Intent",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2304,
+        1280
+      ],
+      "alwaysOutputData": true,
+      "onError": "stopWorkflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $items('Emit Stale Alert Intent Rows').map((item) => item.json || {});\nif (!rows.length) return [];\nconst acknowledgements = $input.all().map((item) => item.json || {}).filter((row) => Object.keys(row).length);\nconst identity = (row) => [row.quote_key,row.submission_id,row.onboarding_id,row.smoke_tag,row.request_fingerprint].map((value) => String(value || '')).join('\\n');\nconst declaredGroups = new Set();\nfor (const row of rows) {\n  const expectedCount = row.duplicate_scope_count;\n  if (!Number.isSafeInteger(expectedCount) || expectedCount < 1) throw new Error('invalid_stale_alert_duplicate_scope_count');\n  const pendingBucket = String(row.stale_alert_pending_bucket || '');\n  const groupKey = identity(row) + '\\n' + pendingBucket;\n  if (declaredGroups.has(groupKey)) throw new Error('duplicate_stale_alert_declared_group');\n  declaredGroups.add(groupKey);\n  const matches = acknowledgements.filter((ack) => identity(ack) === identity(row) && String(ack.stale_alert_pending_bucket || '') === pendingBucket);\n  if (!matches.length) throw new Error('stale_alert_intent_not_acknowledged');\n  if (matches.length !== expectedCount) throw new Error('stale_alert_intent_acknowledgement_count_mismatch');\n}\nfor (const ack of acknowledgements) {\n  if (!rows.some((row) => identity(row) === identity(ack) && String(row.stale_alert_pending_bucket || '') === String(ack.stale_alert_pending_bucket || ''))) throw new Error('unexpected_stale_alert_intent_acknowledgement');\n}\nconst html = (value) => String(value ?? '').replace(/[&<>\"']/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;' }[char]));\nconst body = rows.map((row) => '<li>' + html(row.offer_number || row.submission_id) + ' — ' + html(row.stale_alert_reason) + ', age ' + Number(row.age_hours || 0) + 'h, physical rows ' + row.duplicate_scope_count + '</li>').join('');\nreturn { json: { email_subject: 'Stale quote workflow states: ' + rows.length, email_body_html: '<p>Durable quote states need operator reconciliation.</p><ul>' + body + '</ul>', alert_rows_json: JSON.stringify(rows) } };"
+      },
+      "id": "0fd1d3cd-b185-466d-a8c7-f2eda74cbc51",
+      "name": "Build Stale Quote Alert Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        1536
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "ops@example.test",
+        "subject": "={{ $json.email_subject }}",
+        "emailType": "html",
+        "message": "={{ $json.email_body_html }}"
+      },
+      "id": "cd038abe-adb1-4670-ab1e-fb64b3c0070b",
+      "name": "Send Stale Quote Alert",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        256,
+        1536
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const provider = $input.item.json || {};\nconst emailItems = $items('Build Stale Quote Alert Email');\nif (emailItems.length !== 1) throw new Error('stale_alert_email_cardinality_violation');\nconst email = emailItems[0].json || {};\nconst clean = (value) => typeof value === 'string' ? value.trim().slice(0,512) : '';\nconst messageId = clean(provider.id || provider.messageId);\nconst threadId = clean(provider.threadId);\nconst error = clean(provider.error && provider.error.message ? provider.error.message : provider.error);\nconst confirmed = !error && messageId.length > 0 && threadId.length > 0;\nreturn { json: { provider_confirmed: confirmed, provider_message_id: confirmed ? messageId : '', provider_thread_id: confirmed ? threadId : '', alert_rows_json: email.alert_rows_json } };"
+      },
+      "id": "cc7e2dea-53d3-4b32-af73-5359478360aa",
+      "name": "Validate Stale Alert Gmail Evidence",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        1536
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const source = $input.item.json || {};\nif (source.provider_confirmed !== true) return [];\nconst rows = JSON.parse(String(source.alert_rows_json || '[]'));\nconst now = new Date().toISOString();\nreturn rows.map((row) => ({ json: { ...row, stale_alert_sent_bucket: row.stale_alert_pending_bucket, stale_alert_sent_at_utc: now, stale_alert_provider_message_id: source.provider_message_id, stale_alert_provider_thread_id: source.provider_thread_id, updated_at_utc: now, last_execution_id: $execution.id } }));"
+      },
+      "id": "3aabdb67-066f-4ff7-ab36-61232ef246d2",
+      "name": "Emit Stale Alert Sent Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        768,
+        1536
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_QUOTE_OFFERS_TABLE_ID",
+          "cachedResultName": "Quote_Offers"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "quote_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.quote_key }}"
+            },
+            {
+              "keyName": "submission_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.submission_id }}"
+            },
+            {
+              "keyName": "onboarding_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.onboarding_id }}"
+            },
+            {
+              "keyName": "smoke_tag",
+              "condition": "eq",
+              "keyValue": "={{ $json.smoke_tag }}"
+            },
+            {
+              "keyName": "request_fingerprint",
+              "condition": "eq",
+              "keyValue": "={{ $json.request_fingerprint }}"
+            },
+            {
+              "keyName": "stale_alert_pending_bucket",
+              "condition": "eq",
+              "keyValue": "={{ $json.stale_alert_pending_bucket }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "stale_alert_sent_bucket": "={{ $json.stale_alert_sent_bucket }}",
+            "stale_alert_sent_at_utc": "={{ $json.stale_alert_sent_at_utc }}",
+            "stale_alert_provider_message_id": "={{ $json.stale_alert_provider_message_id }}",
+            "stale_alert_provider_thread_id": "={{ $json.stale_alert_provider_thread_id }}",
+            "updated_at_utc": "={{ $json.updated_at_utc }}",
+            "last_execution_id": "={{ $json.last_execution_id }}"
+          },
+          "schema": [
+            {
+              "id": "stale_alert_sent_bucket",
+              "displayName": "stale_alert_sent_bucket",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "stale_alert_sent_at_utc",
+              "displayName": "stale_alert_sent_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "stale_alert_provider_message_id",
+              "displayName": "stale_alert_provider_message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "stale_alert_provider_thread_id",
+              "displayName": "stale_alert_provider_thread_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at_utc",
+              "displayName": "updated_at_utc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_execution_id",
+              "displayName": "last_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        }
+      },
+      "id": "4a0f7560-dbe8-4a68-a681-a6d079d927d6",
+      "name": "Update Stale Alert Sent",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1024,
+        1536
+      ],
+      "alwaysOutputData": true,
+      "onError": "stopWorkflow"
+    }
+  ],
+  "connections": {
+    "Quote Intake Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Quote Intake Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Quote Intake Token": {
+      "main": [
+        [
+          {
+            "node": "Quote Intake Authorized?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quote Intake Authorized?": {
+      "main": [
+        [
+          {
+            "node": "Normalize Quote Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Quote Intake Unauthorized Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Quote Intake Unauthorized Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Quote Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Quote Request": {
+      "main": [
+        [
+          {
+            "node": "Quote Request Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quote Request Valid?": {
+      "main": [
+        [
+          {
+            "node": "Find Existing Quote Rows",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Quote Invalid Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Quote Invalid Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Quote Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Existing Quote Rows": {
+      "main": [
+        [
+          {
+            "node": "Resolve Quote Intake",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Quote Intake": {
+      "main": [
+        [
+          {
+            "node": "Filter Quote Terminal Outcome",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter New Standard Quote",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter New Review Quote",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Quote Terminal Outcome": {
+      "main": [
+        [
+          {
+            "node": "Build Quote Terminal Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Quote Terminal Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Quote Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter New Standard Quote": {
+      "main": [
+        [
+          {
+            "node": "Insert Standard Send Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Standard Send Intent": {
+      "main": [
+        [
+          {
+            "node": "Verify Standard Intent Acknowledgement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Standard Intent Acknowledgement": {
+      "main": [
+        [
+          {
+            "node": "Send Standard Client Offer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Standard Client Offer": {
+      "main": [
+        [
+          {
+            "node": "Validate Standard Gmail Evidence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Standard Gmail Evidence": {
+      "main": [
+        [
+          {
+            "node": "Update Standard Offer Delivery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Standard Offer Delivery": {
+      "main": [
+        [
+          {
+            "node": "Build Standard Quote Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Standard Quote Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Quote Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter New Review Quote": {
+      "main": [
+        [
+          {
+            "node": "Insert Review Alert Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Review Alert Intent": {
+      "main": [
+        [
+          {
+            "node": "Verify Review Intent Acknowledgement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Review Intent Acknowledgement": {
+      "main": [
+        [
+          {
+            "node": "Send Quote Review Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Quote Review Alert": {
+      "main": [
+        [
+          {
+            "node": "Validate Review Alert Gmail Evidence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Review Alert Gmail Evidence": {
+      "main": [
+        [
+          {
+            "node": "Update Review Alert Delivery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Review Alert Delivery": {
+      "main": [
+        [
+          {
+            "node": "Build Review Quote Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Review Quote Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Quote Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quote Approval Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Quote Approval Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Quote Approval Token": {
+      "main": [
+        [
+          {
+            "node": "Quote Approval Authorized?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quote Approval Authorized?": {
+      "main": [
+        [
+          {
+            "node": "Normalize Quote Approval",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Quote Approval Unauthorized Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Quote Approval Unauthorized Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Approval Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Quote Approval": {
+      "main": [
+        [
+          {
+            "node": "Quote Approval Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quote Approval Valid?": {
+      "main": [
+        [
+          {
+            "node": "Find Approval Quote Rows",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Quote Approval Invalid Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Quote Approval Invalid Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Approval Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Approval Quote Rows": {
+      "main": [
+        [
+          {
+            "node": "Resolve Quote Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Quote Approval": {
+      "main": [
+        [
+          {
+            "node": "Filter Approval Terminal Outcome",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter Approval Rejection",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter Approval Expiry",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter Approval Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Approval Terminal Outcome": {
+      "main": [
+        [
+          {
+            "node": "Build Approval Terminal Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Approval Terminal Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Approval Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Approval Rejection": {
+      "main": [
+        [
+          {
+            "node": "Build Quote Rejection Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Quote Rejection Update": {
+      "main": [
+        [
+          {
+            "node": "Update Quote Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Quote Rejected": {
+      "main": [
+        [
+          {
+            "node": "Verify Rejection Acknowledgement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Rejection Acknowledgement": {
+      "main": [
+        [
+          {
+            "node": "Respond Approval Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Approval Expiry": {
+      "main": [
+        [
+          {
+            "node": "Build Quote Expiry Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Quote Expiry Update": {
+      "main": [
+        [
+          {
+            "node": "Update Quote Expired",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Quote Expired": {
+      "main": [
+        [
+          {
+            "node": "Verify Expiry Acknowledgement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Expiry Acknowledgement": {
+      "main": [
+        [
+          {
+            "node": "Respond Approval Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Approval Send": {
+      "main": [
+        [
+          {
+            "node": "Build Approval Send Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Approval Send Intent": {
+      "main": [
+        [
+          {
+            "node": "Update Approval Send Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Approval Send Intent": {
+      "main": [
+        [
+          {
+            "node": "Verify Approval Send Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Approval Send Intent": {
+      "main": [
+        [
+          {
+            "node": "Send Approved Client Offer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Approved Client Offer": {
+      "main": [
+        [
+          {
+            "node": "Validate Approved Gmail Evidence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Approved Gmail Evidence": {
+      "main": [
+        [
+          {
+            "node": "Update Approved Offer Delivery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Approved Offer Delivery": {
+      "main": [
+        [
+          {
+            "node": "Build Approval Send Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Approval Send Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Approval Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quote Observability Schedule": {
+      "main": [
+        [
+          {
+            "node": "Find Observable Quote Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Observable Quote Rows": {
+      "main": [
+        [
+          {
+            "node": "Build Stale Quote Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Stale Quote Alerts": {
+      "main": [
+        [
+          {
+            "node": "Stale Quote Alert Needed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stale Quote Alert Needed?": {
+      "main": [
+        [
+          {
+            "node": "Emit Stale Alert Intent Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emit Stale Alert Intent Rows": {
+      "main": [
+        [
+          {
+            "node": "Update Stale Alert Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Stale Alert Intent": {
+      "main": [
+        [
+          {
+            "node": "Build Stale Quote Alert Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Stale Quote Alert Email": {
+      "main": [
+        [
+          {
+            "node": "Send Stale Quote Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Stale Quote Alert": {
+      "main": [
+        [
+          {
+            "node": "Validate Stale Alert Gmail Evidence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Stale Alert Gmail Evidence": {
+      "main": [
+        [
+          {
+            "node": "Emit Stale Alert Sent Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emit Stale Alert Sent Rows": {
+      "main": [
+        [
+          {
+            "node": "Update Stale Alert Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "UTC"
+  },
+  "tags": []
+}
