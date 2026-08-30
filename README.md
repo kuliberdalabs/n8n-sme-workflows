@@ -1,6 +1,6 @@
 # n8n-sme-workflows
 
-[n8n](https://n8n.io) workflow templates for SME back-office automation, engineered well past demo grade: lead intake, invoicing and dunning, document intake, support triage, ops reporting, bank reconciliation, Polish KSeF e-invoicing, client onboarding, and replay-safe kickoff booking.
+[n8n](https://n8n.io) workflow templates for SME back-office automation, engineered well past demo grade: lead intake, invoicing and dunning, document intake, support triage, ops reporting, bank reconciliation, Polish KSeF e-invoicing, client onboarding, replay-safe kickoff booking, order tracking, and controlled fixed-price quoting.
 
 Agent cold start: read [`AGENTS.md`](AGENTS.md), select its one primary task route, and follow that route's ordered local sources and gates.
 
@@ -20,6 +20,7 @@ Each workflow is an import-ready JSON built to a consistent engineering standard
 | [08](workflows/08-client-onboarding-saga/) | Client Onboarding Saga | Saga-pattern orchestration of multi-step onboarding with durable state and duplicate-send protection |
 | [09](workflows/09-booking-lifecycle/) | Booking Lifecycle | Replay-safe client kickoff booking with durable intent, Google Calendar provider evidence, and Gmail drafts |
 | [10](workflows/10-order-status-tracker/) | Order Status Tracker | Token-separated order intake and status transitions with durable history, notification dedup, stale-pending visibility, and safe customer lookup |
+| [11](workflows/11-quote-offer/) | Quote and Offer Workflow | Authenticated fixed-price quoting with durable replay and conflict guards, approval decisions, provider-evidence delivery, and stale-state alerts |
 
 ## Engineering approach
 
