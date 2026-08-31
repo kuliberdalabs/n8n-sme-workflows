@@ -31,16 +31,32 @@ function body(overrides = {}) {
   };
 }
 
-function normalize(overrides = {}) {
-  return executeCodeNode(quoteWorkflow, 'Normalize Quote Request', {
-    input: { body: body(overrides) },
+function itemizedBody(line_items, overrides = {}) {
+  const request = body(overrides);
+  delete request.service_code;
+  delete request.quantity;
+  request.line_items = line_items;
+  return request;
+}
+
+function runQuotePipeline(request) {
+  const normalized = executeCodeNode(quoteWorkflow, 'Normalize Quote Request', {
+    input: { body: request },
   }).json;
+  const catalog = executeCodeNode(quoteWorkflow, 'Resolve Quote Catalog Items', { input: normalized }).json;
+  const totals = executeCodeNode(quoteWorkflow, 'Calculate Itemized Quote Totals', { input: catalog }).json;
+  const policy = executeCodeNode(quoteWorkflow, 'Apply Quote Commercial Policy', { input: totals }).json;
+  return executeCodeNode(quoteWorkflow, 'Render Itemized Quote Offer', { input: policy }).json;
+}
+
+function normalize(overrides = {}) {
+  return runQuotePipeline(body(overrides));
 }
 
 function resolve(normalized, rows = []) {
   return executeCodeNode(quoteWorkflow, 'Resolve Quote Intake', {
     inputRows: rows,
-    nodeItems: { 'Normalize Quote Request': [normalized] },
+    nodeItems: { 'Render Itemized Quote Offer': [normalized] },
   }).json;
 }
 
@@ -154,8 +170,165 @@ test('fixed price book supports all workflow 08 service codes with integer minor
   for (const [service_code, quantity] of [['ai_audit', 2], ['automation_retainer', 7], ['workflow_build', 4], ['ops_sprint', 3]]) {
     const n = normalize({ service_code, quantity });
     assert.equal(n.valid_input, false);
-    assert.ok(n.validation_errors.includes('quantity_outside_price_book_bounds'));
+    assert.ok(n.validation_errors.some((error) => error.startsWith('quantity_outside_price_book_bounds')));
   }
+});
+
+test('itemized requests canonicalize in catalog order and reordered equivalent bundles replay identically', () => {
+  const first = runQuotePipeline(itemizedBody([
+    { service_code: 'workflow_build', quantity: 1 },
+    { service_code: 'ai_audit', quantity: 1 },
+  ]));
+  const reordered = runQuotePipeline(itemizedBody([
+    { service_code: 'ai_audit', quantity: 1 },
+    { service_code: 'workflow_build', quantity: 1 },
+  ]));
+  assert.equal(first.valid_input, true, JSON.stringify(first.validation_errors));
+  assert.equal(first.quote_mode, 'itemized');
+  assert.equal(first.line_item_count, 2);
+  assert.equal(first.line_items_json, JSON.stringify([
+    { service_code: 'ai_audit', quantity: 1 },
+    { service_code: 'workflow_build', quantity: 1 },
+  ]));
+  assert.equal(first.submission_id, reordered.submission_id);
+  assert.equal(first.request_fingerprint, reordered.request_fingerprint);
+  assert.equal(first.pricing_snapshot_json, reordered.pricing_snapshot_json);
+  assert.equal(first.pricing_snapshot_hash, reordered.pricing_snapshot_hash);
+  assert.equal(first.total_net_minor, 500000);
+});
+
+test('itemized contract accepts one and five exact items but rejects duplicate, mixed, extra-key, unsafe, and out-of-range shapes', () => {
+  const one = runQuotePipeline(itemizedBody([{ service_code: 'ai_audit', quantity: 1 }]));
+  assert.equal(one.valid_input, true, JSON.stringify(one.validation_errors));
+  assert.equal(one.line_item_count, 1);
+
+  const five = runQuotePipeline(itemizedBody([
+    { service_code: 'ops_sprint', quantity: 1 },
+    { service_code: 'workflow_build', quantity: 1 },
+    { service_code: 'automation_retainer', quantity: 1 },
+    { service_code: 'ai_audit', quantity: 1 },
+    { service_code: 'custom_discovery', quantity: 1 },
+  ]));
+  assert.equal(five.valid_input, true, JSON.stringify(five.validation_errors));
+  assert.equal(five.line_item_count, 5);
+  assert.equal(five.needs_review, true);
+
+  const invalidRequests = [
+    body({ line_items: [{ service_code: 'ai_audit', quantity: 1 }] }),
+    itemizedBody([
+      { service_code: 'ai_audit', quantity: 1 },
+      { service_code: 'AI_AUDIT', quantity: 1 },
+    ]),
+    itemizedBody([{ service_code: 'ai_audit', quantity: 1, discount: 50 }]),
+    itemizedBody([{ service_code: ['ai_audit'], quantity: 1 }]),
+    itemizedBody([{ service_code: 'ai_audit', quantity: { value: 1 } }]),
+    itemizedBody([{ service_code: 'ai_audit', quantity: 1.5 }]),
+    itemizedBody([{ service_code: 'ai_audit', quantity: Number.MAX_SAFE_INTEGER + 1 }]),
+    itemizedBody([{ service_code: 'workflow_build', quantity: 4 }]),
+    itemizedBody(Array.from({ length: 6 }, (_, index) => ({ service_code: 'custom_' + index, quantity: 1 }))),
+  ];
+  for (const request of invalidRequests) {
+    const result = runQuotePipeline(request);
+    assert.equal(result.valid_input, false, JSON.stringify({ request, errors: result.validation_errors }));
+  }
+});
+
+test('itemized totals, pricing snapshot, and escaped HTML are stable and never guess unknown-item money', () => {
+  const priced = runQuotePipeline(itemizedBody([
+    { service_code: 'workflow_build', quantity: 2 },
+    { service_code: 'automation_retainer', quantity: 3 },
+  ], {
+    client_name: '<img src=x onerror=alert(1)>',
+    company: '<script>alert(1)</script>',
+  }));
+  assert.equal(priced.valid_input, true, JSON.stringify(priced.validation_errors));
+  assert.equal(priced.total_net_minor, 1090000);
+  assert.equal(priced.needs_review, true);
+  assert.match(priced.review_reason, /total above automatic send band/);
+  const snapshot = JSON.parse(priced.pricing_snapshot_json);
+  assert.equal(snapshot.schema, 'quote-pricing-snapshot.v1');
+  assert.equal(snapshot.price_book_version, 'QUOTE_SAMPLE_V1_2026-08-30');
+  assert.equal(snapshot.items[0].service_code, 'automation_retainer');
+  assert.equal(snapshot.items[0].line_total_net_minor, 450000);
+  assert.equal(snapshot.items[1].line_total_net_minor, 640000);
+  assert.equal(snapshot.total_net_minor, 1090000);
+  assert.equal(priced.pricing_snapshot_hash, hash(priced.pricing_snapshot_json));
+  assert.match(priced.offer_html, /<table/);
+  assert.match(priced.offer_html, /10900\.00 USD/);
+  assert.doesNotMatch(priced.offer_html, /<script|<img/i);
+  assert.match(priced.offer_html, /&lt;script&gt;/);
+
+  const unknown = runQuotePipeline(itemizedBody([
+    { service_code: 'ai_audit', quantity: 1 },
+    { service_code: 'custom_discovery', quantity: 1 },
+  ]));
+  assert.equal(unknown.valid_input, true);
+  assert.equal(unknown.has_price_book_entry, false);
+  assert.equal(unknown.total_net_minor, 0);
+  assert.equal(unknown.needs_review, true);
+  assert.match(unknown.review_reason, /custom_discovery/);
+  const unknownSnapshot = JSON.parse(unknown.pricing_snapshot_json);
+  assert.equal(unknownSnapshot.total_net_minor, null);
+  assert.equal(unknownSnapshot.items.find((item) => item.service_code === 'custom_discovery').unit_net_minor, null);
+  assert.match(unknown.offer_html, /Review required/);
+
+  const unknownRow = resolve(unknown);
+  const decision = approval({ submission_id: unknown.submission_id });
+  assert.equal(resolveApproval(decision, [{ ...unknownRow, expires_at_utc: '2999-01-01T00:00:00.000Z' }]).terminal_status, 'price_book_entry_required');
+});
+
+test('request fingerprint changes when only the internal price snapshot input changes', () => {
+  const normalized = executeCodeNode(quoteWorkflow, 'Normalize Quote Request', {
+    input: { body: itemizedBody([
+      { service_code: 'ai_audit', quantity: 1 },
+      { service_code: 'workflow_build', quantity: 1 },
+    ]) },
+  }).json;
+  const catalog = executeCodeNode(quoteWorkflow, 'Resolve Quote Catalog Items', { input: normalized }).json;
+  const totals = executeCodeNode(quoteWorkflow, 'Calculate Itemized Quote Totals', { input: catalog }).json;
+  const policy = executeCodeNode(quoteWorkflow, 'Apply Quote Commercial Policy', { input: totals }).json;
+  const base = executeCodeNode(quoteWorkflow, 'Render Itemized Quote Offer', { input: policy }).json;
+
+  const repricedResolvedItems = JSON.parse(catalog.resolved_quote_items_json).map((item, index) => index === 0 ? {
+    ...item,
+    unit_net_minor: item.unit_net_minor - 10000,
+  } : item);
+  const repricedTotals = executeCodeNode(quoteWorkflow, 'Calculate Itemized Quote Totals', {
+    input: {
+      ...catalog,
+      resolved_quote_items_json: JSON.stringify(repricedResolvedItems),
+    },
+  }).json;
+  const repricedPolicy = executeCodeNode(quoteWorkflow, 'Apply Quote Commercial Policy', { input: repricedTotals }).json;
+  const repriced = executeCodeNode(quoteWorkflow, 'Render Itemized Quote Offer', {
+    input: repricedPolicy,
+  }).json;
+
+  assert.equal(repriced.submission_id, base.submission_id);
+  assert.equal(repriced.line_items_json, base.line_items_json);
+  assert.equal(repriced.quote_mode, base.quote_mode);
+  assert.notEqual(repriced.pricing_snapshot_json, base.pricing_snapshot_json);
+  assert.notEqual(repriced.pricing_snapshot_hash, base.pricing_snapshot_hash);
+  assert.notEqual(repriced.request_fingerprint, base.request_fingerprint);
+  assert.equal(repriced.pricing_snapshot_hash, hash(repriced.pricing_snapshot_json));
+  const repricedSnapshot = JSON.parse(repriced.pricing_snapshot_json);
+  assert.equal(repricedSnapshot.items[0].unit_net_minor, 170000);
+  assert.equal(repricedSnapshot.total_net_minor, 490000);
+  assert.match(repriced.offer_html, /4900\.00 USD/);
+
+  const conflict = resolve(repriced, [resolve(base)]);
+  assert.equal(conflict.terminal_status, 'submission_identity_conflict');
+  assert.equal(conflict.response_code, 409);
+
+  const changedRequest = runQuotePipeline(itemizedBody([
+    { service_code: 'ai_audit', quantity: 1 },
+    { service_code: 'workflow_build', quantity: 2 },
+  ]));
+  assert.notEqual(changedRequest.submission_id, base.submission_id);
+  assert.notEqual(changedRequest.pricing_snapshot_hash, base.pricing_snapshot_hash);
+  assert.notEqual(changedRequest.request_fingerprint, base.request_fingerprint);
+  assert.match(nodeByName(loadWorkflow(quoteWorkflow), 'Render Itemized Quote Offer').parameters.jsCode, /pricing_snapshot_hash/);
+  assert.match(nodeByName(loadWorkflow(quoteWorkflow), 'Render Itemized Quote Offer').parameters.jsCode, /line_items_json/);
 });
 
 test('workflow 08 child payload produces the exact parent-compatible submission id and preserves owner and smoke scope', () => {
@@ -187,7 +360,7 @@ test('workflow 08 child payload produces the exact parent-compatible submission 
   const offerStep = JSON.parse(onboarding.planned_steps_json).find((step) => step.step_name === 'offer_out');
   assert.ok(offerStep);
   const request = JSON.parse(offerStep.request_snapshot_bytes);
-  const n = executeCodeNode(quoteWorkflow, 'Normalize Quote Request', { input: { body: request } }).json;
+  const n = runQuotePipeline(request);
   const expected = hash([
     request.onboarding_id, request.email, request.service_code, request.quantity, request.request_details,
   ].join('\n').toLowerCase());
@@ -612,8 +785,127 @@ test('stale alert email requires the exact acknowledged physical-row count for e
   }), /invalid_stale_alert_duplicate_scope_count/);
 });
 
+test('optional customization lab executes integer-only choices, deposits, and a bounded payload-only CRM handoff', () => {
+  const fixture = executeCodeNode(quoteWorkflow, 'Build Safe Quote Customization Fixture').json;
+  assert.equal(fixture.customer_email, 'ada@example.test');
+  assert.equal(fixture.total_net_minor, 500000);
+  assert.equal(fixture.external_action_performed, false);
+
+  const choices = executeCodeNode(quoteWorkflow, 'OPTION — Build Good Better Best Choices', { input: fixture }).json;
+  assert.deepEqual(choices.choices.map((choice) => choice.total_net_minor), [500000, 575000, 650000]);
+  assert.ok(choices.choices.every((choice) => Number.isSafeInteger(choice.total_net_minor)));
+
+  const deposit = executeCodeNode(quoteWorkflow, 'OPTION — Add Deposit Schedule', { input: fixture }).json;
+  assert.deepEqual(deposit.schedule.map((entry) => entry.amount_minor), [200000, 300000]);
+  assert.equal(deposit.schedule.reduce((sum, entry) => sum + entry.amount_minor, 0), fixture.total_net_minor);
+
+  const crm = executeCodeNode(quoteWorkflow, 'OPTION — Build CRM Handoff Payload', { input: fixture }).json;
+  assert.equal(crm.external_action_performed, false);
+  assert.equal(crm.payload_only, true);
+  assert.equal(crm.crm_handoff_payload.contact_email, 'ada@example.test');
+  assert.equal(crm.crm_handoff_payload.total_net_minor, 500000);
+  assert.equal(crm.crm_handoff_payload.line_items.length, 2);
+
+  for (const name of [
+    'OPTION — Build Good Better Best Choices',
+    'OPTION — Add Deposit Schedule',
+    'OPTION — Build CRM Handoff Payload',
+  ]) {
+    for (const total_net_minor of [-1, 1.5, Number.MAX_SAFE_INTEGER + 1, Infinity]) {
+      assert.throws(() => executeCodeNode(quoteWorkflow, name, {
+        input: { ...fixture, total_net_minor },
+      }), /invalid_customization_total_minor|customization_total_overflow/, name + ':' + total_net_minor);
+    }
+    assert.throws(() => executeCodeNode(quoteWorkflow, name, {
+      input: { ...fixture, currency: { value: 'USD' } },
+    }), /invalid_customization_currency|invalid_crm_currency/, name + ':currency');
+  }
+  assert.throws(() => executeCodeNode(quoteWorkflow, 'OPTION — Build Good Better Best Choices', {
+    input: { ...fixture, total_net_minor: Number.MAX_SAFE_INTEGER },
+  }), /customization_total_overflow/);
+  assert.throws(() => executeCodeNode(quoteWorkflow, 'OPTION — Build CRM Handoff Payload', {
+    input: {
+      ...fixture,
+      line_items: [{ service_code: 'unsafe', quantity: 2, unit_net_minor: Number.MAX_SAFE_INTEGER, line_total_net_minor: Number.MAX_SAFE_INTEGER }],
+    },
+  }), /invalid_crm_line_item_minor_units/);
+  assert.throws(() => executeCodeNode(quoteWorkflow, 'OPTION — Build CRM Handoff Payload', {
+    input: { ...fixture, customer_email: 'real@example.com' },
+  }), /crm_fixture_email_must_use_example_test/);
+});
+
+test('CRM handoff payload rejects a safe per-line aggregate that differs from the declared total', () => {
+  const fixture = executeCodeNode(quoteWorkflow, 'Build Safe Quote Customization Fixture').json;
+  assert.throws(() => executeCodeNode(quoteWorkflow, 'OPTION — Build CRM Handoff Payload', {
+    input: {
+      ...fixture,
+      total_net_minor: 500000,
+      line_items: [{
+        service_code: 'workflow_build',
+        quantity: 1,
+        unit_net_minor: 320001,
+        line_total_net_minor: 320001,
+      }],
+    },
+  }), /crm_line_items_total_mismatch/);
+});
+
+test('CRM handoff payload rejects aggregate overflow across individually safe lines', () => {
+  const fixture = executeCodeNode(quoteWorkflow, 'Build Safe Quote Customization Fixture').json;
+  assert.throws(() => executeCodeNode(quoteWorkflow, 'OPTION — Build CRM Handoff Payload', {
+    input: {
+      ...fixture,
+      total_net_minor: Number.MAX_SAFE_INTEGER,
+      line_items: [
+        {
+          service_code: 'max_safe_line',
+          quantity: 1,
+          unit_net_minor: Number.MAX_SAFE_INTEGER,
+          line_total_net_minor: Number.MAX_SAFE_INTEGER,
+        },
+        {
+          service_code: 'overflow_line',
+          quantity: 1,
+          unit_net_minor: 1,
+          line_total_net_minor: 1,
+        },
+      ],
+    },
+  }), /crm_line_items_total_overflow/);
+});
+
+test('optional customization lab is an exact five-node island with no production boundary edge', () => {
+  const workflow = loadWorkflow(quoteWorkflow);
+  const labNames = new Set([
+    'Try Quote Customizations',
+    'Build Safe Quote Customization Fixture',
+    'OPTION — Build Good Better Best Choices',
+    'OPTION — Add Deposit Schedule',
+    'OPTION — Build CRM Handoff Payload',
+  ]);
+  assert.deepEqual(reachable(workflow, 'Try Quote Customizations'), labNames);
+  assert.deepEqual(direct(workflow, 'Try Quote Customizations'), ['Build Safe Quote Customization Fixture']);
+  assert.deepEqual(new Set(direct(workflow, 'Build Safe Quote Customization Fixture')), new Set([
+    'OPTION — Build Good Better Best Choices',
+    'OPTION — Add Deposit Schedule',
+    'OPTION — Build CRM Handoff Payload',
+  ]));
+  for (const start of ['Quote Intake Webhook', 'Quote Approval Webhook', 'Quote Observability Schedule']) {
+    const production = reachable(workflow, start);
+    for (const name of labNames) assert.equal(production.has(name), false, start + ' -> ' + name);
+  }
+  for (const name of labNames) {
+    for (const target of direct(workflow, name)) assert.equal(labNames.has(target), true, name + ' -> ' + target);
+  }
+});
+
 test('graph orders durable intent before every Gmail and exposes one responder per webhook lane', () => {
   const workflow = loadWorkflow(quoteWorkflow);
+  assert.deepEqual(direct(workflow, 'Normalize Quote Request'), ['Resolve Quote Catalog Items']);
+  assert.deepEqual(direct(workflow, 'Resolve Quote Catalog Items'), ['Calculate Itemized Quote Totals']);
+  assert.deepEqual(direct(workflow, 'Calculate Itemized Quote Totals'), ['Apply Quote Commercial Policy']);
+  assert.deepEqual(direct(workflow, 'Apply Quote Commercial Policy'), ['Render Itemized Quote Offer']);
+  assert.deepEqual(direct(workflow, 'Render Itemized Quote Offer'), ['Quote Request Valid?']);
   assert.deepEqual(direct(workflow, 'Filter New Standard Quote'), ['Insert Standard Send Intent']);
   assert.deepEqual(direct(workflow, 'Insert Standard Send Intent'), ['Verify Standard Intent Acknowledgement']);
   assert.deepEqual(direct(workflow, 'Verify Standard Intent Acknowledgement'), ['Send Standard Client Offer']);
@@ -660,6 +952,12 @@ test('all Data Table operations fail-stop and durable reads inspect all exact ma
   assert.equal(nodeByName(workflow, 'Update Standard Offer Delivery').parameters.filters.conditions.at(-1).keyValue, 'Standard Send Pending');
   assert.equal(nodeByName(workflow, 'Update Approved Offer Delivery').parameters.filters.conditions.at(-1).keyValue, 'Approval Send Pending');
   assert.equal(nodeByName(workflow, 'Update Stale Alert Sent').parameters.filters.conditions.at(-1).keyName, 'stale_alert_pending_bucket');
+  for (const name of ['Insert Standard Send Intent', 'Insert Review Alert Intent']) {
+    const values = nodeByName(workflow, name).parameters.columns.value;
+    for (const field of ['quote_mode','line_item_count','line_items_json','pricing_snapshot_json','pricing_snapshot_hash']) {
+      assert.equal(values[field], '={{ $json.' + field + ' }}', name + ':' + field);
+    }
+  }
 });
 
 test('workflow is inactive, native-only, placeholder-only, and free of credentials, pin data, private branding, and unsafe metadata', () => {
@@ -668,11 +966,11 @@ test('workflow is inactive, native-only, placeholder-only, and free of credentia
   assert.equal(workflow.active, false);
   assert.equal(Object.hasOwn(workflow, 'pinData'), false);
   assert.equal(Object.hasOwn(workflow.settings, 'availableInMCP'), false);
-  assert.equal(workflow.nodes.length, 65);
+  assert.equal(workflow.nodes.length, 74);
   const allowedTypes = new Set([
     'n8n-nodes-base.webhook', 'n8n-nodes-base.code', 'n8n-nodes-base.if',
     'n8n-nodes-base.dataTable', 'n8n-nodes-base.gmail', 'n8n-nodes-base.respondToWebhook',
-    'n8n-nodes-base.scheduleTrigger',
+    'n8n-nodes-base.scheduleTrigger', 'n8n-nodes-base.manualTrigger',
   ]);
   for (const node of workflow.nodes) {
     assert.ok(allowedTypes.has(node.type), `${node.name}:${node.type}`);

@@ -4,15 +4,15 @@
 
 `workflow-annotated-v2.json`
 
-SHA-256: `c80dcb22b3b98610a64643b1aa3e2e519c58c00c9ecf045b37afb6393517b436`
+SHA-256: `c7677127b8a5df30fa8c26586bd9d6f3ee9564776aa4598e5a3edf0628de636b`
 
 ## Title
 
-Create fixed-price quotes with Gmail and n8n Data Tables
+Create itemized quotes with Gmail and n8n Data Tables
 
 ## Short description
 
-Price authenticated quote requests, prevent replay sends, route exceptions for approval, and surface stale delivery state.
+Price one-to-five-line quote bundles, preview optional offer variations, route exceptions for approval, and preserve delivery evidence.
 
 ## Categories
 
@@ -27,55 +27,58 @@ Price authenticated quote requests, prevent replay sends, route exceptions for a
 
 ## Description
 
-# Turn a qualified request into a controlled fixed-price offer
+# Build itemized service quotes from a controlled catalog
 
-This workflow gives a service business a durable path from an authenticated quote request to a fixed-price offer, human review, approval or rejection, and delivery evidence. It uses a deterministic sample price book instead of AI, so the same accepted inputs always produce the same money calculation.
+This workflow turns an authenticated quote request into an itemized fixed-price offer. A request can contain one to five unique service lines, or use the included legacy single-service shorthand. Four visible Code stages resolve a closed versioned catalog, calculate safe integer minor-unit totals, apply commercial review policy, and render an escaped HTML table with a stable pricing snapshot and hash.
 
-The intake webhook accepts exactly one bounded request object. It derives a parent-compatible submission id and a broader request fingerprint, then reads every matching Data Table row before deciding what to do. An exact replay performs no write and sends no email. A changed request under the same parent id is held as an identity conflict, while duplicate physical rows fail closed instead of silently selecting the first result.
+Itemized bundles are sorted in catalog order before identity is derived. Sending the same services in a different order therefore replays the same durable request instead of creating another quote. Duplicate service codes, mixed shorthand and item arrays, extra item keys, fractional or unsafe quantities, and catalog-specific quantity violations fail before state or email.
 
-Four sample services are included: AI workflow audit, automation operations retainer, production workflow build, and operations automation sprint. Quotes above the sample automatic-send threshold, custom discount or legal language, unknown service codes, and missing or mismatched verified addresses move to `Needs Review`. Unknown services receive no guessed price and cannot be approved until the price book is extended.
+The sample catalog contains an AI workflow audit, an automation operations retainer, a production workflow build, and an operations automation sprint. Unknown service codes can be recorded for human review, but the workflow returns no partial or guessed total and blocks approval until the catalog is deliberately extended.
 
-Eligible standard quotes persist `Standard Send Pending` before Gmail. Review cases persist a separate operator-alert intent and email only the controlled operations inbox. The independent approval webhook supports explicit approve and reject decisions, expiry checks, and durable actor, note, event, and timestamp evidence. An approved quote persists `Approval Send Pending` before it can reach Gmail.
+The canvas also includes a disconnected manual customization lab. Its synthetic `example.test` fixture fans out to Good/Better/Best choices, a 40/60 deposit schedule, and a bounded CRM handoff payload. These are pure integer-safe previews: they use no credentials, variables, Data Tables, provider calls, or production edges. The CRM option explicitly returns `external_action_performed=false` and does not synchronize a CRM.
 
-Client delivery is confirmed only when Gmail returns both a message id and thread id and the corresponding Data Table update acknowledges exactly one matching row. Review-alert delivery has separate fields and never marks the client offer sent. An hourly branch surfaces stale review and email-pending states, including ambiguous duplicate scopes. It requires exactly the declared physical-row count to acknowledge stale-alert intent before Gmail, then consumes its daily alert bucket only after confirmed delivery.
+The production lanes preserve controlled delivery. Every request reads all rows in the exact durable scope before deciding whether to create, replay, or hold a conflict. Standard offers and review alerts persist their intent before Gmail. Client delivery is confirmed only when Gmail returns both a message id and thread id and the matching Data Table lifecycle update is acknowledged.
+
+A separately authenticated approval webhook records approve or reject evidence and blocks expired, terminal, ambiguous, unverified-recipient, pending-send, and unknown-price rows. An hourly branch surfaces stale review and pending-email state and consumes its daily operator-alert bucket only after confirmed Gmail evidence.
 
 ## How it works
 
-1. Authenticates quote intake with the server-side `QUOTE_INTAKE_TOKEN` and rejects malformed, array-shaped, padded-scope, or out-of-range requests before state access.
-2. Calculates integer USD cents from a versioned fixed price book and derives the exact workflow 08-compatible submission id plus a full request fingerprint.
-3. Reads all rows in the `submission_id + onboarding_id + smoke_tag` scope to distinguish a new request, exact replay, identity conflict, or ambiguous duplicate.
-4. Persists standard-send or review-alert intent and verifies the exact acknowledgement before Gmail.
-5. Sends an eligible standard offer only when `email` and `verified_email` normalize to the same valid submitted address; otherwise it alerts only the operations inbox.
-6. Authenticates approval separately with `QUOTE_APPROVAL_TOKEN`, records approve or reject evidence, and blocks expired, terminal, ambiguous, pending-send, unverified-recipient, and unknown-price rows.
-7. Confirms an offer as sent only after Gmail provider evidence and an exact compare-and-set delivery acknowledgement.
-8. Sweeps hourly for stale review or pending-email state and records alert intent and confirmed alert delivery in separate fields.
+1. Authenticates one quote request and accepts either legacy `service_code + quantity` or one-to-five exact `line_items`, never both.
+2. Canonicalizes line items in catalog order so reordered equivalent bundles share one deterministic submission id.
+3. Resolves catalog entries, calculates line and quote totals in integer USD cents, applies review reasons, and renders escaped itemized HTML.
+4. Persists `quote_mode`, `line_item_count`, canonical `line_items_json`, `pricing_snapshot_json`, and `pricing_snapshot_hash` with the quote.
+5. Holds unknown services with no guessed total and prevents their approval.
+6. Resolves replay or identity conflict across every exact Data Table match before writing send or review-alert intent.
+7. Sends only to the normalized verified client address, while review and stale alerts use the controlled operations inbox.
+8. Records approval or rejection through a separate token and confirms delivery only after provider plus durable update evidence.
+9. Offers three isolated manual preview modules that can be inspected and adapted without performing payment or CRM actions.
 
 ## Setup
 
-1. Create one n8n Data Table named `Quote_Offers` using the exact columns in the workflow README, then re-select it in every Data Table node.
+1. Create one n8n Data Table named `Quote_Offers` using the exact schema in the workflow README, then re-select it in every Data Table node.
 2. Create separate n8n Variables named `QUOTE_INTAKE_TOKEN` and `QUOTE_APPROVAL_TOKEN`.
 3. Connect Gmail to the four Gmail nodes.
-4. Replace `ops@example.test` with a controlled operations inbox. Keep the client-recipient expressions bound to the validated stored email; do not add request-controlled recipient overrides.
-5. Replace and version the sample price book, currency, automatic-send threshold, review phrases, offer copy, expiry window, and stale thresholds for your business.
-6. Keep the workflow inactive while testing wrong tokens, exact replay, identity conflict, ambiguous rows, standard delivery, review, approve, reject, expiry, partial Gmail evidence, failed durable acknowledgement, and stale alerts.
+4. Replace `ops@example.test` with a controlled operations inbox. Keep client recipients bound to the validated stored email.
+5. Replace and version the sample catalog, currency, auto-send threshold, review phrases, itemized offer copy, expiry window, and stale thresholds.
+6. Run `Try Quote Customizations` with the bundled synthetic fixture. Copy an optional transformation into your own reviewed branch only if you need it.
+7. Keep the workflow inactive while testing shorthand compatibility, item boundaries, reorder replay, unknown services, approval, Gmail evidence, and stale alerts.
 
 ## Good to know
 
-- This is a fixed-price sample, not tax, accounting, legal, signature, payment, or commercial advice. It does not include VAT or another tax calculation.
-- n8n Data Tables do not provide an atomic unique constraint or transaction across lookup, write, and Gmail. Concurrent first deliveries or approvals can race; use a transactional store with unique keys when that risk matters.
+- This is a fixed-price example, not tax, accounting, legal, signature, payment, or commercial advice. The deposit option is a numeric schedule preview only.
+- The CRM option builds a bounded payload only. It does not authenticate to, write to, or synchronize a CRM.
+- n8n Data Tables do not provide an atomic unique constraint or transaction across lookup, write, and Gmail. Concurrent first deliveries or approvals can race.
 - Gmail acceptance and Data Table acknowledgement are separate steps. A crash between them leaves explicit pending state for operator reconciliation; the workflow does not blindly resend.
-- Review alerts and stale alerts are operational notifications, not client-offer sends. Their provider ids and sent flags remain separate from `email_sent`.
 - The hourly sweep reports stale state and throttles confirmed alerts by UTC day. Concurrent sweep executions can still duplicate an operator alert.
-- There is deliberately no automatic customer follow-up lane. Add one only with durable suppression for rejection, expiry, reply, payment, cancellation, and provider acknowledgement.
-- Raw webhook bodies and tokens can appear in n8n execution history even though only bounded whitelisted fields reach the Data Table. Configure retention, pruning, and access controls appropriately.
-- One token authorizes its entire webhook lane. Add tenant-specific authentication and authorization when mutually untrusted tenants share the workflow.
-- The template does not claim exactly-once email, legal acceptance, signature, CRM synchronization, automatic recovery, or end-to-end sales fulfilment.
+- Raw webhook bodies and tokens can appear in n8n execution history. Configure retention, pruning, and access controls appropriately.
+- The template does not claim exactly-once email, legal acceptance, signature, payment collection, tax calculation, CRM synchronization, automatic recovery, or end-to-end sales fulfilment.
 
 ## Submission checklist
 
 - [ ] Upload `workflow-annotated-v2.json`, not `workflow.json`.
-- [ ] Verify the upload hash is `c80dcb22b3b98610a64643b1aa3e2e519c58c00c9ecf045b37afb6393517b436`.
-- [ ] Confirm the canvas shows one yellow overview and ten white narrative sections.
+- [ ] Verify the upload hash is `c7677127b8a5df30fa8c26586bd9d6f3ee9564776aa4598e5a3edf0628de636b`.
+- [ ] Confirm the canvas shows one yellow overview and eleven white narrative sections.
+- [ ] Confirm the optional customization section contains exactly five nodes and has no edge to production.
 - [ ] Keep the workflow inactive during reviewer setup and testing.
 - [ ] Select Gmail, n8n Data Tables, and Webhook as integrations if the portal asks for them.
 - [ ] Use `Sales` and `Finance` as the categories.
