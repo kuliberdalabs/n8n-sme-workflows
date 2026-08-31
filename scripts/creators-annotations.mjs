@@ -474,6 +474,77 @@ Connect your commerce or fulfilment adapters and adjust approved status wording 
       ]),
     ],
   },
+  '11-quote-offer': {
+    sectionTopPadding: 192,
+    overviewTitle: 'Build itemized quotes with optional sales modules',
+    overview: `## Build itemized quotes with optional sales modules
+
+### How it works
+1. Accepts the legacy single-service request or an itemized bundle of one to five unique services, then canonicalizes bundle order for replay-safe identity.
+2. Resolves a versioned closed catalog, calculates every line and total in integer minor units, applies review policy, and renders an escaped itemized offer plus a hashed pricing snapshot.
+3. Holds unknown services for review with no guessed total and blocks them from approval until the catalog is deliberately extended.
+4. Reads every durable match before creating work, then stores client-send or operator-alert intent before Gmail and requires provider plus update evidence.
+5. Protects approval with a separate token, records approve or reject evidence, and sweeps hourly for stale review or email-pending state.
+6. Includes a disconnected manual lab for previewing Good/Better/Best choices, a deposit schedule, or a bounded CRM handoff payload without external action.
+
+### Setup steps
+- [ ] Create the Quote Offers Data Table with the documented schema and re-select it in every Data Table node.
+- [ ] Set QUOTE_INTAKE_TOKEN and QUOTE_APPROVAL_TOKEN as separate n8n Variables.
+- [ ] Connect Gmail and replace ops@example.test with your controlled operations inbox.
+- [ ] Review the catalog, currency, policy threshold, offer table, approval expiry, and stale-state schedule.
+- [ ] Run the customization lab only with synthetic data; copy an option into your own branch after review.
+
+### Customization
+Replace sample prices and wording while preserving canonical item identity, snapshot binding, integer minor units, all-row duplicate resolution, persist-before-send ordering, and provider-evidence gates.`,
+    sections: [
+      section('Build the itemized quote', 'Authenticates one request, validates shorthand or exact line items, then visibly resolves catalog, totals, policy, and escaped offer rendering.', 0, 0, 8, [
+        'Quote Intake Webhook', 'Validate Quote Intake Token', 'Quote Intake Authorized?', 'Build Quote Intake Unauthorized Response',
+        'Normalize Quote Request', 'Resolve Quote Catalog Items', 'Calculate Itemized Quote Totals',
+        'Apply Quote Commercial Policy', 'Render Itemized Quote Offer', 'Quote Request Valid?', 'Build Quote Invalid Response',
+      ]),
+      section('Resolve replay and persist intent', 'Inspects every durable scope match, separates replay or conflict outcomes, and stores client-send or review-alert intent.', 2560, 0, 4, [
+        'Find Existing Quote Rows', 'Resolve Quote Intake', 'Filter Quote Terminal Outcome', 'Filter New Standard Quote',
+        'Filter New Review Quote', 'Build Quote Terminal Response', 'Insert Standard Send Intent', 'Insert Review Alert Intent',
+      ]),
+      section('Send the standard quote safely', 'Requires an acknowledged send intent, validates Gmail evidence, and confirms the matching delivery update before success.', 4096, 0, 5, [
+        'Verify Standard Intent Acknowledgement', 'Send Standard Client Offer', 'Validate Standard Gmail Evidence',
+        'Update Standard Offer Delivery', 'Build Standard Quote Response',
+      ]),
+      section('Alert review and return intake', 'Tracks the operator alert separately from client delivery and converges authenticated intake into one terminal response.', 5888, 0, 3, [
+        'Verify Review Intent Acknowledgement', 'Send Quote Review Alert', 'Validate Review Alert Gmail Evidence',
+        'Update Review Alert Delivery', 'Build Review Quote Response', 'Respond Quote Outcome',
+      ]),
+      section('Protect and validate approval', 'Authenticates the independent decision lane and validates exact scope, event identity, action, actor, note, and time.', 0, 768, 4, [
+        'Quote Approval Webhook', 'Validate Quote Approval Token', 'Quote Approval Authorized?', 'Build Quote Approval Unauthorized Response',
+        'Normalize Quote Approval', 'Quote Approval Valid?', 'Build Quote Approval Invalid Response',
+      ]),
+      section('Resolve the approval action', 'Reads every matching quote and classifies safe replay, conflict, reject, expiry, or approval-send outcomes without picking first.', 1536, 768, 4, [
+        'Find Approval Quote Rows', 'Resolve Quote Approval', 'Filter Approval Terminal Outcome', 'Filter Approval Rejection',
+        'Filter Approval Expiry', 'Filter Approval Send', 'Build Approval Terminal Response',
+      ]),
+      section('Persist rejection or expiry', 'Writes a compare-and-set terminal decision and verifies exactly one matching durable acknowledgement before responding.', 3072, 768, 3, [
+        'Build Quote Rejection Update', 'Update Quote Rejected', 'Verify Rejection Acknowledgement',
+        'Build Quote Expiry Update', 'Update Quote Expired', 'Verify Expiry Acknowledgement',
+      ]),
+      section('Persist and deliver approval', 'Acknowledges approval-send intent before Gmail, validates provider evidence, and confirms one exact final delivery update.', 4352, 768, 4, [
+        'Build Approval Send Intent', 'Update Approval Send Intent', 'Verify Approval Send Intent', 'Send Approved Client Offer',
+        'Validate Approved Gmail Evidence', 'Update Approved Offer Delivery', 'Build Approval Send Response', 'Respond Approval Outcome',
+      ]),
+      section('Detect stale durable state', 'Groups observable rows deterministically, isolates ambiguous duplicates, and persists each alert attempt before email.', 0, 1536, 3, [
+        'Quote Observability Schedule', 'Find Observable Quote Rows', 'Build Stale Quote Alerts',
+        'Stale Quote Alert Needed?', 'Emit Stale Alert Intent Rows', 'Update Stale Alert Intent',
+      ]),
+      section('Send and confirm stale alerts', 'Requires every intent acknowledgement, validates operator Gmail evidence, and advances only the matching pending throttle bucket.', 1280, 1536, 5, [
+        'Build Stale Quote Alert Email', 'Send Stale Quote Alert', 'Validate Stale Alert Gmail Evidence',
+        'Emit Stale Alert Sent Rows', 'Update Stale Alert Sent',
+      ]),
+      section('Preview optional quote variations', 'Runs an isolated synthetic fixture into three pure, integer-safe previews without credentials, provider calls, durable state, or CRM synchronization.', 0, 2304, 5, [
+        'Try Quote Customizations', 'Build Safe Quote Customization Fixture',
+        'OPTION — Build Good Better Best Choices', 'OPTION — Add Deposit Schedule',
+        'OPTION — Build CRM Handoff Payload',
+      ]),
+    ],
+  },
   '07-ksef-exception-desk': {
     enforceEdgeCorridors: true,
     overviewTitle: 'Handle KSeF exceptions without blind resubmission',
