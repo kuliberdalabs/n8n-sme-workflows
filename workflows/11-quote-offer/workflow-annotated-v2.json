@@ -3,7 +3,7 @@
   "nodes": [
     {
       "id": "b0b5d46d-72b2-4f3e-ac29-c58341c79bf6",
-      "name": "Overview — Create fixed-price quotes with durable approval controls",
+      "name": "Overview — Build itemized quotes with optional sales modules",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
@@ -11,14 +11,14 @@
         0
       ],
       "parameters": {
-        "content": "## Create fixed-price quotes with durable approval controls\n\n### How it works\n1. Authenticates one server-to-server quote request, validates a bounded contract, and derives the parent-compatible submission id plus a full request fingerprint.\n2. Prices four documented services from a deterministic sample price book; unknown services, recipient mismatches, custom terms, and high-value quotes enter human review without guessing a price.\n3. Reads every durable match before deciding whether to create, replay, or hold a conflicting request, then stores send or review-alert intent before Gmail.\n4. Marks a client offer sent only after Gmail returns both a message id and thread id and the matching lifecycle update is durably acknowledged.\n5. Protects approval with a separate token, records approve or reject evidence, blocks expired and terminal rows, and validates approval-event replays before any client send.\n6. Sweeps hourly for stale review and email-pending states, records alert intent first, and consumes the alert throttle only after confirmed operator-email delivery.\n\n### Setup steps\n- [ ] Create the Quote Offers Data Table with the documented schema and re-select it in every Data Table node.\n- [ ] Set QUOTE_INTAKE_TOKEN and QUOTE_APPROVAL_TOKEN as separate n8n Variables.\n- [ ] Connect Gmail and replace ops@example.test with your controlled operations inbox.\n- [ ] Review the sample price book, currency, approval expiry, high-value threshold, and stale-state schedule.\n- [ ] Keep the workflow inactive while testing authenticated intake, replay, conflict, review, approve, reject, expiry, Gmail failure, and stale alerts.\n\n### Customization\nReplace the sample prices and offer wording for your business while preserving exact request identity, all-row duplicate resolution, persist-before-send ordering, provider-evidence gates, and compare-and-set lifecycle updates.",
+        "content": "## Build itemized quotes with optional sales modules\n\n### How it works\n1. Accepts the legacy single-service request or an itemized bundle of one to five unique services, then canonicalizes bundle order for replay-safe identity.\n2. Resolves a versioned closed catalog, calculates every line and total in integer minor units, applies review policy, and renders an escaped itemized offer plus a hashed pricing snapshot.\n3. Holds unknown services for review with no guessed total and blocks them from approval until the catalog is deliberately extended.\n4. Reads every durable match before creating work, then stores client-send or operator-alert intent before Gmail and requires provider plus update evidence.\n5. Protects approval with a separate token, records approve or reject evidence, and sweeps hourly for stale review or email-pending state.\n6. Includes a disconnected manual lab for previewing Good/Better/Best choices, a deposit schedule, or a bounded CRM handoff payload without external action.\n\n### Setup steps\n- [ ] Create the Quote Offers Data Table with the documented schema and re-select it in every Data Table node.\n- [ ] Set QUOTE_INTAKE_TOKEN and QUOTE_APPROVAL_TOKEN as separate n8n Variables.\n- [ ] Connect Gmail and replace ops@example.test with your controlled operations inbox.\n- [ ] Review the catalog, currency, policy threshold, offer table, approval expiry, and stale-state schedule.\n- [ ] Run the customization lab only with synthetic data; copy an option into your own branch after review.\n\n### Customization\nReplace sample prices and wording while preserving canonical item identity, snapshot binding, integer minor units, all-row duplicate resolution, persist-before-send ordering, and provider-evidence gates.",
         "width": 896,
         "height": 896
       }
     },
     {
       "id": "73549795-e986-4209-a3d9-2d668bdef3f9",
-      "name": "Section 1 — Protect and validate intake",
+      "name": "Section 1 — Build the itemized quote",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
@@ -26,8 +26,8 @@
         0
       ],
       "parameters": {
-        "content": "## Protect and validate intake\nAuthenticates one bounded request, normalizes the exact child contract, and returns explicit unauthorized or invalid outcomes.",
-        "width": 1280,
+        "content": "## Build the itemized quote\nAuthenticates one request, validates shorthand or exact line items, then visibly resolves catalog, totals, policy, and escaped offer rendering.",
+        "width": 2304,
         "height": 688,
         "color": 7
       }
@@ -38,7 +38,7 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        1536,
+        2560,
         0
       ],
       "parameters": {
@@ -54,7 +54,7 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        3072,
+        4096,
         0
       ],
       "parameters": {
@@ -70,7 +70,7 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        4864,
+        5888,
         0
       ],
       "parameters": {
@@ -177,6 +177,22 @@
       }
     },
     {
+      "id": "d7f5d313-5dd2-4a2a-aa61-168294bb2a7c",
+      "name": "Section 11 — Preview optional quote variations",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        2304
+      ],
+      "parameters": {
+        "content": "## Preview optional quote variations\nRuns an isolated synthetic fixture into three pure, integer-safe previews without credentials, provider calls, durable state, or CRM synchronization.",
+        "width": 1536,
+        "height": 432,
+        "color": 7
+      }
+    },
+    {
       "parameters": {
         "httpMethod": "POST",
         "path": "quote-offer-intake",
@@ -249,10 +265,62 @@
     },
     {
       "parameters": {
-        "jsCode": "const crypto = require('crypto');\nconst root = $input.item.json || {};\nconst body = root.body;\nconst isObject = body !== null && typeof body === 'object' && !Array.isArray(body);\nconst source = isObject ? body : {};\nconst own = (key) => Object.prototype.hasOwnProperty.call(source, key);\nconst collapse = (value) => String(value ?? '').replace(/\\s+/g, ' ').trim();\nconst lower = (value) => collapse(value).toLowerCase();\nconst rawString = (key, max) => {\n  if (!own(key)) return { value: '', invalid: false, missing: true };\n  const value = source[key];\n  if (typeof value !== 'string' || value.length > max) return { value: '', invalid: true, missing: false };\n  return { value, invalid: false, missing: value.length === 0 };\n};\nconst bounded = (key, max) => {\n  if (!own(key)) return { value: '', invalid: false, missing: true };\n  const value = source[key];\n  if (typeof value !== 'string') return { value: '', invalid: true, missing: false };\n  const normalized = collapse(value);\n  return { value: normalized.slice(0, max), invalid: normalized.length > max, missing: normalized.length === 0 };\n};\nconst hash = (value) => crypto.createHash('sha256').update(String(value), 'utf8').digest('hex');\nconst html = (value) => String(value ?? '').replace(/[&<>\"']/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;' }[char]));\nconst errors = [];\nif (!isObject) errors.push('request_body_must_be_one_object');\nif (own('requests') || own('items')) errors.push('batch_payload_not_supported');\nconst onboardingRaw = rawString('onboarding_id', 64);\nconst smokeRaw = rawString('smoke_tag', 80);\nconst clientNameField = bounded('client_name', 160);\nconst companyField = bounded('company', 200);\nconst emailField = bounded('email', 254);\nconst verifiedField = bounded('verified_email', 254);\nconst serviceField = bounded('service_code', 64);\nconst detailsField = bounded('request_details', 2000);\nconst textField = bounded('request_text', 2000);\nconst onboarding_id = onboardingRaw.value;\nconst smoke_tag = smokeRaw.value;\nconst client_name = clientNameField.value;\nconst company = companyField.value;\nconst email = lower(emailField.value);\nconst verified_email = lower(verifiedField.value);\nconst service_code = lower(serviceField.value);\nconst request_details = detailsField.value || textField.value;\nconst request_text = textField.value || detailsField.value;\nif (onboardingRaw.invalid || onboardingRaw.missing || !/^[a-f0-9]{64}$/.test(onboarding_id)) errors.push('bad_onboarding_id');\nif (smokeRaw.invalid || smokeRaw.missing || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/.test(smoke_tag)) errors.push('bad_smoke_tag');\nif (clientNameField.invalid || !client_name) errors.push('bad_client_name');\nif (companyField.invalid || !company) errors.push('bad_company');\nconst emailPattern = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/;\nif (emailField.invalid || !emailPattern.test(email)) errors.push('bad_email');\nif (verifiedField.invalid) errors.push('bad_verified_email_type_or_length');\nif (serviceField.invalid || !service_code) errors.push('bad_service_code');\nif (detailsField.invalid || textField.invalid || !request_details) errors.push('bad_request_details');\nif (detailsField.value && textField.value && detailsField.value !== textField.value) errors.push('request_details_request_text_mismatch');\nconst quantityValue = source.quantity;\nconst quantity = typeof quantityValue === 'number' ? quantityValue : (typeof quantityValue === 'string' && /^\\d+$/.test(quantityValue) ? Number(quantityValue) : NaN);\nif (!Number.isSafeInteger(quantity) || quantity < 1) errors.push('bad_quantity');\nconst PRICE_BOOK_VERSION = 'QUOTE_SAMPLE_V1_2026-08-30';\nconst PRICE_BOOK = {\n  ai_audit: { label: 'AI workflow audit', unit_net_minor: 180000, min: 1, max: 1 },\n  automation_retainer: { label: 'Automation operations retainer', unit_net_minor: 150000, min: 1, max: 6 },\n  workflow_build: { label: 'Production workflow build', unit_net_minor: 320000, min: 1, max: 3 },\n  ops_sprint: { label: 'Operations automation sprint', unit_net_minor: 480000, min: 1, max: 2 },\n};\nconst rules = PRICE_BOOK[service_code] || null;\nif (rules && Number.isSafeInteger(quantity) && (quantity < rules.min || quantity > rules.max)) errors.push('quantity_outside_price_book_bounds');\nconst submission_id = onboarding_id && email && service_code && Number.isFinite(quantity) && request_details\n  ? hash([onboarding_id, email, service_code, quantity, request_details].join('\\n').toLowerCase())\n  : '';\nconst recipient_verified = emailPattern.test(email) && verified_email === email;\nconst unit_net_minor = rules ? rules.unit_net_minor : 0;\nconst total_net_minor = rules && Number.isSafeInteger(quantity) ? unit_net_minor * quantity : 0;\nconst reviewReasons = [];\nif (!rules && service_code) reviewReasons.push('price book entry required');\nif (!verified_email) reviewReasons.push('verified_email missing');\nelse if (!recipient_verified) reviewReasons.push('email and verified_email mismatch');\nconst edgeText = request_details.toLowerCase();\nfor (const entry of [\n  ['discount or special pricing requested', /\\b(discount|coupon|promo|rabat|rabatt)\\b/i],\n  ['legal or procurement terms requested', /\\b(legal|procurement|msa|dpa|binding terms|contract terms)\\b/i],\n  ['unusual delivery or SLA requested', /\\b(urgent|same day|24h|weekend|guarantee|custom sla)\\b/i],\n]) if (entry[1].test(edgeText)) reviewReasons.push(entry[0]);\nif (total_net_minor > 500000) reviewReasons.push('total above automatic send band');\nconst valid_input = errors.length === 0;\nconst needs_review = valid_input && reviewReasons.length > 0;\nconst now = new Date();\nconst created_at_utc = now.toISOString();\nconst expires_at_utc = new Date(now.getTime() + 14 * 86400000).toISOString();\nconst request_fingerprint = valid_input ? hash(JSON.stringify({\n  contract: 'quote-request.v1', price_book_version: PRICE_BOOK_VERSION, has_price_book_entry: !!rules, onboarding_id, smoke_tag,\n  client_name, company, email, verified_email, service_code, quantity, request_details,\n})) : '';\nconst quote_key = valid_input ? hash('quote.offer.v1\\n' + submission_id + '\\n' + onboarding_id + '\\n' + smoke_tag) : '';\nconst offer_number = valid_input ? 'QO-' + created_at_utc.slice(0,10).replace(/-/g,'') + '-' + submission_id.slice(0,8).toUpperCase() : '';\nconst money = (minor) => (Number(minor || 0) / 100).toFixed(2);\nconst offer_subject = valid_input ? 'Fixed-price quote ' + offer_number + ' for ' + company : '';\nconst serviceLabel = rules ? rules.label : 'Price book entry required';\nconst offer_html = valid_input ? [\n  '<section style=\"font-family:Arial,sans-serif;color:#17202a;line-height:1.5;max-width:720px\">',\n  '<h1>Fixed-price quote ' + html(offer_number) + '</h1>',\n  '<p>Prepared for <strong>' + html(company) + '</strong>, attention ' + html(client_name) + '.</p>',\n  '<p><strong>Service:</strong> ' + html(serviceLabel) + '<br><strong>Quantity:</strong> ' + quantity + '<br><strong>Unit net:</strong> ' + money(unit_net_minor) + ' USD<br><strong>Total net:</strong> ' + money(total_net_minor) + ' USD</p>',\n  '<p><strong>Request:</strong> ' + html(request_details) + '</p>',\n  '<p><strong>Valid until:</strong> ' + html(expires_at_utc.slice(0,10)) + '<br><strong>Price book:</strong> ' + html(PRICE_BOOK_VERSION) + '</p>',\n  '<p style=\"font-size:12px;color:#5d6d7e\">Reference: ' + html(submission_id) + '</p>',\n  '</section>',\n].join('') : '';\nreturn { json: {\n  valid_input, validation_errors: errors, quote_key, submission_id, offer_submission_id: submission_id,\n  onboarding_id, smoke_tag, request_fingerprint, client_name, company, email, verified_email, recipient_verified,\n  service_code, service_label: serviceLabel, has_price_book_entry: !!rules, quantity: Number.isFinite(quantity) ? quantity : 0,\n  request_details, price_book_version: PRICE_BOOK_VERSION, currency: 'USD', unit_net_minor, total_net_minor,\n  offer_number, offer_subject, offer_html, needs_review, review_reason: reviewReasons.join('; '),\n  created_at_utc, updated_at_utc: created_at_utc, expires_at_utc, last_execution_id: $execution.id,\n} };"
+        "jsCode": "const crypto = require('crypto');\nconst root = $input.item.json || {};\nconst body = root.body;\nconst isObject = body !== null && typeof body === 'object' && !Array.isArray(body);\nconst source = isObject ? body : {};\nconst own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);\nconst collapse = (value) => String(value ?? '').replace(/\\s+/g, ' ').trim();\nconst lower = (value) => collapse(value).toLowerCase();\nconst rawString = (key, max) => {\n  if (!own(source, key)) return { value: '', invalid: false, missing: true };\n  const value = source[key];\n  if (typeof value !== 'string' || value.length > max) return { value: '', invalid: true, missing: false };\n  return { value, invalid: false, missing: value.length === 0 };\n};\nconst bounded = (key, max) => {\n  if (!own(source, key)) return { value: '', invalid: false, missing: true };\n  const value = source[key];\n  if (typeof value !== 'string') return { value: '', invalid: true, missing: false };\n  const normalized = collapse(value);\n  return { value: normalized.slice(0, max), invalid: normalized.length > max, missing: normalized.length === 0 };\n};\nconst parseQuantity = (value) => {\n  if (typeof value === 'number') return value;\n  if (typeof value === 'string' && /^(0|[1-9]\\d*)$/.test(value)) return Number(value);\n  return NaN;\n};\nconst hash = (value) => crypto.createHash('sha256').update(String(value), 'utf8').digest('hex');\nconst errors = [];\nif (!isObject) errors.push('request_body_must_be_one_object');\nif (own(source, 'requests') || own(source, 'items')) errors.push('batch_payload_not_supported');\nconst onboardingRaw = rawString('onboarding_id', 64);\nconst smokeRaw = rawString('smoke_tag', 80);\nconst clientNameField = bounded('client_name', 160);\nconst companyField = bounded('company', 200);\nconst emailField = bounded('email', 254);\nconst verifiedField = bounded('verified_email', 254);\nconst detailsField = bounded('request_details', 2000);\nconst textField = bounded('request_text', 2000);\nconst onboarding_id = onboardingRaw.value;\nconst smoke_tag = smokeRaw.value;\nconst client_name = clientNameField.value;\nconst company = companyField.value;\nconst email = lower(emailField.value);\nconst verified_email = lower(verifiedField.value);\nconst request_details = detailsField.value || textField.value;\nif (onboardingRaw.invalid || onboardingRaw.missing || !/^[a-f0-9]{64}$/.test(onboarding_id)) errors.push('bad_onboarding_id');\nif (smokeRaw.invalid || smokeRaw.missing || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/.test(smoke_tag)) errors.push('bad_smoke_tag');\nif (clientNameField.invalid || !client_name) errors.push('bad_client_name');\nif (companyField.invalid || !company) errors.push('bad_company');\nconst emailPattern = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/;\nif (emailField.invalid || !emailPattern.test(email)) errors.push('bad_email');\nif (verifiedField.invalid) errors.push('bad_verified_email_type_or_length');\nif (detailsField.invalid || textField.invalid || !request_details) errors.push('bad_request_details');\nif (detailsField.value && textField.value && detailsField.value !== textField.value) errors.push('request_details_request_text_mismatch');\nconst hasLineItems = own(source, 'line_items');\nconst hasService = own(source, 'service_code');\nconst hasQuantity = own(source, 'quantity');\nif (hasLineItems && (hasService || hasQuantity)) errors.push('mixed_shorthand_and_line_items');\nlet quote_mode = hasLineItems ? 'itemized' : 'shorthand';\nlet service_code = '';\nlet quantity = 0;\nlet requestItems = [];\nif (hasLineItems) {\n  if (!Array.isArray(source.line_items)) {\n    errors.push('line_items_must_be_array');\n  } else {\n    if (source.line_items.length < 1 || source.line_items.length > 5) errors.push('line_items_count_out_of_range');\n    const seen = new Set();\n    for (const [index, raw] of source.line_items.slice(0, 5).entries()) {\n      if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {\n        errors.push('line_item_must_be_exact_object:' + index);\n        continue;\n      }\n      const keys = Object.keys(raw).sort();\n      if (keys.length !== 2 || keys[0] !== 'quantity' || keys[1] !== 'service_code') errors.push('line_item_unknown_or_missing_keys:' + index);\n      const code = typeof raw.service_code === 'string' ? lower(raw.service_code) : '';\n      const itemQuantity = parseQuantity(raw.quantity);\n      if (!code || code.length > 64 || !/^[a-z0-9][a-z0-9_-]{0,63}$/.test(code)) errors.push('bad_line_item_service_code:' + index);\n      if (!Number.isSafeInteger(itemQuantity) || itemQuantity < 1 || itemQuantity > 100) errors.push('bad_line_item_quantity:' + index);\n      if (code && seen.has(code)) errors.push('duplicate_line_item_service_code:' + code);\n      if (code) seen.add(code);\n      requestItems.push({ service_code: code, quantity: Number.isSafeInteger(itemQuantity) ? itemQuantity : 0 });\n    }\n  }\n  service_code = 'itemized_bundle';\n  quantity = requestItems.length;\n} else {\n  const serviceField = bounded('service_code', 64);\n  service_code = lower(serviceField.value);\n  quantity = parseQuantity(source.quantity);\n  if (!hasService || serviceField.invalid || !service_code || !/^[a-z0-9][a-z0-9_-]{0,63}$/.test(service_code)) errors.push('bad_service_code');\n  if (!hasQuantity || !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 100) errors.push('bad_quantity');\n  requestItems = [{ service_code, quantity: Number.isSafeInteger(quantity) ? quantity : 0 }];\n}\nconst submission_id = quote_mode === 'shorthand' && onboarding_id && email && service_code && Number.isSafeInteger(quantity) && quantity > 0 && request_details\n  ? hash([onboarding_id, email, service_code, quantity, request_details].join('\\n').toLowerCase())\n  : '';\nconst now = new Date();\nconst created_at_utc = now.toISOString();\nconst expires_at_utc = new Date(now.getTime() + 14 * 86400000).toISOString();\nreturn { json: {\n  valid_input: errors.length === 0,\n  validation_errors: [...new Set(errors)],\n  quote_mode,\n  line_item_count: requestItems.length,\n  line_items_json: JSON.stringify(requestItems),\n  quote_key: '',\n  submission_id,\n  offer_submission_id: submission_id,\n  onboarding_id,\n  smoke_tag,\n  request_fingerprint: '',\n  client_name,\n  company,\n  email,\n  verified_email,\n  recipient_verified: emailPattern.test(email) && verified_email === email,\n  service_code,\n  service_label: quote_mode === 'itemized' ? 'Itemized quote bundle' : '',\n  has_price_book_entry: false,\n  quantity: Number.isSafeInteger(quantity) ? quantity : 0,\n  request_details,\n  price_book_version: '',\n  currency: 'USD',\n  unit_net_minor: 0,\n  total_net_minor: 0,\n  pricing_snapshot_json: '',\n  pricing_snapshot_hash: '',\n  offer_number: '',\n  offer_subject: '',\n  offer_html: '',\n  needs_review: false,\n  review_reason: '',\n  created_at_utc,\n  updated_at_utc: created_at_utc,\n  expires_at_utc,\n  last_execution_id: $execution.id,\n} };"
       },
       "id": "88fc7ace-9729-43cd-a2b8-09438c0db9e5",
       "name": "Normalize Quote Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\nconst n = $input.item.json || {};\nconst hash = (value) => crypto.createHash('sha256').update(String(value), 'utf8').digest('hex');\nconst PRICE_BOOK_VERSION = 'QUOTE_SAMPLE_V1_2026-08-30';\nconst CATALOG = [\n  ['ai_audit', 'AI workflow audit', 180000, 1, 1],\n  ['automation_retainer', 'Automation operations retainer', 150000, 1, 6],\n  ['workflow_build', 'Production workflow build', 320000, 1, 3],\n  ['ops_sprint', 'Operations automation sprint', 480000, 1, 2],\n];\nconst byCode = new Map(CATALOG.map((entry, index) => [entry[0], { service_code: entry[0], service_label: entry[1], unit_net_minor: entry[2], min: entry[3], max: entry[4], catalog_order: index }]));\nconst errors = Array.isArray(n.validation_errors) ? [...n.validation_errors] : ['invalid_validation_errors'];\nlet requested = [];\ntry {\n  const parsed = JSON.parse(String(n.line_items_json || '[]'));\n  if (!Array.isArray(parsed)) throw new Error('not_array');\n  requested = parsed;\n} catch {\n  errors.push('line_items_json_invalid');\n}\nconst resolved = requested.map((item) => {\n  const code = String(item && item.service_code || '');\n  const quantity = Number(item && item.quantity);\n  const rule = byCode.get(code);\n  if (rule && (!Number.isSafeInteger(quantity) || quantity < rule.min || quantity > rule.max)) errors.push('quantity_outside_price_book_bounds:' + code);\n  return rule\n    ? { ...rule, quantity, known_service: true }\n    : { service_code: code, service_label: 'Price book entry required', unit_net_minor: null, min: 1, max: 100, catalog_order: CATALOG.length, quantity, known_service: false };\n});\nresolved.sort((a, b) => a.catalog_order - b.catalog_order || a.service_code.localeCompare(b.service_code));\nconst canonicalItems = resolved.map(({ service_code, quantity }) => ({ service_code, quantity }));\nconst line_items_json = JSON.stringify(canonicalItems);\nconst has_price_book_entry = resolved.length > 0 && resolved.every((item) => item.known_service);\nlet submission_id = String(n.submission_id || '');\nif (n.quote_mode === 'itemized' && n.onboarding_id && n.email && canonicalItems.length && n.request_details) {\n  submission_id = hash([n.onboarding_id, n.email, line_items_json, n.request_details].join('\\n').toLowerCase());\n}\nif (n.quote_mode === 'shorthand' && canonicalItems.length === 1 && n.onboarding_id && n.email && n.request_details) {\n  submission_id = hash([n.onboarding_id, n.email, canonicalItems[0].service_code, canonicalItems[0].quantity, n.request_details].join('\\n').toLowerCase());\n}\nreturn { json: {\n  ...n,\n  valid_input: n.valid_input === true && errors.length === 0,\n  validation_errors: [...new Set(errors)],\n  submission_id,\n  offer_submission_id: submission_id,\n  line_item_count: canonicalItems.length,\n  line_items_json,\n  resolved_quote_items_json: JSON.stringify(resolved),\n  price_book_version: PRICE_BOOK_VERSION,\n  has_price_book_entry,\n  service_label: n.quote_mode === 'shorthand' && resolved[0] ? resolved[0].service_label : 'Itemized quote bundle',\n} };"
+      },
+      "id": "d0c61916-e65a-4ae8-a08b-c260484ef5ee",
+      "name": "Resolve Quote Catalog Items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const n = $input.item.json || {};\nconst errors = Array.isArray(n.validation_errors) ? [...n.validation_errors] : ['invalid_validation_errors'];\nlet resolved = [];\ntry {\n  const parsed = JSON.parse(String(n.resolved_quote_items_json || '[]'));\n  if (!Array.isArray(parsed)) throw new Error('not_array');\n  resolved = parsed;\n} catch {\n  errors.push('resolved_quote_items_json_invalid');\n}\nlet runningTotal = 0;\nlet numericSafe = true;\nconst calculated = resolved.map((item) => {\n  const quantity = Number(item.quantity);\n  const unit = item.unit_net_minor;\n  if (!Number.isSafeInteger(quantity) || quantity < 1) {\n    errors.push('unsafe_line_item_quantity:' + String(item.service_code || ''));\n    numericSafe = false;\n  }\n  if (item.known_service === true) {\n    if (!Number.isSafeInteger(unit) || unit < 0 || (unit > 0 && quantity > Math.floor(Number.MAX_SAFE_INTEGER / unit))) {\n      errors.push('unsafe_line_item_minor_units:' + String(item.service_code || ''));\n      numericSafe = false;\n      return { ...item, line_total_net_minor: null };\n    }\n    const lineTotal = unit * quantity;\n    if (!Number.isSafeInteger(lineTotal) || runningTotal > Number.MAX_SAFE_INTEGER - lineTotal) {\n      errors.push('quote_total_minor_units_overflow');\n      numericSafe = false;\n      return { ...item, line_total_net_minor: null };\n    }\n    runningTotal += lineTotal;\n    return { ...item, line_total_net_minor: lineTotal };\n  }\n  return { ...item, line_total_net_minor: null };\n});\nconst fullyPriced = n.has_price_book_entry === true && resolved.length > 0 && numericSafe;\nreturn { json: {\n  ...n,\n  valid_input: n.valid_input === true && errors.length === 0,\n  validation_errors: [...new Set(errors)],\n  calculated_quote_items_json: JSON.stringify(calculated),\n  unit_net_minor: n.quote_mode === 'shorthand' && fullyPriced && calculated[0] ? calculated[0].unit_net_minor : 0,\n  total_net_minor: fullyPriced ? runningTotal : 0,\n} };"
+      },
+      "id": "df41e07f-fc9b-4bcb-a553-8a53ea6f5662",
+      "name": "Calculate Itemized Quote Totals",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const n = $input.item.json || {};\nconst reasons = [];\nlet items = [];\ntry {\n  const parsed = JSON.parse(String(n.calculated_quote_items_json || '[]'));\n  if (Array.isArray(parsed)) items = parsed;\n} catch {\n  // The totals stage already fails the request closed for malformed internal state.\n}\nconst unknownCodes = items.filter((item) => item.known_service !== true).map((item) => String(item.service_code || '')).filter(Boolean);\nif (unknownCodes.length) reasons.push('price book entry required: ' + unknownCodes.join(', '));\nif (!n.verified_email) reasons.push('verified_email missing');\nelse if (n.recipient_verified !== true) reasons.push('email and verified_email mismatch');\nconst edgeText = String(n.request_details || '').toLowerCase();\nfor (const [reason, pattern] of [\n  ['discount or special pricing requested', /\\b(discount|coupon|promo|rabat|rabatt)\\b/i],\n  ['legal or procurement terms requested', /\\b(legal|procurement|msa|dpa|binding terms|contract terms)\\b/i],\n  ['unusual delivery or SLA requested', /\\b(urgent|same day|24h|weekend|guarantee|custom sla)\\b/i],\n]) if (pattern.test(edgeText)) reasons.push(reason);\nif (n.has_price_book_entry === true && Number(n.total_net_minor) > 500000) reasons.push('total above automatic send band');\nreturn { json: {\n  ...n,\n  needs_review: n.valid_input === true && reasons.length > 0,\n  review_reason: reasons.join('; '),\n} };"
+      },
+      "id": "918a3be8-644d-4df2-8424-893a42c892b2",
+      "name": "Apply Quote Commercial Policy",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1856,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\nconst n = $input.item.json || {};\nconst hash = (value) => crypto.createHash('sha256').update(String(value), 'utf8').digest('hex');\nconst html = (value) => String(value ?? '').replace(/[&<>\"']/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;' }[char]));\nconst money = (minor) => (Number(minor) / 100).toFixed(2);\nlet items = [];\ntry {\n  const parsed = JSON.parse(String(n.calculated_quote_items_json || '[]'));\n  if (Array.isArray(parsed)) items = parsed;\n} catch {\n  // The totals stage already records invalid internal state.\n}\nconst snapshot = n.valid_input === true ? {\n  schema: 'quote-pricing-snapshot.v1',\n  price_book_version: String(n.price_book_version || ''),\n  currency: String(n.currency || ''),\n  quote_mode: String(n.quote_mode || ''),\n  items: items.map((item) => ({\n    service_code: String(item.service_code || ''),\n    service_label: String(item.service_label || ''),\n    quantity: Number(item.quantity),\n    known_service: item.known_service === true,\n    unit_net_minor: item.known_service === true ? Number(item.unit_net_minor) : null,\n    line_total_net_minor: item.known_service === true ? Number(item.line_total_net_minor) : null,\n  })),\n  total_net_minor: n.has_price_book_entry === true ? Number(n.total_net_minor) : null,\n} : null;\nconst pricing_snapshot_json = snapshot ? JSON.stringify(snapshot) : '';\nconst pricing_snapshot_hash = pricing_snapshot_json ? hash(pricing_snapshot_json) : '';\nconst request_fingerprint = n.valid_input === true ? hash(JSON.stringify({\n  contract: 'quote-request.v2',\n  price_book_version: n.price_book_version,\n  pricing_snapshot_hash,\n  onboarding_id: n.onboarding_id,\n  smoke_tag: n.smoke_tag,\n  client_name: n.client_name,\n  company: n.company,\n  email: n.email,\n  verified_email: n.verified_email,\n  quote_mode: n.quote_mode,\n  line_items_json: n.line_items_json,\n  request_details: n.request_details,\n})) : '';\nconst quote_key = n.valid_input === true ? hash('quote.offer.v2\\n' + n.submission_id + '\\n' + n.onboarding_id + '\\n' + n.smoke_tag) : '';\nconst offer_number = n.valid_input === true ? 'QO-' + String(n.created_at_utc || '').slice(0,10).replace(/-/g,'') + '-' + String(n.submission_id || '').slice(0,8).toUpperCase() : '';\nconst offer_subject = n.valid_input === true ? 'Itemized fixed-price quote ' + offer_number + ' for ' + n.company : '';\nconst rows = items.map((item) => {\n  const unit = item.known_service === true ? money(item.unit_net_minor) + ' ' + n.currency : 'Review required';\n  const line = item.known_service === true ? money(item.line_total_net_minor) + ' ' + n.currency : 'Review required';\n  return '<tr><td>' + html(item.service_label) + '<br><small>' + html(item.service_code) + '</small></td><td style=\"text-align:right\">' + html(item.quantity) + '</td><td style=\"text-align:right\">' + html(unit) + '</td><td style=\"text-align:right\">' + html(line) + '</td></tr>';\n}).join('');\nconst total = n.has_price_book_entry === true ? money(n.total_net_minor) + ' ' + n.currency : 'Review required';\nconst offer_html = n.valid_input === true ? [\n  '<section style=\"font-family:Arial,sans-serif;color:#17202a;line-height:1.5;max-width:760px\">',\n  '<h1>Itemized fixed-price quote ' + html(offer_number) + '</h1>',\n  '<p>Prepared for <strong>' + html(n.company) + '</strong>, attention ' + html(n.client_name) + '.</p>',\n  '<table style=\"border-collapse:collapse;width:100%\"><thead><tr><th style=\"text-align:left\">Service</th><th style=\"text-align:right\">Qty</th><th style=\"text-align:right\">Unit net</th><th style=\"text-align:right\">Line net</th></tr></thead><tbody>' + rows + '</tbody><tfoot><tr><th colspan=\"3\" style=\"text-align:right\">Total net</th><th style=\"text-align:right\">' + html(total) + '</th></tr></tfoot></table>',\n  '<p><strong>Request:</strong> ' + html(n.request_details) + '</p>',\n  '<p><strong>Valid until:</strong> ' + html(String(n.expires_at_utc || '').slice(0,10)) + '<br><strong>Price book:</strong> ' + html(n.price_book_version) + '</p>',\n  '<p style=\"font-size:12px;color:#5d6d7e\">Reference: ' + html(n.submission_id) + '</p>',\n  '</section>',\n].join('') : '';\nreturn { json: {\n  ...n,\n  request_fingerprint,\n  quote_key,\n  pricing_snapshot_json,\n  pricing_snapshot_hash,\n  offer_number,\n  offer_subject,\n  offer_html,\n} };"
+      },
+      "id": "52a1ba7d-b0aa-46ee-a25f-5945950ad7e3",
+      "name": "Render Itemized Quote Offer",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -340,7 +408,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1600,
+        2624,
         192
       ],
       "alwaysOutputData": true,
@@ -348,14 +416,14 @@
     },
     {
       "parameters": {
-        "jsCode": "const sourceRows = $input.all().map((item) => item.json || {}).filter((row) => Object.keys(row).length);\nconst normalizedItems = $items('Normalize Quote Request');\nif (normalizedItems.length !== 1) throw new Error('quote_normalization_cardinality_violation');\nconst n = normalizedItems[0].json || {};\nconst rows = sourceRows.filter((row) => String(row.submission_id || '') === n.submission_id && String(row.onboarding_id || '') === n.onboarding_id && String(row.smoke_tag || '') === n.smoke_tag);\nif (rows.length > 1) return { json: { ...n, action: 'terminal', terminal_status: 'ambiguous_duplicate_scope', response_code: 409, match_count: rows.length } };\nif (rows.length === 1) {\n  const row = rows[0];\n  if (String(row.request_fingerprint || '') !== n.request_fingerprint) return { json: { ...n, action: 'terminal', terminal_status: 'submission_identity_conflict', response_code: 409, match_count: 1 } };\n  return { json: { ...n, action: 'terminal', terminal_status: 'duplicate_replay', response_code: 200, match_count: 1, existing_status: String(row.status || ''), existing_lifecycle_state: String(row.lifecycle_state || ''), email_sent: row.email_sent === true, review_alert_sent: row.review_alert_sent === true } };\n}\nconst needsReview = n.needs_review === true;\nconst now = n.created_at_utc;\nreturn { json: {\n  ...n,\n  action: needsReview ? 'new_review' : 'new_standard',\n  status: needsReview ? 'Needs Review' : 'Offer Pending Email',\n  lifecycle_state: needsReview ? 'Needs Review' : 'Standard Send Pending',\n  email_sent: false, email_provider_message_id: '', email_provider_thread_id: '', email_send_error: '',\n  send_intent_at_utc: needsReview ? null : now, email_sent_at_utc: null,\n  review_alert_sent: false, review_alert_provider_message_id: '', review_alert_provider_thread_id: '', review_alert_send_error: '',\n  review_alert_intent_at_utc: needsReview ? now : null, review_alert_sent_at_utc: null,\n  approval_action: '', approval_actor: '', approval_note: '', approval_event_id: '', approval_event_fingerprint: '', approval_event_at_utc: null,\n  stale_alert_pending_bucket: '', stale_alert_sent_bucket: '', stale_alert_reason: '', stale_alert_intent_at_utc: null,\n  stale_alert_sent_at_utc: null, stale_alert_provider_message_id: '', stale_alert_provider_thread_id: '',\n} };"
+        "jsCode": "const sourceRows = $input.all().map((item) => item.json || {}).filter((row) => Object.keys(row).length);\nconst normalizedItems = $items('Render Itemized Quote Offer');\nif (normalizedItems.length !== 1) throw new Error('quote_render_cardinality_violation');\nconst n = normalizedItems[0].json || {};\nconst rows = sourceRows.filter((row) => String(row.submission_id || '') === n.submission_id && String(row.onboarding_id || '') === n.onboarding_id && String(row.smoke_tag || '') === n.smoke_tag);\nif (rows.length > 1) return { json: { ...n, action: 'terminal', terminal_status: 'ambiguous_duplicate_scope', response_code: 409, match_count: rows.length } };\nif (rows.length === 1) {\n  const row = rows[0];\n  if (String(row.request_fingerprint || '') !== n.request_fingerprint) return { json: { ...n, action: 'terminal', terminal_status: 'submission_identity_conflict', response_code: 409, match_count: 1 } };\n  return { json: { ...n, action: 'terminal', terminal_status: 'duplicate_replay', response_code: 200, match_count: 1, existing_status: String(row.status || ''), existing_lifecycle_state: String(row.lifecycle_state || ''), email_sent: row.email_sent === true, review_alert_sent: row.review_alert_sent === true } };\n}\nconst needsReview = n.needs_review === true;\nconst now = n.created_at_utc;\nreturn { json: {\n  ...n,\n  action: needsReview ? 'new_review' : 'new_standard',\n  status: needsReview ? 'Needs Review' : 'Offer Pending Email',\n  lifecycle_state: needsReview ? 'Needs Review' : 'Standard Send Pending',\n  email_sent: false, email_provider_message_id: '', email_provider_thread_id: '', email_send_error: '',\n  send_intent_at_utc: needsReview ? null : now, email_sent_at_utc: null,\n  review_alert_sent: false, review_alert_provider_message_id: '', review_alert_provider_thread_id: '', review_alert_send_error: '',\n  review_alert_intent_at_utc: needsReview ? now : null, review_alert_sent_at_utc: null,\n  approval_action: '', approval_actor: '', approval_note: '', approval_event_id: '', approval_event_fingerprint: '', approval_event_at_utc: null,\n  stale_alert_pending_bucket: '', stale_alert_sent_bucket: '', stale_alert_reason: '', stale_alert_intent_at_utc: null,\n  stale_alert_sent_at_utc: null, stale_alert_provider_message_id: '', stale_alert_provider_thread_id: '',\n} };"
       },
       "id": "096c2985-9e1f-408a-aac2-ff32b94eef75",
       "name": "Resolve Quote Intake",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1856,
+        2880,
         192
       ]
     },
@@ -368,7 +436,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2112,
+        3136,
         192
       ]
     },
@@ -381,7 +449,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2368,
+        3392,
         192
       ]
     },
@@ -394,7 +462,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1600,
+        2624,
         448
       ]
     },
@@ -407,7 +475,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1856,
+        2880,
         448
       ]
     },
@@ -478,7 +546,12 @@
             "stale_alert_provider_thread_id": "={{ $json.stale_alert_provider_thread_id }}",
             "created_at_utc": "={{ $json.created_at_utc }}",
             "updated_at_utc": "={{ $json.updated_at_utc }}",
-            "last_execution_id": "={{ $json.last_execution_id }}"
+            "last_execution_id": "={{ $json.last_execution_id }}",
+            "quote_mode": "={{ $json.quote_mode }}",
+            "line_item_count": "={{ $json.line_item_count }}",
+            "line_items_json": "={{ $json.line_items_json }}",
+            "pricing_snapshot_json": "={{ $json.pricing_snapshot_json }}",
+            "pricing_snapshot_hash": "={{ $json.pricing_snapshot_hash }}"
           },
           "schema": [
             {
@@ -975,6 +1048,51 @@
               "display": true,
               "type": "string",
               "canBeUsedToMatch": false
+            },
+            {
+              "id": "quote_mode",
+              "displayName": "quote_mode",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "line_item_count",
+              "displayName": "line_item_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "line_items_json",
+              "displayName": "line_items_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "pricing_snapshot_json",
+              "displayName": "pricing_snapshot_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "pricing_snapshot_hash",
+              "displayName": "pricing_snapshot_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
             }
           ]
         }
@@ -984,7 +1102,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2112,
+        3136,
         448
       ],
       "onError": "stopWorkflow"
@@ -998,7 +1116,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3136,
+        4160,
         192
       ]
     },
@@ -1016,7 +1134,7 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.2,
       "position": [
-        3392,
+        4416,
         192
       ],
       "onError": "continueRegularOutput"
@@ -1030,7 +1148,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3648,
+        4672,
         192
       ]
     },
@@ -1182,7 +1300,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        3904,
+        4928,
         192
       ],
       "alwaysOutputData": true,
@@ -1197,7 +1315,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4160,
+        5184,
         192
       ]
     },
@@ -1268,7 +1386,12 @@
             "stale_alert_provider_thread_id": "={{ $json.stale_alert_provider_thread_id }}",
             "created_at_utc": "={{ $json.created_at_utc }}",
             "updated_at_utc": "={{ $json.updated_at_utc }}",
-            "last_execution_id": "={{ $json.last_execution_id }}"
+            "last_execution_id": "={{ $json.last_execution_id }}",
+            "quote_mode": "={{ $json.quote_mode }}",
+            "line_item_count": "={{ $json.line_item_count }}",
+            "line_items_json": "={{ $json.line_items_json }}",
+            "pricing_snapshot_json": "={{ $json.pricing_snapshot_json }}",
+            "pricing_snapshot_hash": "={{ $json.pricing_snapshot_hash }}"
           },
           "schema": [
             {
@@ -1765,6 +1888,51 @@
               "display": true,
               "type": "string",
               "canBeUsedToMatch": false
+            },
+            {
+              "id": "quote_mode",
+              "displayName": "quote_mode",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "line_item_count",
+              "displayName": "line_item_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "line_items_json",
+              "displayName": "line_items_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "pricing_snapshot_json",
+              "displayName": "pricing_snapshot_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "pricing_snapshot_hash",
+              "displayName": "pricing_snapshot_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
             }
           ]
         }
@@ -1774,7 +1942,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2368,
+        3392,
         448
       ],
       "onError": "stopWorkflow"
@@ -1788,7 +1956,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4928,
+        5952,
         192
       ]
     },
@@ -1806,7 +1974,7 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.2,
       "position": [
-        5184,
+        6208,
         192
       ],
       "onError": "continueRegularOutput"
@@ -1820,7 +1988,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5440,
+        6464,
         192
       ]
     },
@@ -1982,7 +2150,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        4928,
+        5952,
         448
       ],
       "alwaysOutputData": true,
@@ -1997,7 +2165,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5184,
+        6208,
         448
       ]
     },
@@ -2014,7 +2182,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        5440,
+        6464,
         448
       ]
     },
@@ -3497,6 +3665,69 @@
       ],
       "alwaysOutputData": true,
       "onError": "stopWorkflow"
+    },
+    {
+      "parameters": {},
+      "id": "d05be89e-ce32-41fb-9a60-ebd088689009",
+      "name": "Try Quote Customizations",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        64,
+        2496
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = [\n  { service_code: 'ai_audit', service_label: 'AI workflow audit', quantity: 1, unit_net_minor: 180000, line_total_net_minor: 180000 },\n  { service_code: 'workflow_build', service_label: 'Production workflow build', quantity: 1, unit_net_minor: 320000, line_total_net_minor: 320000 },\n];\nreturn { json: {\n  lab_contract: 'quote-customization-lab.v1',\n  quote_mode: 'itemized',\n  offer_number: 'QO-LAB-EXAMPLE',\n  company: 'Example Company',\n  client_name: 'Ada Example',\n  customer_email: 'ada@example.test',\n  currency: 'USD',\n  line_items: items,\n  total_net_minor: 500000,\n  external_action_performed: false,\n} };"
+      },
+      "id": "c3a2dd7d-a1ff-41a9-83a4-1586bb3083cd",
+      "name": "Build Safe Quote Customization Fixture",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        2496
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const n = $input.item.json || {};\nconst total = n.total_net_minor;\nif (!Number.isSafeInteger(total) || total < 0) throw new Error('invalid_customization_total_minor');\nconst currency = n.currency;\nif (typeof currency !== 'string' || !/^[A-Z]{3}$/.test(currency)) throw new Error('invalid_customization_currency');\nconst add = (base, increment) => {\n  if (!Number.isSafeInteger(increment) || increment < 0 || base > Number.MAX_SAFE_INTEGER - increment) throw new Error('customization_total_overflow');\n  return base + increment;\n};\nreturn { json: {\n  lab_contract: String(n.lab_contract || ''),\n  currency,\n  choices: [\n    { tier: 'Good', total_net_minor: total },\n    { tier: 'Better', total_net_minor: add(total, 75000) },\n    { tier: 'Best', total_net_minor: add(total, 150000) },\n  ],\n} };"
+      },
+      "id": "6b2a455f-f906-4f9b-ad78-c80c0e95aa7f",
+      "name": "OPTION — Build Good Better Best Choices",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        2496
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const n = $input.item.json || {};\nconst total = n.total_net_minor;\nif (!Number.isSafeInteger(total) || total < 0) throw new Error('invalid_customization_total_minor');\nconst currency = n.currency;\nif (typeof currency !== 'string' || !/^[A-Z]{3}$/.test(currency)) throw new Error('invalid_customization_currency');\nconst totalBig = BigInt(total);\nconst deposit = Number((totalBig * 40n) / 100n);\nconst balance = total - deposit;\nif (!Number.isSafeInteger(deposit) || !Number.isSafeInteger(balance) || deposit < 0 || balance < 0 || deposit + balance !== total) throw new Error('deposit_schedule_overflow');\nreturn { json: {\n  lab_contract: String(n.lab_contract || ''),\n  currency,\n  schedule: [\n    { milestone: 'Deposit', percent: 40, amount_minor: deposit },\n    { milestone: 'Completion', percent: 60, amount_minor: balance },\n  ],\n  total_net_minor: total,\n} };"
+      },
+      "id": "390a9400-a5f8-44f8-a970-9bfe26ada58c",
+      "name": "OPTION — Add Deposit Schedule",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        2496
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const n = $input.item.json || {};\nconst total = n.total_net_minor;\nif (!Number.isSafeInteger(total) || total < 0) throw new Error('invalid_customization_total_minor');\nconst bounded = (value, max, marker) => {\n  if (typeof value !== 'string') throw new Error(marker);\n  const clean = value.replace(/\\s+/g, ' ').trim();\n  if (!clean || clean.length > max) throw new Error(marker);\n  return clean;\n};\nif (!Array.isArray(n.line_items) || n.line_items.length < 1 || n.line_items.length > 5) throw new Error('invalid_crm_line_items');\nlet runningLineTotal = 0;\nconst lineItems = n.line_items.map((item) => {\n  if (!item || typeof item !== 'object' || Array.isArray(item)) throw new Error('invalid_crm_line_item');\n  const quantity = item.quantity;\n  const unit = item.unit_net_minor;\n  const line = item.line_total_net_minor;\n  if (![quantity, unit, line].every(Number.isSafeInteger) || quantity < 1 || unit < 0 || line < 0 || (unit > 0 && quantity > Math.floor(Number.MAX_SAFE_INTEGER / unit)) || unit * quantity !== line) throw new Error('invalid_crm_line_item_minor_units');\n  if (runningLineTotal > Number.MAX_SAFE_INTEGER - line) throw new Error('crm_line_items_total_overflow');\n  runningLineTotal += line;\n  return {\n    service_code: (() => {\n      const code = bounded(item.service_code, 64, 'invalid_crm_service_code');\n      if (!/^[a-z0-9][a-z0-9_-]{0,63}$/.test(code)) throw new Error('invalid_crm_service_code');\n      return code;\n    })(),\n    quantity,\n    unit_net_minor: unit,\n    line_total_net_minor: line,\n  };\n});\nif (runningLineTotal !== total) throw new Error('crm_line_items_total_mismatch');\nconst contactEmail = bounded(n.customer_email, 254, 'invalid_crm_email');\nif (!/^[^\\s@]+@example\\.test$/i.test(contactEmail)) throw new Error('crm_fixture_email_must_use_example_test');\nconst currency = bounded(n.currency, 8, 'invalid_crm_currency');\nif (!/^[A-Z]{3}$/.test(currency)) throw new Error('invalid_crm_currency');\nreturn { json: {\n  external_action_performed: false,\n  payload_only: true,\n  crm_handoff_payload: {\n    offer_number: bounded(n.offer_number, 80, 'invalid_crm_offer_number'),\n    company: bounded(n.company, 200, 'invalid_crm_company'),\n    contact_name: bounded(n.client_name, 160, 'invalid_crm_client_name'),\n    contact_email: contactEmail,\n    currency,\n    total_net_minor: total,\n    line_items: lineItems,\n  },\n} };"
+      },
+      "id": "f5b1f83e-88f2-43e2-a2c8-57fc1cbff1df",
+      "name": "OPTION — Build CRM Handoff Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        2496
+      ]
     }
   ],
   "connections": {
@@ -3555,7 +3786,7 @@
       "main": [
         [
           {
-            "node": "Quote Request Valid?",
+            "node": "Resolve Quote Catalog Items",
             "type": "main",
             "index": 0
           }
@@ -4229,6 +4460,82 @@
         [
           {
             "node": "Update Stale Alert Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Quote Catalog Items": {
+      "main": [
+        [
+          {
+            "node": "Calculate Itemized Quote Totals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Itemized Quote Totals": {
+      "main": [
+        [
+          {
+            "node": "Apply Quote Commercial Policy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply Quote Commercial Policy": {
+      "main": [
+        [
+          {
+            "node": "Render Itemized Quote Offer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Itemized Quote Offer": {
+      "main": [
+        [
+          {
+            "node": "Quote Request Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Try Quote Customizations": {
+      "main": [
+        [
+          {
+            "node": "Build Safe Quote Customization Fixture",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Safe Quote Customization Fixture": {
+      "main": [
+        [
+          {
+            "node": "OPTION — Build Good Better Best Choices",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "OPTION — Add Deposit Schedule",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "OPTION — Build CRM Handoff Payload",
             "type": "main",
             "index": 0
           }

@@ -1,20 +1,21 @@
 # Quote and Offer Workflow
 
-An inactive, import-ready n8n workflow that accepts authenticated quote requests, calculates a fixed-price offer from a deterministic sample price book, sends eligible quotes only to a verified submitted address, routes exceptions to human review, and records approval or rejection decisions. It uses only native n8n nodes, Gmail, and one n8n Data Table.
+An inactive, import-ready n8n workflow that turns either a legacy single-service request or a one-to-five-line bundle into an itemized fixed-price offer. It resolves a versioned catalog, calculates integer minor-unit totals, renders a stable pricing snapshot and escaped HTML table, sends eligible quotes only to a verified submitted address, and routes exceptions to human review. It uses only native n8n nodes, Gmail, and one n8n Data Table.
 
 ## What it does
 
-The workflow has three independent entrances:
+The workflow has four independent entrances:
 
-1. `POST /webhook/quote-offer-intake` validates `x-quote-intake-token` (or the matching Bearer token) against the server-side `QUOTE_INTAKE_TOKEN`, normalizes one request object, and derives a deterministic price and offer.
+1. `POST /webhook/quote-offer-intake` validates `x-quote-intake-token` (or the matching Bearer token) against the server-side `QUOTE_INTAKE_TOKEN`, then visibly normalizes, resolves catalog items, totals the bundle, applies commercial policy, and renders the offer.
 2. `POST /webhook/quote-offer-approval` validates a separate `QUOTE_APPROVAL_TOKEN`, then records an explicit approve or reject decision for one exact durable quote scope.
 3. An hourly UTC sweep surfaces review rows whose operator alert is unconfirmed, quotes that have remained in review for 24 hours, and client-email intents that have remained pending for two hours.
+4. `Try Quote Customizations` runs a disconnected synthetic fixture into three optional pure-Code previews: Good/Better/Best choices, a 40/60 deposit schedule, and a bounded CRM handoff payload.
 
-The request cannot provide a price, discount, recipient override, approval flag, or role. Money comes only from the embedded price book. The workflow does not use AI for pricing or routing.
+The production request cannot provide a price, discount, recipient override, approval flag, or role. Money comes only from the embedded catalog. The workflow does not use AI for pricing or routing. The optional lab has no credentials, variables, table access, provider call, or edge into the production graph; its CRM branch creates payload JSON only and records `external_action_performed=false`.
 
 ## Intake contract
 
-Send exactly one object:
+Send exactly one object. The itemized contract accepts one to five exact `{ service_code, quantity }` objects:
 
 ```json
 {
@@ -24,20 +25,26 @@ Send exactly one object:
   "company": "Example Company",
   "email": "ada@example.test",
   "verified_email": "ada@example.test",
-  "service_code": "workflow_build",
-  "quantity": 1,
+  "line_items": [
+    { "service_code": "ai_audit", "quantity": 1 },
+    { "service_code": "workflow_build", "quantity": 1 }
+  ],
   "request_details": "Build and hand over one production workflow.",
   "request_text": "Build and hand over one production workflow."
 }
 ```
 
-`onboarding_id` must be a lowercase 64-character SHA-256 hex value. `smoke_tag` must be an exact, unpadded 1–80 character value matching `[A-Za-z0-9][A-Za-z0-9._-]*`. Both request-detail fields may be supplied for workflow 08 compatibility, but if both are present they must normalize to the same text. Object-valued strings, arrays, batch wrappers, missing identity, and out-of-range quantities fail closed before any Data Table or Gmail node. A syntactically bounded but unknown service is durably recorded as `Needs Review` with zero price and cannot be approved until the price-book entry is added; the workflow does not guess a price.
+The legacy workflow 08 shorthand remains accepted by replacing `line_items` with top-level `service_code` and `quantity`. A request must use exactly one mode: mixed shorthand plus `line_items` fails closed.
+
+`onboarding_id` must be a lowercase 64-character SHA-256 hex value. `smoke_tag` must be an exact, unpadded 1–80 character value matching `[A-Za-z0-9][A-Za-z0-9._-]*`. Both request-detail fields may be supplied for workflow 08 compatibility, but if both are present they must normalize to the same text. Scalar fields reject arrays and objects. Item arrays reject zero or more than five entries, duplicate normalized service codes, unknown or missing item keys, malformed codes, unsafe integers, fractions, and catalog-specific quantity violations before any Data Table or Gmail node.
+
+A syntactically bounded unknown service is allowed only as a durable `Needs Review` case. If any line is unknown, `has_price_book_entry=false`, the quote total remains zero, the pricing snapshot uses `null` for unavailable money, and approval is blocked. The workflow never adds known lines into a partial total and never guesses an unknown price.
 
 The client address is eligible for a send only when `email` and `verified_email` normalize to the same valid address. A missing or different `verified_email` creates `Needs Review`; it never sends to either address. Caller fields such as `send_to`, `recipient`, `discount`, `client_type`, or `force_review` are ignored and never persisted.
 
 ## Deterministic sample price book
 
-The workflow embeds `QUOTE_SAMPLE_V1_2026-08-30` in the `Normalize Quote Request` Code node. Amounts use integer USD cents.
+The workflow embeds `QUOTE_SAMPLE_V1_2026-08-30` in `Resolve Quote Catalog Items`. `Calculate Itemized Quote Totals` checks multiplication and addition in integer USD cents; `Apply Quote Commercial Policy` controls review routing; `Render Itemized Quote Offer` creates the stable snapshot/hash and escaped line-item table.
 
 | Service code | Sample service | Unit net | Quantity |
 |---|---|---:|---:|
@@ -64,9 +71,27 @@ submission_id = sha256(lowercase(
 ))
 ```
 
+The itemized mode first sorts requested items by the fixed catalog order shown above; syntactically valid unknown codes follow known entries in lexical order. It then serializes the canonical array with exact keys in this order:
+
+```text
+canonical_items_json = JSON.stringify([
+  { "service_code": <normalized code>, "quantity": <safe integer> },
+  ...
+])
+
+submission_id = sha256(lowercase(
+  onboarding_id + "\n" +
+  email + "\n" +
+  canonical_items_json + "\n" +
+  request_details
+))
+```
+
+Equivalent itemized bundles therefore produce the same `submission_id` even when the caller changes line order. Item content or quantity changes produce a different id. Duplicate codes are rejected instead of combined.
+
 The durable lookup is always scoped by all three fields: `submission_id + onboarding_id + smoke_tag`. It reads every matching physical row. Zero rows creates one new intent, one matching row is evaluated, and two or more rows stop as `ambiguous_duplicate_scope`; the workflow never silently takes the first row.
 
-The parent formula intentionally omits some fields that can still change the generated offer or review path. A separate `request_fingerprint` covers the exact owner/run scope, client and company, both normalized addresses, service, quantity, request details, and price-book version. Reusing the same parent-compatible `submission_id` with a different fingerprint returns `submission_identity_conflict` with no new row or Gmail send. Exact replay also performs no new write or send.
+The parent formula intentionally omits some fields that can still change the generated offer or review path. A separate `request_fingerprint` covers the exact owner/run scope, client and company, both normalized addresses, quote mode, canonical `line_items_json`, request details, price-book version, and `pricing_snapshot_hash`. Reusing the same parent-compatible `submission_id` with a different fingerprint returns `submission_identity_conflict` with no new row or Gmail send. Exact replay also performs no new write or send.
 
 Rows expose parent-compatible `status` values: `Offer Sent` only after validated client Gmail evidence, and `Needs Review` for review, rejection, or expiry. `lifecycle_state` preserves the more precise pending, rejected, expired, and sent state.
 
@@ -109,10 +134,12 @@ Create one Data Table named `Quote_Offers`, then re-select it in every Data Tabl
 
 ### Quote_Offers schema
 
-- Strings: `quote_key`, `submission_id`, `offer_submission_id`, `onboarding_id`, `smoke_tag`, `request_fingerprint`, `client_name`, `company`, `email`, `verified_email`, `service_code`, `service_label`, `request_details`, `price_book_version`, `currency`, `offer_number`, `offer_subject`, `offer_html`, `status`, `lifecycle_state`, `review_reason`, `email_provider_message_id`, `email_provider_thread_id`, `email_send_error`, `review_alert_provider_message_id`, `review_alert_provider_thread_id`, `review_alert_send_error`, `approval_action`, `approval_actor`, `approval_note`, `approval_event_id`, `approval_event_fingerprint`, `stale_alert_pending_bucket`, `stale_alert_sent_bucket`, `stale_alert_reason`, `stale_alert_provider_message_id`, `stale_alert_provider_thread_id`, `last_execution_id`
-- Numbers: `quantity`, `unit_net_minor`, `total_net_minor`
+- Strings: `quote_key`, `submission_id`, `offer_submission_id`, `onboarding_id`, `smoke_tag`, `request_fingerprint`, `client_name`, `company`, `email`, `verified_email`, `quote_mode`, `line_items_json`, `pricing_snapshot_json`, `pricing_snapshot_hash`, `service_code`, `service_label`, `request_details`, `price_book_version`, `currency`, `offer_number`, `offer_subject`, `offer_html`, `status`, `lifecycle_state`, `review_reason`, `email_provider_message_id`, `email_provider_thread_id`, `email_send_error`, `review_alert_provider_message_id`, `review_alert_provider_thread_id`, `review_alert_send_error`, `approval_action`, `approval_actor`, `approval_note`, `approval_event_id`, `approval_event_fingerprint`, `stale_alert_pending_bucket`, `stale_alert_sent_bucket`, `stale_alert_reason`, `stale_alert_provider_message_id`, `stale_alert_provider_thread_id`, `last_execution_id`
+- Numbers: `line_item_count`, `quantity`, `unit_net_minor`, `total_net_minor`
 - Booleans: `recipient_verified`, `has_price_book_entry`, `email_sent`, `review_alert_sent`
 - Dates: `send_intent_at_utc`, `email_sent_at_utc`, `review_alert_intent_at_utc`, `review_alert_sent_at_utc`, `approval_event_at_utc`, `expires_at_utc`, `stale_alert_intent_at_utc`, `stale_alert_sent_at_utc`, `created_at_utc`, `updated_at_utc`
+
+Both create nodes, `Insert Standard Send Intent` and `Insert Review Alert Intent`, map all five itemization fields: `quote_mode`, `line_item_count`, `line_items_json`, `pricing_snapshot_json`, and `pricing_snapshot_hash`. Later lifecycle updates intentionally leave the immutable request and pricing snapshot fields unchanged.
 
 ## Setup
 
@@ -121,19 +148,23 @@ Create one Data Table named `Quote_Offers`, then re-select it in every Data Tabl
 3. Create distinct n8n Variables `QUOTE_INTAKE_TOKEN` and `QUOTE_APPROVAL_TOKEN`. If your plan does not support `$vars`, replace them with an equivalent server-side secret mechanism before activation.
 4. Attach a Gmail credential to `Send Standard Client Offer`, `Send Quote Review Alert`, `Send Approved Client Offer`, and `Send Stale Quote Alert`.
 5. Replace `ops@example.test` with a controlled operations inbox. Do not replace the client-recipient expressions with request-controlled override fields.
-6. Customize and version the price book, currency, review bands, offer copy, expiry window, stale thresholds, schedule, and approval policy.
-7. Keep the workflow inactive while testing with synthetic `example.test` addresses and isolated table rows.
+6. Customize and version the catalog, currency, review bands, itemized offer copy, expiry window, stale thresholds, schedule, and approval policy.
+7. Run `Try Quote Customizations` to inspect the three disconnected options. The CRM option is payload-only; connect it to a real CRM only in a separately reviewed production branch.
+8. Keep the workflow inactive while testing with synthetic `example.test` addresses and isolated table rows.
 
 ## Synthetic test plan
 
 - Missing, wrong, cross-lane, and correctly configured intake and approval tokens.
-- Non-object and batch-shaped bodies; object-valued strings; padded or malformed scope values; unknown-service review; NaN, infinite, fractional, and out-of-bound quantity.
+- Non-object and batch-shaped bodies; object-valued strings; padded or malformed scope values; NaN, infinite, fractional, unsafe, and catalog-out-of-bound quantities.
+- One- and five-item boundaries; mixed shorthand and item arrays; duplicate normalized codes; extra or missing item keys; more than five items; item arrays or objects in scalar fields.
 - Exact workflow 08 child payload and its expected `submission_id` formula across all four service codes.
+- Itemized catalog-order canonicalization, reorder-stable replay identity, changed-item identity, exact line totals, pricing snapshot hash, escaped HTML, and unknown-service review with no partial total.
 - A standard quote, an amount review, a terms review, missing/mismatched `verified_email`, and ignored `send_to`, discount, role, and `force_review` fields.
 - Exact replay; changed client/company/verified address under the same parent key; two identical and two conflicting physical rows in both input orders.
 - Gmail success with both ids, Gmail error, message-id-only, and thread-id-only for standard, review-alert, approved-send, and stale-alert paths.
 - Approval, rejection, expired attempt, repeated approval event, already sent, rejected, pending-send, unverified recipient, missing row, and ambiguous scope.
 - Scheduled rows at both sides of the one-, two-, and 24-hour thresholds; an already-consumed daily bucket; zero, partial, exact, and excess grouped acknowledgements; Gmail failure followed by retry; success marking all rows in an explicitly grouped duplicate scope.
+- The customization fixture and all three option nodes with valid integer minor units, invalid/fractional/overflow failures, bounded CRM output, `external_action_performed=false`, and exact five-node graph isolation.
 - Graph inspection proving intent-before-Gmail ordering, exactly one response node per webhook lane, fail-stop Data Table nodes, inactive state, placeholders, and no credentials or pinned data.
 
 ## Limits and residuals
@@ -144,6 +175,7 @@ Create one Data Table named `Quote_Offers`, then re-select it in every Data Tabl
 - Duplicate physical rows are fail-closed in intake and approval. Observability groups identical durable scopes, reports the physical-row count, and updates the shared daily alert receipt across every exact match after provider success; it does not choose one row as truth.
 - The workflow omits the older static-only follow-up lane. There is no customer follow-up automation until a separate design has durable suppression for rejection, expiry, reply, payment, cancellation, and provider acknowledgement.
 - The embedded prices, review words, USD currency, tax omission, offer HTML, and 14-day expiry are examples, not legal or commercial advice. Adapt them to the operating entity and jurisdiction.
+- The optional deposit schedule is a numeric preview, not a payment request or legal acceptance flow. The CRM option only builds a bounded payload and does not authenticate to, write to, or synchronize any CRM.
 - One token authorizes its whole lane. For mutually untrusted tenants, add tenant-specific authentication and authorization rather than treating `onboarding_id` or `smoke_tag` as an access boundary.
 - Webhook bodies can remain in n8n execution history even though only bounded whitelisted fields reach the Data Table. Configure execution retention, access control, and pruning for your privacy requirements.
-- This template does not claim exactly-once email, legal acceptance, signature, payment, tax calculation, CRM synchronization, automatic recovery, or end-to-end sales fulfilment.
+- This template does not claim exactly-once email, legal acceptance, signature, payment collection, tax calculation, CRM synchronization, automatic recovery, or end-to-end sales fulfilment.
