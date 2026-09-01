@@ -545,6 +545,47 @@ Replace sample prices and wording while preserving canonical item identity, snap
       ]),
     ],
   },
+  '12-client-report-engine': {
+    sectionTopPadding: 192,
+    overviewTitle: 'Create replay-safe branded client report drafts',
+    overview: `## Create replay-safe branded client report drafts
+
+### How it works
+1. Accepts an authenticated batch of one to 20 already-supplied client reports and validates every client independently.
+2. Enforces exact keys, bounded scalar and array types, verified recipients, recent explicit-timezone source evidence, integer metrics, and sane funnel ordering.
+3. Derives deterministic SHA-256 scope, recipient, content, and fingerprint identities, then renders escaped tenant-branded HTML or an explicit no-data state.
+4. Reads every physical ledger row in each exact scope and fails closed on changed, partial, or ambiguous state instead of creating another draft.
+5. Persists and verifies one privacy-minimal draft intent before Gmail, creates a draft without sending, and requires provider plus durable update evidence.
+6. Returns one JSON response summarizing every report without exposing recipient addresses or report content.
+
+### Setup steps
+- [ ] Create the Client Report Ledger Data Table with the documented schema and re-select it in all three table nodes.
+- [ ] Set CLIENT_REPORT_INTAKE_TOKEN as a server-side n8n Variable with at least 16 characters.
+- [ ] Connect Gmail only to the draft-creation node.
+- [ ] Keep the workflow inactive while testing with synthetic .example.test recipients.
+- [ ] Configure execution-history retention and access controls for webhook privacy.
+
+### Customization
+Adapt the HTML, labels, freshness window, and source adapter while preserving exact validation, privacy-minimal persistence, all-row replay decisions, intent-before-draft ordering, and reconciliation holds.`,
+    sections: [
+      section('Authenticate and validate the batch', 'Fails closed on the intake token, strips auth headers, and validates every supplied client report independently.', 0, 0, 5, [
+        'Client Report Intake Webhook', 'Validate Client Report Intake Token', 'Client Report Intake Authorized?',
+        'Build Client Report Unauthorized Response', 'Normalize Client Report Batch',
+      ]),
+      section('Resolve every report scope', 'Expands only valid reports, reads all physical scope rows, and classifies new, replay, conflict, partial, or ambiguous state.', 1792, 0, 5, [
+        'Valid Reports Present?', 'Expand Valid Report Lookups', 'Find Existing Report Rows',
+        'Resolve Report Scopes', 'New Draft Intents Present?',
+      ]),
+      section('Persist and acknowledge intent', 'Stores privacy-minimal draft intent metadata and requires exactly one matching acknowledgement before a draft job can continue.', 3584, 0, 5, [
+        'Expand New Draft Intents', 'Insert Report Draft Intent', 'Verify Intent Acknowledgements',
+        'Confirmed Draft Jobs Present?', 'Expand Confirmed Draft Jobs',
+      ]),
+      section('Create and confirm Gmail drafts', 'Creates drafts without sending, persists provider evidence or reconcile state, verifies the exact update, and returns one bounded response.', 5376, 0, 6, [
+        'Create Gmail Report Draft', 'Build Draft Lifecycle Update', 'Update Draft Lifecycle',
+        'Verify Durable Lifecycle Updates', 'Build Client Report Batch Response', 'Respond Client Report Batch',
+      ]),
+    ],
+  },
   '07-ksef-exception-desk': {
     enforceEdgeCorridors: true,
     overviewTitle: 'Handle KSeF exceptions without blind resubmission',
