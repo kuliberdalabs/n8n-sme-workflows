@@ -1,0 +1,505 @@
+'use strict';
+
+const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
+const fs = require('node:fs');
+const test = require('node:test');
+
+const { executeCodeNode, loadWorkflow, workflowFile } = require('./helpers/workflow-vm');
+
+const workflowPath = workflowFile('12-client-report-engine');
+const annotatedPath = workflowPath.replace('workflow.json', 'workflow-annotated-v2.json');
+
+function timestamp(offsetMs = -60_000) {
+  return new Date(Date.now() + offsetMs).toISOString();
+}
+
+function report(overrides = {}) {
+  return {
+    tenant_id: 'tenant-example',
+    source_report_id: 'report-2026-08',
+    report_period: '2026-08',
+    client_name: 'Ada Example',
+    recipient_email: 'ada@example.test',
+    verified_recipient_email: 'ada@example.test',
+    locale: 'en-US',
+    brand_name: 'Example Studio',
+    brand_color: '#3366AA',
+    source_updated_at_utc: timestamp(),
+    source_status: 'complete',
+    metrics: {
+      leads: 40,
+      qualified_leads: 25,
+      proposals: 12,
+      won_deals: 5,
+      revenue_minor: 125000,
+      currency: 'USD',
+    },
+    highlights: ['Qualified demand improved.'],
+    risks: ['Proposal cycle remains long.'],
+    next_steps: ['Review stalled proposals.'],
+    ...overrides,
+  };
+}
+
+function body(reports = [report()], overrides = {}) {
+  return { batch_id: 'batch-example-001', reports, ...overrides };
+}
+
+function normalize(payload = body()) {
+  return executeCodeNode(workflowPath, 'Normalize Client Report Batch', {
+    input: { body: payload },
+  }).json;
+}
+
+function resolve(normalized, rows = []) {
+  return executeCodeNode(workflowPath, 'Resolve Report Scopes', {
+    inputRows: rows.length ? rows : [{}],
+    nodeItems: { 'Normalize Client Report Batch': [normalized] },
+  }).json;
+}
+
+function nodeByName(workflow, name) {
+  const matches = workflow.nodes.filter((node) => node.name === name);
+  assert.equal(matches.length, 1, 'expected exactly one node named ' + name);
+  return matches[0];
+}
+
+function direct(workflow, name, branch = 0) {
+  return (workflow.connections[name]?.main?.[branch] || []).map((edge) => edge.node);
+}
+
+function reachable(workflow, start) {
+  const seen = new Set();
+  const pending = [start];
+  while (pending.length) {
+    const name = pending.pop();
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    for (const branch of workflow.connections[name]?.main || []) {
+      for (const edge of branch || []) pending.push(edge.node);
+    }
+  }
+  return seen;
+}
+
+test('authentication fails closed, accepts the configured lane, and strips auth headers', () => {
+  const missing = executeCodeNode(workflowPath, 'Validate Client Report Intake Token', {
+    input: { headers: { authorization: 'Bearer secret-secret-secret' }, body: {} },
+    vars: {},
+  }).json;
+  assert.equal(missing.auth_ok, false);
+  assert.equal(missing.auth_reason, 'missing_server_token_var_CLIENT_REPORT_INTAKE_TOKEN');
+
+  const wrong = executeCodeNode(workflowPath, 'Validate Client Report Intake Token', {
+    input: { headers: { 'x-client-report-intake-token': 'wrong-wrong-wrong' }, body: {} },
+    vars: { CLIENT_REPORT_INTAKE_TOKEN: 'secret-secret-secret' },
+  }).json;
+  assert.equal(wrong.auth_ok, false);
+
+  const accepted = executeCodeNode(workflowPath, 'Validate Client Report Intake Token', {
+    input: {
+      headers: {
+        authorization: 'Bearer secret-secret-secret',
+        'x-client-report-intake-token': 'secret-secret-secret',
+        'x-correlation-id': 'synthetic-1',
+      },
+      body: body(),
+    },
+    vars: { CLIENT_REPORT_INTAKE_TOKEN: 'secret-secret-secret' },
+  }).json;
+  assert.equal(accepted.auth_ok, true);
+  assert.equal(Object.hasOwn(accepted.headers, 'authorization'), false);
+  assert.equal(Object.hasOwn(accepted.headers, 'x-client-report-intake-token'), false);
+  assert.equal(accepted.headers['x-correlation-id'], 'synthetic-1');
+});
+
+test('strict complete report renders deterministic branded HTML and stable SHA-256 identities', () => {
+  const payload = body();
+  const first = normalize(payload);
+  const second = normalize(payload);
+  assert.equal(first.batch_valid, true);
+  assert.equal(first.valid_reports_count, 1);
+  const item = first.reports[0];
+  assert.equal(item.valid_input, true, JSON.stringify(item.validation_errors));
+  for (const key of ['report_scope_key', 'recipient_hash', 'report_content_hash', 'report_fingerprint']) {
+    assert.match(item[key], /^[a-f0-9]{64}$/);
+    assert.equal(item[key], second.reports[0][key], key + ' must be stable');
+  }
+  assert.equal(item.recipient_hash, crypto.createHash('sha256').update('ada@example.test').digest('hex'));
+  assert.match(item.report_html, /Example Studio/);
+  assert.match(item.report_html, /Performance/);
+  assert.match(item.report_html, /USD 1250\.00/);
+  assert.match(item.report_html, /Source metadata/);
+  assert.doesNotMatch(item.report_html, /artificial intelligence|generated by AI/i);
+});
+
+test('complete_no_data requires empty metrics and renders explicit no-data instead of zero metrics', () => {
+  const noData = normalize(body([report({
+    source_status: 'complete_no_data',
+    metrics: {},
+    locale: 'pl-PL',
+    highlights: [],
+    risks: [],
+    next_steps: [],
+  })]));
+  const item = noData.reports[0];
+  assert.equal(item.valid_input, true, JSON.stringify(item.validation_errors));
+  assert.match(item.report_html, /nie dostarczono danych źródłowych/i);
+  assert.doesNotMatch(item.report_html, />0</);
+
+  for (const metrics of [null, { leads: 0 }]) {
+    const invalid = normalize(body([report({ source_status: 'complete_no_data', metrics })]));
+    assert.equal(invalid.reports[0].valid_input, false);
+    assert.ok(invalid.reports[0].validation_errors.includes('complete_no_data_metrics_must_be_empty_object'));
+  }
+});
+
+test('timestamp validation rejects stale, future, and offset-free source times', () => {
+  const fixtures = [
+    [timestamp(-94 * 24 * 60 * 60 * 1000), 'source_updated_at_utc_is_stale'],
+    [timestamp(60_000), 'source_updated_at_utc_must_not_be_future'],
+    ['2026-08-31T10:00:00', 'invalid_source_updated_at_utc'],
+  ];
+  for (const [value, error] of fixtures) {
+    const item = normalize(body([report({ source_updated_at_utc: value })])).reports[0];
+    assert.equal(item.valid_input, false);
+    assert.ok(item.validation_errors.includes(error), JSON.stringify(item.validation_errors));
+  }
+});
+
+test('metrics reject null, empty, fractions, unsafe values, and impossible funnel ordering', () => {
+  const fixtures = [
+    [null, 'complete_metrics_keys_must_match_exact_contract'],
+    [{}, 'complete_metrics_keys_must_match_exact_contract'],
+    [{ ...report().metrics, leads: 1.5 }, 'invalid_metric_leads'],
+    [{ ...report().metrics, revenue_minor: Number.MAX_SAFE_INTEGER + 1 }, 'invalid_metric_revenue_minor'],
+    [{ ...report().metrics, leads: 4, qualified_leads: 5 }, 'metrics_funnel_order_invalid'],
+  ];
+  for (const [metrics, error] of fixtures) {
+    const item = normalize(body([report({ metrics })])).reports[0];
+    assert.equal(item.valid_input, false);
+    assert.ok(item.validation_errors.includes(error), JSON.stringify(item.validation_errors));
+  }
+});
+
+test('exact report contract, scalar bounds, arrays, recipient verification, locale, and brand color fail closed', () => {
+  const extra = report();
+  extra.unexpected = true;
+  const fixtures = [
+    [extra, 'report_keys_must_match_exact_contract'],
+    [report({ tenant_id: { value: 'tenant-example' } }), 'invalid_tenant_id'],
+    [report({ verified_recipient_email: 'other@example.test' }), 'verified_recipient_email_mismatch'],
+    [report({ locale: 'en' }), 'invalid_locale'],
+    [report({ brand_color: '#abc' }), 'invalid_brand_color'],
+    [report({ brand_name: 'Example\nInjected' }), 'invalid_brand_name'],
+    [report({ highlights: 'not-an-array' }), 'invalid_highlights_array'],
+    [report({ next_steps: [null] }), 'invalid_next_steps_entry'],
+  ];
+  for (const [candidate, error] of fixtures) {
+    const item = normalize(body([candidate])).reports[0];
+    assert.equal(item.valid_input, false);
+    assert.ok(item.validation_errors.includes(error), JSON.stringify(item.validation_errors));
+  }
+});
+
+test('exact batch contract blocks side-effect eligibility while per-report failures do not block valid siblings', () => {
+  const extraBatch = normalize({ ...body(), extra: true });
+  assert.equal(extraBatch.batch_valid, false);
+  assert.equal(extraBatch.valid_reports_count, 0);
+  const rejectedResponse = executeCodeNode(workflowPath, 'Build Client Report Batch Response', {
+    nodeItems: { 'Normalize Client Report Batch': [extraBatch] },
+  }).json;
+  assert.equal(rejectedResponse.http_status, 422);
+  assert.equal(JSON.parse(rejectedResponse.response_body_json).reports[0].outcome, 'batch_rejected');
+
+  const invalid = report({ source_report_id: 'bad-report', recipient_email: 'bad' });
+  const valid = report({ tenant_id: 'tenant-sibling', source_report_id: 'valid-sibling' });
+  const mixed = normalize(body([invalid, valid]));
+  assert.equal(mixed.batch_valid, true);
+  assert.equal(mixed.reports[0].valid_input, false);
+  assert.equal(mixed.reports[1].valid_input, true);
+  assert.equal(mixed.valid_reports_count, 1);
+});
+
+test('duplicate tenant and period scopes invalidate every duplicate but preserve an unrelated sibling', () => {
+  const first = report({ source_report_id: 'duplicate-a' });
+  const second = report({ source_report_id: 'duplicate-b' });
+  const sibling = report({ tenant_id: 'tenant-other', source_report_id: 'unique-c' });
+  const normalized = normalize(body([first, second, sibling]));
+  assert.equal(normalized.reports[0].valid_input, false);
+  assert.equal(normalized.reports[1].valid_input, false);
+  assert.ok(normalized.reports[0].validation_errors.includes('duplicate_tenant_period_scope_in_batch'));
+  assert.equal(normalized.reports[2].valid_input, true);
+  assert.equal(normalized.valid_reports_count, 1);
+});
+
+test('HTML escaping covers brand, client, narrative, and source metadata injection surfaces', () => {
+  const normalized = normalize(body([report({
+    client_name: '<img src=x onerror=alert(1)>',
+    brand_name: 'A & B <script>alert(1)</script>',
+    source_report_id: 'report:injection-test',
+    highlights: ['<script>alert(1)</script>'],
+    risks: ['"quoted" & risky'],
+    next_steps: ["client's next step"],
+  })]));
+  const item = normalized.reports[0];
+  assert.equal(item.valid_input, true, JSON.stringify(item.validation_errors));
+  assert.doesNotMatch(item.report_html, /<script>|<img/);
+  assert.match(item.report_html, /&lt;script&gt;/);
+  assert.match(item.report_html, /&amp;/);
+  assert.match(item.report_html, /&#39;/);
+});
+
+test('scope resolution inspects every physical row and classifies new, replay, conflict, pending, and ambiguous state', () => {
+  const normalized = normalize();
+  const item = normalized.reports[0];
+
+  const fresh = resolve(normalized, []);
+  assert.equal(fresh.decisions[0].action, 'new_intent');
+  assert.equal(fresh.new_reports_count, 1);
+
+  const readyRow = {
+    report_scope_key: item.report_scope_key,
+    report_fingerprint: item.report_fingerprint,
+    lifecycle_status: 'Draft Ready',
+    gmail_draft_id: 'draft-provider-1',
+  };
+  assert.equal(resolve(normalized, [readyRow]).decisions[0].action, 'terminal_replay');
+  assert.equal(resolve(normalized, [{ ...readyRow, report_fingerprint: 'f'.repeat(64) }]).decisions[0].action, 'identity_conflict');
+  assert.equal(resolve(normalized, [{ ...readyRow, lifecycle_status: 'Draft Intent', gmail_draft_id: '' }]).decisions[0].action, 'reconcile_required');
+  assert.equal(resolve(normalized, [{ ...readyRow, lifecycle_status: 'Unknown State' }]).decisions[0].action, 'reconcile_required');
+  assert.equal(resolve(normalized, [readyRow, { ...readyRow }]).decisions[0].action, 'ambiguous_physical_rows');
+  assert.equal(resolve(normalized, [{ ...readyRow }, { ...readyRow }].reverse()).decisions[0].action, 'ambiguous_physical_rows');
+});
+
+test('empty-ledger always-output sentinel still reaches the actual resolver and creates one new decision', () => {
+  const normalized = normalize();
+  const lookupItems = executeCodeNode(workflowPath, 'Expand Valid Report Lookups', {
+    input: normalized,
+  });
+  assert.equal(lookupItems.length, 1);
+  assert.match(lookupItems[0].json.report_scope_key, /^[a-f0-9]{64}$/);
+
+  const resolved = executeCodeNode(workflowPath, 'Resolve Report Scopes', {
+    inputRows: [{}],
+    nodeItems: { 'Normalize Client Report Batch': [normalized] },
+  }).json;
+  assert.equal(resolved.decisions.length, 1);
+  assert.equal(resolved.decisions[0].physical_row_count, 0);
+  assert.equal(resolved.decisions[0].action, 'new_intent');
+  assert.equal(resolved.new_reports_count, 1);
+});
+
+test('intent acknowledgement requires exactly one matching scope, fingerprint, and Draft Intent row', () => {
+  const normalized = normalize();
+  const resolved = resolve(normalized, []);
+  const intents = executeCodeNode(workflowPath, 'Expand New Draft Intents', {
+    input: resolved,
+    nodeItems: { 'Normalize Client Report Batch': [normalized] },
+    executionId: 'execution-example',
+  });
+  assert.equal(intents.length, 1);
+  const intent = intents[0].json;
+  const verify = (rows) => executeCodeNode(workflowPath, 'Verify Intent Acknowledgements', {
+    inputRows: rows,
+    nodeItems: { 'Expand New Draft Intents': [intent] },
+  }).json;
+
+  assert.equal(verify([intent]).draft_jobs_count, 1);
+  assert.equal(verify([]).intent_results[0].outcome, 'intent_acknowledgement_failed');
+  assert.equal(verify([intent, { ...intent }]).intent_results[0].acknowledgement_count, 2);
+  assert.equal(verify([{ ...intent, report_fingerprint: '0'.repeat(64) }]).draft_jobs_count, 0);
+});
+
+test('provider evidence requires a Gmail draft id and records pending reconcile without it', () => {
+  const job = { input_index: 0, report_scope_key: 'a'.repeat(64), report_fingerprint: 'b'.repeat(64) };
+  const ready = executeCodeNode(workflowPath, 'Build Draft Lifecycle Update', {
+    input: { id: 'draft-123', threadId: 'thread-456' },
+    nodeOutputs: { 'Expand Confirmed Draft Jobs': job },
+  }).json;
+  assert.equal(ready.lifecycle_status, 'Draft Ready');
+  assert.equal(ready.gmail_draft_id, 'draft-123');
+
+  const pending = executeCodeNode(workflowPath, 'Build Draft Lifecycle Update', {
+    input: { error: { message: 'provider unavailable' } },
+    nodeOutputs: { 'Expand Confirmed Draft Jobs': job },
+  }).json;
+  assert.equal(pending.lifecycle_status, 'Draft Pending Reconcile');
+  assert.equal(pending.gmail_draft_id, '');
+  assert.equal(pending.gmail_error, 'provider unavailable');
+});
+
+test('durable lifecycle acknowledgement requires one exact persisted update', () => {
+  const update = {
+    input_index: 0,
+    report_scope_key: 'a'.repeat(64),
+    report_fingerprint: 'b'.repeat(64),
+    lifecycle_status: 'Draft Ready',
+    gmail_draft_id: 'draft-123',
+    gmail_thread_id: 'thread-456',
+  };
+  const verify = (rows, source = update) => executeCodeNode(workflowPath, 'Verify Durable Lifecycle Updates', {
+    inputRows: rows,
+    nodeItems: { 'Build Draft Lifecycle Update': [source] },
+  }).json.draft_results[0];
+
+  assert.equal(verify([update]).outcome, 'draft_ready');
+  assert.equal(verify([]).outcome, 'durable_update_acknowledgement_failed');
+  assert.equal(verify([update, { ...update }]).acknowledgement_count, 2);
+  assert.equal(verify([{ ...update, gmail_draft_id: 'other' }]).outcome, 'durable_update_acknowledgement_failed');
+
+  const pending = { ...update, lifecycle_status: 'Draft Pending Reconcile', gmail_draft_id: '', gmail_thread_id: '' };
+  assert.equal(verify([pending], pending).outcome, 'draft_pending_reconcile');
+});
+
+test('response summarizes invalid, replay, and draft outcomes without email or report content', () => {
+  const normalized = normalize(body([
+    report({ recipient_email: 'bad', source_report_id: 'invalid-source' }),
+    report({ tenant_id: 'tenant-two', source_report_id: 'replay-source' }),
+    report({ tenant_id: 'tenant-three', source_report_id: 'draft-source' }),
+  ]));
+  const replay = normalized.reports[1];
+  const draft = normalized.reports[2];
+  const result = executeCodeNode(workflowPath, 'Build Client Report Batch Response', {
+    nodeItems: {
+      'Normalize Client Report Batch': [normalized],
+      'Resolve Report Scopes': [{
+        decisions: [
+          { input_index: 1, action: 'terminal_replay' },
+          { input_index: 2, action: 'new_intent' },
+        ],
+      }],
+      'Verify Intent Acknowledgements': [{
+        intent_results: [{ input_index: 2, outcome: 'intent_acknowledged' }],
+      }],
+      'Verify Durable Lifecycle Updates': [{
+        draft_results: [{ input_index: 2, outcome: 'draft_ready' }],
+      }],
+    },
+  }).json;
+  const payload = JSON.parse(result.response_body_json);
+  assert.equal(payload.reports[0].outcome, 'invalid_report');
+  assert.equal(payload.reports[1].outcome, 'terminal_replay');
+  assert.equal(payload.reports[2].outcome, 'draft_ready');
+  assert.equal(payload.reports[1].report_scope_key, replay.report_scope_key);
+  assert.equal(payload.reports[2].report_scope_key, draft.report_scope_key);
+  assert.doesNotMatch(result.response_body_json, /ada@example\.test|<!doctype|"report_html"/);
+});
+
+test('response replaces an oversized invalid source report id with null and stays bounded', () => {
+  const oversizedSourceReportId = 'x'.repeat(1_000_000);
+  const normalized = normalize(body([report({ source_report_id: oversizedSourceReportId })]));
+  assert.equal(normalized.reports[0].valid_input, false);
+  assert.equal(normalized.reports[0].source_report_id, '');
+
+  const result = executeCodeNode(workflowPath, 'Build Client Report Batch Response', {
+    nodeItems: {
+      'Normalize Client Report Batch': [normalized],
+      'Resolve Report Scopes': [{ decisions: [] }],
+      'Verify Intent Acknowledgements': [{ intent_results: [] }],
+      'Verify Durable Lifecycle Updates': [{ draft_results: [] }],
+    },
+  }).json;
+  const payload = JSON.parse(result.response_body_json);
+  assert.equal(payload.reports[0].outcome, 'invalid_report');
+  assert.equal(payload.reports[0].source_report_id, null);
+  assert.equal(result.response_body_json.includes(oversizedSourceReportId), false);
+  assert.ok(Buffer.byteLength(result.response_body_json, 'utf8') < 2_000);
+});
+
+test('Data Table mappings are privacy-minimal and exact lifecycle filters guard updates', () => {
+  const workflow = loadWorkflow(workflowPath);
+  const insert = nodeByName(workflow, 'Insert Report Draft Intent');
+  const persisted = Object.keys(insert.parameters.columns.value).sort();
+  assert.deepEqual(persisted, [
+    'batch_id', 'created_at_utc', 'execution_id', 'gmail_draft_id', 'gmail_error',
+    'gmail_thread_id', 'lifecycle_status', 'recipient_hash', 'report_content_hash',
+    'report_fingerprint', 'report_period', 'report_scope_key', 'source_report_id',
+    'source_status', 'source_updated_at_utc', 'tenant_id', 'updated_at_utc',
+  ].sort());
+  for (const forbidden of [
+    'recipient_email', 'verified_recipient_email', 'report_html', 'report_subject',
+    'client_name', 'brand_name', 'brand_color', 'highlights', 'risks', 'next_steps',
+    'headers', 'body',
+  ]) {
+    assert.equal(persisted.includes(forbidden), false, forbidden);
+  }
+  const update = nodeByName(workflow, 'Update Draft Lifecycle');
+  assert.deepEqual(update.parameters.filters.conditions.map((condition) => [condition.keyName, condition.keyValue]), [
+    ['report_scope_key', '={{ $json.report_scope_key }}'],
+    ['report_fingerprint', '={{ $json.report_fingerprint }}'],
+    ['lifecycle_status', 'Draft Intent'],
+  ]);
+});
+
+test('graph is inactive, native-only, credential-free, draft-only, persist-before-draft, and has one response', () => {
+  const workflow = loadWorkflow(workflowPath);
+  assert.equal(workflow.active, false);
+  assert.equal(Object.hasOwn(workflow, 'pinData'), false);
+  assert.equal(workflow.nodes.length, 21);
+  assert.equal(workflow.nodes.filter((node) => node.type === 'n8n-nodes-base.webhook').length, 1);
+  assert.equal(workflow.nodes.filter((node) => node.type === 'n8n-nodes-base.respondToWebhook').length, 1);
+  assert.equal(workflow.nodes.some((node) => /schedule|cron/i.test(node.type)), false);
+  assert.equal(workflow.nodes.some((node) => /openai|httpRequest/i.test(node.type)), false);
+  for (const node of workflow.nodes) {
+    assert.ok(node.type.startsWith('n8n-nodes-base.'), node.name);
+    assert.equal(Object.hasOwn(node, 'credentials'), false, node.name);
+  }
+  const webhook = nodeByName(workflow, 'Client Report Intake Webhook');
+  assert.equal(webhook.parameters.httpMethod, 'POST');
+  assert.equal(webhook.parameters.path, 'client-report-intake');
+  const gmailNodes = workflow.nodes.filter((node) => node.type === 'n8n-nodes-base.gmail');
+  assert.equal(gmailNodes.length, 1);
+  assert.equal(gmailNodes[0].parameters.resource, 'draft');
+  assert.equal(gmailNodes[0].parameters.operation, 'create');
+  assert.equal(workflow.nodes.some((node) => node.type === 'n8n-nodes-base.gmail' && node.parameters.operation === 'send'), false);
+
+  const placeholders = workflow.nodes
+    .filter((node) => node.type === 'n8n-nodes-base.dataTable')
+    .map((node) => node.parameters.dataTableId.value);
+  assert.deepEqual([...new Set(placeholders)], ['REPLACE_WITH_CLIENT_REPORT_LEDGER_TABLE_ID']);
+  assert.equal(nodeByName(workflow, 'Find Existing Report Rows').parameters.returnAll, true);
+  assert.equal(nodeByName(workflow, 'Find Existing Report Rows').alwaysOutputData, true);
+  assert.deepEqual(direct(workflow, 'Insert Report Draft Intent'), ['Verify Intent Acknowledgements']);
+  assert.ok(reachable(workflow, 'Insert Report Draft Intent').has('Create Gmail Report Draft'));
+  assert.equal(reachable(workflow, 'Create Gmail Report Draft').has('Insert Report Draft Intent'), false);
+
+  const serialized = JSON.stringify(workflow);
+  assert.doesNotMatch(serialized, /kuliberda|@gmail\.com|@kuliberda\.ai/i);
+  assert.doesNotMatch(serialized, /getWorkflowStaticData|\$getWorkflowStaticData/);
+});
+
+test('every Code node executes or compiles under the repository VM harness', () => {
+  const workflow = loadWorkflow(workflowPath);
+  const specialized = new Set([
+    'Normalize Client Report Batch', 'Resolve Report Scopes', 'Expand New Draft Intents',
+    'Verify Intent Acknowledgements', 'Build Draft Lifecycle Update',
+    'Verify Durable Lifecycle Updates', 'Build Client Report Batch Response',
+  ]);
+  for (const node of workflow.nodes.filter((candidate) => candidate.type === 'n8n-nodes-base.code')) {
+    if (specialized.has(node.name)) continue;
+    assert.doesNotThrow(() => executeCodeNode(workflowPath, node.name, {
+      input: node.name === 'Expand Valid Report Lookups'
+        ? { reports: [] }
+        : node.name === 'Expand Confirmed Draft Jobs'
+          ? { draft_jobs: [] }
+          : {},
+      vars: {},
+    }), node.name);
+  }
+});
+
+test('canonical and annotated artifacts preserve exact behavior outside positions and sticky notes', {
+  skip: !fs.existsSync(annotatedPath),
+}, () => {
+  const canonical = loadWorkflow(workflowPath);
+  const annotated = loadWorkflow(annotatedPath);
+  const normalizeArtifact = (workflow) => ({
+    ...workflow,
+    nodes: workflow.nodes
+      .filter((node) => node.type !== 'n8n-nodes-base.stickyNote')
+      .map(({ position, ...node }) => node),
+  });
+  assert.deepEqual(normalizeArtifact(annotated), normalizeArtifact(canonical));
+});
