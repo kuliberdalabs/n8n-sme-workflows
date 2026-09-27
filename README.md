@@ -34,7 +34,7 @@ These are templates, not a hosted product. Each one demonstrates patterns that m
 - **Idempotency keys** — stable content-derived keys plus replay guards, so repeated deliveries don't double side effects (best-effort claims, not atomic locks — the READMEs say which is which).
 - **Explicit failure paths** — dead-letter routes and fail-closed 401s instead of silent drops.
 - **Human-in-the-loop where it matters** — AI outputs are validated and gated; ambiguous cases go to review, not to customers.
-- **Outbound safety** — anything that emails a real person is draft-first or approval-gated in its default configuration.
+- **Outbound safety** — outbound email to a real person is draft-first or approval-gated in the default configuration, with one documented exception: workflow 11 auto-sends only eligible standard quotes, under explicit limits, to a verified submitted address.
 - **Honest limits** — each workflow README states what the workflow does *not* do and records its current hardening needs; completed remediation remains traceable in closed GitHub Issues. Treat the templates as a strong starting point you adapt and harden for your environment, not a drop-in production system.
 
 ## Getting started
