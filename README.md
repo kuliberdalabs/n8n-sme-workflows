@@ -1,6 +1,6 @@
 # n8n-sme-workflows
 
-[n8n](https://n8n.io) workflow templates for SME back-office automation, engineered well past demo grade: lead intake, invoicing and dunning, document intake, support triage, ops reporting, bank reconciliation, Polish KSeF e-invoicing, client onboarding, replay-safe kickoff booking, order tracking, controlled fixed-price quoting, and branded client report drafts.
+[n8n](https://n8n.io) workflow templates for SME back-office automation, engineered well past demo grade: lead intake, invoicing and dunning, document intake, support triage, ops reporting, bank reconciliation, Polish KSeF e-invoicing, client onboarding, replay-safe kickoff booking, order tracking, controlled fixed-price quoting, branded client report drafts, complaint ownership with response deadlines, and CRM ↔ invoicing field reconciliation.
 
 Agent cold start: read [`AGENTS.md`](AGENTS.md), select its one primary task route, and follow that route's ordered local sources and gates.
 
@@ -8,22 +8,24 @@ Each workflow is an import-ready JSON built to a consistent engineering standard
 
 ## Workflows
 
-| # | Workflow | What it automates |
-|---|----------|-------------------|
-| [01](workflows/01-lead-intake/) | SME Lead Intake | Webhook lead capture → validation → routing (approved / needs-review / sensitive) → email alerts |
-| [02](workflows/02-invoice-dunning/) | Invoice Dunning | Invoice-on-completion, idempotent payment reminders, pre-send stop-on-paid checks |
-| [03](workflows/03-document-intake/) | Document Intake with AI Classification | Inbound documents → OCR/AI classification with validation gates → filing or human review |
-| [04](workflows/04-support-triage/) | Support Triage + FAQ Draft | Ticket triage with layered prompt-injection defenses; replies are drafts by design — the intake graph has no path to a send node |
-| [05](workflows/05-ops-digest-alert/) | Scheduled Ops Digest + Anomaly Alert | Daily digest with anomaly alerting and alert throttling |
-| [06](workflows/06-bank-reconciliation/) | Bank ↔ Invoice Reconciliation | Deterministic (AI-free) matching of bank payments to invoices, review queue for ambiguity |
-| [07](workflows/07-ksef-exception-desk/) | KSeF Exception Desk | Exception handling for Poland's mandatory e-invoicing system: query-before-retry, durable state |
-| [08](workflows/08-client-onboarding-saga/) | Client Onboarding Saga | Saga-pattern orchestration of multi-step onboarding with durable state and duplicate-send protection |
-| [09](workflows/09-booking-lifecycle/) | Booking Lifecycle | Replay-safe client kickoff booking with durable intent, Google Calendar provider evidence, and Gmail drafts |
-| [10](workflows/10-order-status-tracker/) | Order Status Tracker | Token-separated order intake and status transitions with durable history, notification dedup, stale-pending visibility, and safe customer lookup |
-| [11](workflows/11-quote-offer/) | Quote and Offer Workflow | Authenticated fixed-price quoting with durable replay and conflict guards, approval decisions, provider-evidence delivery, and stale-state alerts |
-| [12](workflows/12-client-report-engine/) | Branded Client Report Draft Engine | Authenticated multi-client report validation → deterministic branded HTML → replay-suppressed Gmail drafts with privacy-minimal lifecycle evidence |
-| [13](workflows/13-complaint-sla-intake/) | Complaint Intake and Owned SLA | Metadata-only complaint intake, role-bound ownership, explicit response deadlines, and durable internal Gmail alerts |
-| [14](workflows/14-crm-invoicing-reconciliation/) | CRM and Invoicing Reconciliation | Owner-defined field synchronization through conditional REST adapter writes, independent readback and a minimal durable journal |
+All 14 workflows are also published as free templates on the n8n template library under the [Kuliberda Labs creator page](https://n8n.io/creators/klabs/). The `workflow.json` in this repository is the canonical behavior source; each workflow folder also carries the annotated `workflow-annotated-v2.json` prepared for the template library.
+
+| # | Workflow | What it automates | n8n template |
+|---|----------|-------------------|--------------|
+| [01](workflows/01-lead-intake/) | SME Lead Intake | Webhook lead capture → validation → routing (approved / needs-review / sensitive) → email alerts | [17741](https://n8n.io/workflows/17741/) |
+| [02](workflows/02-invoice-dunning/) | Invoice Dunning | Invoice-on-completion, idempotent payment reminders, pre-send stop-on-paid checks | [18054](https://n8n.io/workflows/18054/) |
+| [03](workflows/03-document-intake/) | Document Intake with AI Classification | Inbound documents → OCR/AI classification with validation gates → filing or human review | [18351](https://n8n.io/workflows/18351/) |
+| [04](workflows/04-support-triage/) | Support Triage + FAQ Draft | Ticket triage with layered prompt-injection defenses; replies are drafts by design — the intake graph has no path to a send node | [17988](https://n8n.io/workflows/17988/) |
+| [05](workflows/05-ops-digest-alert/) | Scheduled Ops Digest + Anomaly Alert | Daily digest with anomaly alerting and alert throttling | [18148](https://n8n.io/workflows/18148/) |
+| [06](workflows/06-bank-reconciliation/) | Bank ↔ Invoice Reconciliation | Deterministic (AI-free) matching of bank payments to invoices, review queue for ambiguity | [18420](https://n8n.io/workflows/18420/) |
+| [07](workflows/07-ksef-exception-desk/) | KSeF Exception Desk | Exception handling for Poland's mandatory e-invoicing system: query-before-retry, durable state | [18704](https://n8n.io/workflows/18704/) |
+| [08](workflows/08-client-onboarding-saga/) | Client Onboarding Saga | Saga-pattern orchestration of multi-step onboarding with durable state and duplicate-send protection | [18626](https://n8n.io/workflows/18626/) |
+| [09](workflows/09-booking-lifecycle/) | Booking Lifecycle | Replay-safe client kickoff booking with durable intent, Google Calendar provider evidence, and Gmail drafts | [18741](https://n8n.io/workflows/18741/) |
+| [10](workflows/10-order-status-tracker/) | Order Status Tracker | Token-separated order intake and status transitions with durable history, notification dedup, stale-pending visibility, and safe customer lookup | [18823](https://n8n.io/workflows/18823/) |
+| [11](workflows/11-quote-offer/) | Quote and Offer Workflow | Authenticated fixed-price quoting with durable replay and conflict guards, approval decisions, provider-evidence delivery, and stale-state alerts | [18873](https://n8n.io/workflows/18873/) |
+| [12](workflows/12-client-report-engine/) | Branded Client Report Draft Engine | Authenticated multi-client report validation → deterministic branded HTML → replay-suppressed Gmail drafts with privacy-minimal lifecycle evidence | [19006](https://n8n.io/workflows/19006/) |
+| [13](workflows/13-complaint-sla-intake/) | Complaint Intake and Owned SLA | Metadata-only complaint intake, role-bound ownership, explicit response deadlines, and durable internal Gmail alerts | [19315](https://n8n.io/workflows/19315/) |
+| [14](workflows/14-crm-invoicing-reconciliation/) | CRM and Invoicing Reconciliation | Owner-defined field synchronization through conditional REST adapter writes, independent readback and a minimal durable journal | [19412](https://n8n.io/workflows/19412/) |
 
 ## Engineering approach
 
