@@ -15,7 +15,7 @@ All 14 workflows are also published as free templates on the n8n template librar
 | [01](workflows/01-lead-intake/) | SME Lead Intake | Webhook lead capture → validation → routing (approved / needs-review / sensitive) → email alerts | [17741](https://n8n.io/workflows/17741/) |
 | [02](workflows/02-invoice-dunning/) | Invoice Dunning | Invoice-on-completion, idempotent payment reminders, pre-send stop-on-paid checks | [18054](https://n8n.io/workflows/18054/) |
 | [03](workflows/03-document-intake/) | Document Intake with AI Classification | Inbound documents → OCR/AI classification with validation gates → filing or human review | [18351](https://n8n.io/workflows/18351/) |
-| [04](workflows/04-support-triage/) | Support Triage + FAQ Draft | Ticket triage with layered prompt-injection defenses; replies are drafts by design — the intake graph has no path to a send node | [17988](https://n8n.io/workflows/17988/) |
+| [04](workflows/04-support-triage/) | Support Triage + FAQ Draft | Ticket triage with layered prompt-injection defenses; customer replies are drafts by design — the intake graph has no path to the customer-reply send node; it does send internal review and escalation alerts | [17988](https://n8n.io/workflows/17988/) |
 | [05](workflows/05-ops-digest-alert/) | Scheduled Ops Digest + Anomaly Alert | Daily digest with anomaly alerting and alert throttling | [18148](https://n8n.io/workflows/18148/) |
 | [06](workflows/06-bank-reconciliation/) | Bank ↔ Invoice Reconciliation | Deterministic (AI-free) matching of bank payments to invoices, review queue for ambiguity | [18420](https://n8n.io/workflows/18420/) |
 | [07](workflows/07-ksef-exception-desk/) | KSeF Exception Desk | Exception handling for Poland's mandatory e-invoicing system: query-before-retry, durable state | [18704](https://n8n.io/workflows/18704/) |
@@ -34,7 +34,7 @@ These are templates, not a hosted product. Each one demonstrates patterns that m
 - **Idempotency keys** — stable content-derived keys plus replay guards, so repeated deliveries don't double side effects (best-effort claims, not atomic locks — the READMEs say which is which).
 - **Explicit failure paths** — dead-letter routes and fail-closed 401s instead of silent drops.
 - **Human-in-the-loop where it matters** — AI outputs are validated and gated; ambiguous cases go to review, not to customers.
-- **Outbound safety** — outbound email to a real person is draft-first or approval-gated in the default configuration, with one documented exception: workflow 11 auto-sends only eligible standard quotes, under explicit limits, to a verified submitted address.
+- **Outbound safety** — email to customers and other external people is draft-first or approval-gated in the default configuration, with one documented exception: workflow 11 auto-sends only eligible standard quotes, under explicit limits, to a verified submitted address. Internal operational mail (digests, alerts, escalations, for example in workflows 04, 05 and 13) goes automatically to the team addresses you configure.
 - **Honest limits** — each workflow README states what the workflow does *not* do and records its current hardening needs; completed remediation remains traceable in closed GitHub Issues. Treat the templates as a strong starting point you adapt and harden for your environment, not a drop-in production system.
 
 ## Getting started
