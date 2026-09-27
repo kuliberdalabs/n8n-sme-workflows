@@ -22,6 +22,7 @@ Each workflow is an import-ready JSON built to a consistent engineering standard
 | [10](workflows/10-order-status-tracker/) | Order Status Tracker | Token-separated order intake and status transitions with durable history, notification dedup, stale-pending visibility, and safe customer lookup |
 | [11](workflows/11-quote-offer/) | Quote and Offer Workflow | Authenticated fixed-price quoting with durable replay and conflict guards, approval decisions, provider-evidence delivery, and stale-state alerts |
 | [12](workflows/12-client-report-engine/) | Branded Client Report Draft Engine | Authenticated multi-client report validation → deterministic branded HTML → replay-suppressed Gmail drafts with privacy-minimal lifecycle evidence |
+| [13](workflows/13-complaint-sla-intake/) | Complaint Intake and Owned SLA | Metadata-only complaint intake, role-bound ownership, explicit response deadlines, and durable internal Gmail alerts |
 
 ## Engineering approach
 

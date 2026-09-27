@@ -17,6 +17,50 @@ const LEGACY_SECTION_TOP_PADDING = 144;
 const MIN_SECTION_WIDTH = 512;
 
 const WORKFLOWS = {
+  '13-complaint-sla-intake': {
+    overviewTitle: 'Own complaints and track response deadlines',
+    overview: `## Own complaints and track response deadlines
+
+### How it works
+1. Accepts authenticated complaint metadata and stores one case per tenant and source reference, detecting conflicting retries.
+2. Assigns an owner and escalates unanswered ownership requests through three internal roles.
+3. Tracks an explicit response deadline supplied with a policy reference; missing deadlines become a visible review alert.
+4. Keeps response-deadline alerts running after ownership acknowledgement and stops them only after an authenticated close action with a resolution reference.
+5. Records alert intent before Gmail and preserves uncertain sends for manual reconciliation.
+
+### Setup steps
+- [ ] Create and select the Complaint_Cases and Complaint_Alerts Data Tables using the README schemas.
+- [ ] Configure separate intake and per-owner tokens in n8n Variables.
+- [ ] Set the three internal owner email variables and connect Gmail OAuth.
+- [ ] Supply opaque source references, explicit timestamp offsets and a reviewed response deadline.
+- [ ] Test synthetic intake, acknowledgement, closure and deadline alerts before activation.
+
+### Customization
+Adjust ownership SLA hours, internal recipients and the 15-minute sweep. Response deadlines come from your policy process; this template does not calculate statutory periods or decide complaints. Keep delivery serialized and review any uncertain send before retrying.`,
+    sections: [
+      section('Receive complaint metadata', 'Authenticates the intake and rejects fields outside the bounded metadata contract.', 0, 0, 5, [
+        'Complaint Intake Webhook', 'Authenticate Complaint Intake', 'Intake Authorized?', 'Reject Intake Authentication', 'Normalize Complaint Metadata', 'Complaint Metadata Valid?',
+      ], { 'Reject Intake Authentication': [2, 1], 'Normalize Complaint Metadata': [3, 0], 'Complaint Metadata Valid?': [4, 0] }),
+      section('Persist one complaint case', 'Detects replays and conflicts, then confirms the case write before returning success.', 1664, 0, 6, [
+        'Find Existing Complaint', 'Resolve Complaint Identity', 'Create New Complaint?', 'Insert Complaint Case', 'Verify Complaint Persistence', 'Respond Complaint Intake',
+      ], { 'Respond Complaint Intake': [0, 1] }),
+      section('Authenticate the assigned owner', 'Uses a separate credential for each role and validates acknowledgement or closure metadata.', 0, 1024, 5, [
+        'Complaint Owner Action Webhook', 'Authenticate Complaint Owner', 'Owner Authorized?', 'Reject Owner Authentication', 'Normalize Owner Action', 'Owner Action Valid?',
+      ], { 'Reject Owner Authentication': [2, 1], 'Normalize Owner Action': [3, 0], 'Owner Action Valid?': [4, 0] }),
+      section('Record acknowledgement or closure', 'Checks the current owner and revision, then verifies the guarded state update.', 1664, 1024, 6, [
+        'Find Owner Action Case', 'Resolve Owner Action', 'Update Complaint Owner State?', 'Persist Owner Action', 'Verify Owner Action', 'Respond Owner Action',
+      ], { 'Respond Owner Action': [0, 1] }),
+      section('Recheck open complaints', 'Processes one unique case at a time and reloads its current state before planning an alert.', 0, 2048, 6, [
+        'Complaint SLA Sweep', 'Find Open Complaints', 'Select Unique Open Cases', 'Loop Complaint Cases', 'Recheck Current Complaint', 'Require One Current Case',
+      ]),
+      section('Plan and persist the alert intent', 'Selects a new ownership or deadline event and verifies state and intent before Gmail.', 1920, 2048, 7, [
+        'Find Complaint Alert History', 'Plan Complaint Alert', 'Complaint Alert Needed?', 'Persist Complaint Alert State', 'Verify Complaint Alert State', 'Insert Complaint Alert Intent', 'Verify Complaint Alert Intent',
+      ]),
+      section('Confirm internal alert delivery', 'Sends only to configured internal recipients and records provider evidence or a reconcile-required outcome.', 4096, 2048, 4, [
+        'Send Internal Complaint Alert', 'Capture Complaint Alert Outcome', 'Persist Complaint Alert Outcome', 'Verify Complaint Alert Outcome',
+      ]),
+    ],
+  },
   '02-invoice-dunning': {
     enforceEdgeCorridors: true,
     acceptedLegacyLayout: true,
