@@ -17,6 +17,50 @@ const LEGACY_SECTION_TOP_PADDING = 144;
 const MIN_SECTION_WIDTH = 512;
 
 const WORKFLOWS = {
+  '14-crm-invoicing-reconciliation': {
+    overviewTitle: 'Reconcile CRM and invoicing fields',
+    overview: `## Reconcile CRM and invoicing fields
+
+### How it works
+1. Accepts an authenticated entity reference; separate source credentials determine which system owns the change.
+2. Reads the current CRM and invoice records through your normalized REST adapters and compares only the source-owned fields.
+3. Stops on missing records, tombstones or unresolved journal entries; unchanged fields need no write.
+4. Verifies a minimal durable intent, rechecks the source, and applies a conditional per-field PATCH to the existing target.
+5. Confirms the provider write marker and reads the target again before recording the applied result.
+
+### Setup steps
+- [ ] Create Reconciliation_Journal with the documented column schema and select it in all three Data Table nodes.
+- [ ] Configure distinct CRM and invoice source tokens and HTTPS adapter base URLs in n8n Variables.
+- [ ] Attach each adapter's Header Auth credential to its four HTTP nodes.
+- [ ] Implement the documented snapshot, strong ETag, conditional PATCH and idempotency contract in both adapters.
+- [ ] Serialize this lane and test both directions, unchanged replay, conflict and uncertain writes before activation.
+
+### Customization
+Map your provider fields to the fixed ownership policy and call the webhook from source-system events or your scheduler. The workflow does not create invoices or revive deleted records. Unknown write outcomes require manual reconciliation; raw business values are excluded from the journal.`,
+    sections: [
+      section('Authenticate the source event', 'Binds the source role to its token and accepts only an opaque entity reference.', 0, 0, 6, [
+        'Reconciliation Webhook', 'Authenticate Reconciliation Source', 'Source Authorized?', 'Reject Source Authentication',
+        'Validate Reconciliation Request', 'Reconciliation Request Valid?', 'Respond Reconciliation Decision',
+      ], { 'Reject Source Authentication': [2, 1], 'Validate Reconciliation Request': [3, 0], 'Reconciliation Request Valid?': [4, 0], 'Respond Reconciliation Decision': [5, 1] }),
+      section('Compare authoritative fields', 'Checks unresolved history and current provider snapshots before planning a bounded patch.', 2112, 0, 7, [
+        'Find Entity Reconciliation Journal', 'Check Reconciliation Journal', 'Journal Clear?', 'Read Current CRM Record',
+        'Read Current Invoice Record', 'Plan Owner Field Patch', 'Owner Fields Differ?',
+      ]),
+      section('Persist intent and recheck source', 'Verifies the metadata journal insert and rejects a changed or unavailable source before writing.', 4480, 0, 6, [
+        'Insert Reconciliation Intent', 'Verify Reconciliation Intent', 'Recheck CRM Source?', 'Recheck CRM Source',
+        'Recheck Invoice Source', 'Verify Source Is Still Current', 'Source Still Current?',
+      ], { 'Recheck Invoice Source': [3, 1], 'Verify Source Is Still Current': [4, 0], 'Source Still Current?': [5, 0] }),
+      section('Apply a conditional field patch', 'Uses the target revision and write key, retaining conflicts and uncertain outcomes for review.', 0, 1024, 4, [
+        'Patch Invoice Target?', 'Patch Invoice Owner Fields', 'Patch CRM Owner Fields', 'Inspect Conditional Patch Result', 'Provider Write Acknowledged?',
+      ], { 'Patch CRM Owner Fields': [1, 1], 'Inspect Conditional Patch Result': [2, 0], 'Provider Write Acknowledged?': [3, 0] }),
+      section('Verify provider state independently', 'Reads the target again and requires its fields, revision and write marker to match the acknowledgement.', 2112, 1024, 3, [
+        'Read Invoice Target?', 'Read Invoice After Patch', 'Read CRM After Patch', 'Verify Applied Provider State',
+      ], { 'Read CRM After Patch': [1, 1], 'Verify Applied Provider State': [2, 0] }),
+      section('Record and return the outcome', 'Persists only result metadata and confirms that write before returning a verified response.', 4480, 1024, 4, [
+        'Prepare Journal Outcome', 'Persist Reconciliation Outcome', 'Verify Journal Outcome', 'Respond Verified Reconciliation',
+      ]),
+    ],
+  },
   '13-complaint-sla-intake': {
     overviewTitle: 'Own complaints and track response deadlines',
     overview: `## Own complaints and track response deadlines

@@ -46,7 +46,11 @@ function executeCodeNode(file, exactName, options = {}) {
       all: () => items(inputRows),
     },
     $items: (name) => items(nodeItems[name] || []),
-    $: (name) => ({ item: { json: nodeOutputs[name] || {} } }),
+    $: (name) => ({
+      item: { json: nodeOutputs[name] || {} },
+      first: () => ({ json: nodeOutputs[name] || nodeItems[name]?.[0] || {} }),
+      all: () => items(nodeItems[name] || (nodeOutputs[name] ? [nodeOutputs[name]] : [])),
+    }),
     $vars: options.vars || {},
     $getWorkflowStaticData(scope) {
       assert.equal(scope, 'global', `unexpected workflow static-data scope from ${exactName}`);
